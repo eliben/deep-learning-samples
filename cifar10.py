@@ -5,8 +5,10 @@
 # See https://www.cs.toronto.edu/~kriz/cifar.html for information on the
 # data set and its format.
 #
-# * Xs (data) are arrays of 32x33x3 arrays of pixels (each a uint8 for color
-#   intensity)
+# * Xs (data) are arrays of 32x33x3 arrays of pixels. Logically, the values are
+#   between 0-255, so they would fit into a uint8. However, since we want to
+#   perform math on them without running into uint overflow and other problems,
+#   we load them as float64.
 # * ys (labels) are arrays of integers in the range 0-9
 import cPickle as pickle
 import numpy as np
@@ -19,7 +21,7 @@ def _load_CIFAR_batch(filename):
         datadict = pickle.load(f)
         X = datadict['data']
         Y = datadict['labels']
-        X = X.reshape(10000, 3, 32, 32).transpose(0,2,3,1).astype("uint8")
+        X = X.reshape(10000, 3, 32, 32).transpose(0,2,3,1).astype('float64')
         Y = np.array(Y)
         return X, Y
 

@@ -58,14 +58,38 @@ class KNearestNeighbor:
 
     def compute_distances_no_loops(self, X):
         """Fully-vectorized distance matrix computation."""
-        X_norm = np.sum(X ** 2, axis=1, keepdims=True)
-        print 'X_norm', X_norm.shape
+        # The sum in L2 distance is:
+        #
+        #   distance[i,j] = sqrt(Sum_p (X_train[i,p] - X[j,p])^2
+        #
+        # where 'p' is running over the pixels/colors vector.
+        #
+        # The expression inside the sum can be rewritten as:
+        #
+        #   X_train[i,p]^2 - 2*X_train[i,p]*X[j,p] + X[j,p]^2
+        #
+        # Note that the first and last items only depend on one of i or j, not
+        # both, so they can be broadcast over the result array. And the middle
+        # item can be computed as matrix multiplication between X_train and X
+        # (one of them transposed).
+        X_train_T = self.X_train.T
+
+        # First compute the "cross-correlation" item using matrix mul,
+        # transposing X_train since we want tests in rows and train in columns.
+        # The shape of this is (num_test,num_train), which is also the shape
+        # of the result.
+        cross = -2.0 * X.dot(X_train_T)
+
+        # Now compute the first item: norm of X_train. Sum all columns together,
+        # getting a row vector.
         X_train_norm = np.sum(self.X_train ** 2, axis=1)
-        print 'X_train_norm', X_train_norm.shape
-        cross = -2.0 * X.dot(self.X_train.T)
-        print 'cross', cross.shape
-        dists = np.sqrt(X_norm + cross + X_train_norm)
-        return dists
+
+        # Similarly for X, but this time the results go into a column vector so
+        # it gets broadcast per column of the result.
+        X_norm = np.sum(X ** 2, axis=1, keepdims=True)
+
+        # Finally sum up the parts and compute their sqrt.
+        return np.sqrt(X_norm + cross + X_train_norm)
 
     def predict_labels(self, dists, k=1):
         """Predict labels, given a distances matrix.
