@@ -75,4 +75,3 @@ if __name__ == '__main__':
 
     print 'Showing a few samples from the dataset.....'
     show_CIFAR10_samples(X_train, y_train)
-

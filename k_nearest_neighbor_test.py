@@ -14,7 +14,7 @@ class TestKNearestNeighborDistance(unittest.TestCase):
         d_no = knn.compute_distances_no_loops(test)
         self.assertAlmostEqual(0, np.linalg.norm(d_two - d_one, ord='fro'))
         self.assertAlmostEqual(0, np.linalg.norm(d_no - d_one, ord='fro'))
-    
+
 
 if __name__ == '__main__':
     unittest.main()
