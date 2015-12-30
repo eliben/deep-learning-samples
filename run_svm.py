@@ -71,13 +71,21 @@ print X_train.shape, X_val.shape, X_test.shape
 
 W = np.random.randn(10, 3073) * 0.0001
 
-with timer.Timer('SVM loss naive'):
-    loss, grad = linear_svm.svm_loss_naive(W, X_train, y_train, 0.00001)
-print loss, grad
+#with timer.Timer('SVM loss naive'):
+    #loss, grad = linear_svm.svm_loss_naive(W, X_train, y_train, 0.00001)
 
-with timer.Timer('SVM loss vectorized'):
-    loss, grad = linear_svm.svm_loss_vectorized(W, X_train, y_train, 0.00001)
-print loss, grad
+#with timer.Timer('SVM loss vectorized'):
+    #loss, grad = linear_svm.svm_loss_vectorized(W, X_train, y_train, 0.00001)
+
+svm = linear_svm.LinearSVM()
+loss_hist = svm.train(X_train, y_train, learning_rate=1e-7, reg=5e4,
+                      num_iters=800, verbose=True)
+
+y_train_pred = svm.predict(X_train)
+print 'training accuracy: %f' % (np.mean(y_train == y_train_pred), )
+y_val_pred = svm.predict(X_val)
+print 'validation accuracy: %f' % (np.mean(y_val == y_val_pred), )
+
 #f = lambda w: linear_svm.svm_loss_naive(w, X_train, y_train, 0.0)[0]
 #math_utils.grad_check_sparse(f, W, grad, 10)
 

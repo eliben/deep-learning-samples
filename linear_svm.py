@@ -4,6 +4,8 @@
 import numpy as np
 import random
 
+import linear_classifier
+
 
 def svm_loss_naive(W, X, y, reg):
     """Structured SVM loss function, naive implementation (with loops).
@@ -119,3 +121,9 @@ def svm_loss_vectorized(W, X, y, reg):
     # Finally, indicators * X.T will give use the result
     dW = indicators.dot(X.T) / N + reg * W
     return loss, dW
+
+
+class LinearSVM(linear_classifier.LinearClassifier):
+    """ A subclass that uses the Multiclass SVM loss function """
+    def loss(self, X_batch, y_batch, reg):
+        return svm_loss_vectorized(self.W, X_batch, y_batch, reg)
