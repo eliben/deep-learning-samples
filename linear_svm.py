@@ -5,7 +5,6 @@ import numpy as np
 import random
 
 
-
 def svm_loss_naive(W, X, y, reg):
     """Structured SVM loss function, naive implementation (with loops).
 
