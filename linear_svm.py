@@ -5,7 +5,6 @@ import numpy as np
 import random
 
 
-
 def svm_loss_naive(W, X, y, reg):
     """Structured SVM loss function, naive implementation (with loops).
 
@@ -74,8 +73,8 @@ def svm_loss_vectorized(W, X, y, reg):
 
        Inputs and outputs are the same as svm_loss_naive.
     """
+    N = X.shape[1]
     delta = 1
-    dW = np.zeros(W.shape)  # initialize the gradient as zero
 
     # scores's shape is (K, N): contains scores for all N samples, in columns.
     scores = W.dot(X)
@@ -83,36 +82,40 @@ def svm_loss_vectorized(W, X, y, reg):
     # We want to select the score of the correct class for every sample. Samples
     # are in columns. y[i] gives, for sample i, the correct class. Therefore
     # we need to index into every column at the appropriate y[i].
-    correct_class_scores = scores[y, np.arange(scores.shape[1])]
+    # The result is a (N,) vector.
+    correct_class_scores = scores[y, np.arange(N)]
 
-    # Vectorized sum for all samples.
-    s = (scores - correct_class_scores + delta).clip(min=0).sum(axis=0)
+    # Vectorized sum for all samples. This computes the sigma for all Li.
+    # scores is (K,N), correct_class_scores is (N,) so it's broadcast over each
+    # row of scores.
+    # The shape remains (K,N) since it contains the score per class for each
+    # sample.
+    si = scores - correct_class_scores + delta
+
+    # Sum all class scores for each sample into a total "loss per sample".
+    # clip performs the max(0,...) operation.
+    s = si.clip(min=0).sum(axis=0)
 
     # The sum was supposed to ignore the category with the correct score. But
     # for j=yi, the summed element is just max(0, delta), so we subtract delta
     # from the sums.
     s -= delta
+
+    # Finally compute the average loss with regularization.
     loss = np.mean(s) + 0.5 * reg * np.sum(W * W)
 
-    b = (scores - correct_class_scores + delta) > 0
+    # To compute the vectorized gradient, create a (K,N) array of indicators
+    # where each cell is the gradient contribution to the row's class from the
+    # column's sample.
+    indicators = np.zeros(scores.shape)
 
-    print scores.shape, correct_class_scores.shape
-    print s.shape
-    print 'b', b.shape, b
-    #print('y=', y)
-    #print scores
-    #############################################################################
-    # TODO:                                                                     #
-    # Implement a vectorized version of the gradient for the structured SVM     #
-    # loss, storing the result in dW.                                           #
-    #                                                                           #
-    # Hint: Instead of computing the gradient from scratch, it may be easier    #
-    # to reuse some of the intermediate values that you used to compute the     #
-    # loss.                                                                     #
-    #############################################################################
-    pass
-    #############################################################################
-    #                             END OF YOUR CODE                              #
-    #############################################################################
+    # This is for all dW_j
+    indicators[si > 0] = 1
 
+    # For dW_yi, subtract the number of positive indicators
+    num_positive = np.sum(si > 0, axis=0)
+    indicators[y, np.arange(N)] -= num_positive
+
+    # Finally, indicators * X.T will give use the result
+    dW = indicators.dot(X.T) / N + reg * W
     return loss, dW
