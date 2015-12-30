@@ -1,6 +1,8 @@
 import numpy as np
 
 import cifar10
+import linear_svm
+import math_utils
 import timer
 
 dir = 'datasets/cifar-10-batches-py'
@@ -8,8 +10,8 @@ X_train, y_train, X_test, y_test = cifar10.load_CIFAR10(dir)
 
 # Subsample to save on time/space
 num_training = 5000
-num_validation = 1000
-num_test = 1000
+num_validation = 100
+num_test = 100
 
 # Our validation set will be num_validation points from the original
 # training set.
@@ -57,6 +59,27 @@ def report_mean_image(mimg):
 X_train -= mean_image
 X_val -= mean_image
 X_test -= mean_image
+
+# 3. append the bias dimension of ones (i.e. bias trick) so that our SVM
+# only has to worry about optimizing a single weight matrix W.
+# Also, transform data matrices so that each image is a column.
+X_train = np.hstack([X_train, np.ones((X_train.shape[0], 1))]).T
+X_val = np.hstack([X_val, np.ones((X_val.shape[0], 1))]).T
+X_test = np.hstack([X_test, np.ones((X_test.shape[0], 1))]).T
+
+print X_train.shape, X_val.shape, X_test.shape
+
+W = np.random.randn(10, 3073) * 0.0001
+
+with timer.Timer('SVM loss naive'):
+    loss, grad = linear_svm.svm_loss_naive(W, X_train, y_train, 0.00001)
+print loss, grad
+
+with timer.Timer('SVM loss vectorized'):
+    loss, grad = linear_svm.svm_loss_vectorized(W, X_train, y_train, 0.00001)
+print loss, grad
+#f = lambda w: linear_svm.svm_loss_naive(w, X_train, y_train, 0.0)[0]
+#math_utils.grad_check_sparse(f, W, grad, 10)
 
 #import k_nearest_neighbor
 #knn = k_nearest_neighbor.KNearestNeighbor()

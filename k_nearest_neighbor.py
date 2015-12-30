@@ -1,5 +1,5 @@
 # KNN classifier with L2 distance function.
-# See http://cs231n.github.io/classification/ for background.
+# See http://cs231n.github.io/linear-classify for background.
 import numpy as np
 
 

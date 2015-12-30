@@ -33,10 +33,10 @@ import k_nearest_neighbor
 knn = k_nearest_neighbor.KNearestNeighbor()
 knn.train(X_train, y_train)
 
-with timer.Timer('Computing distances...'):
+with timer.Timer('Computing distances'):
     dists = knn.compute_distances_no_loops(X_test)
 
-with timer.Timer('Running label prediction...'):
+with timer.Timer('Running label prediction'):
     y_test_pred = knn.predict_labels(dists, k=5)
 
 # Compute and print the fraction of correctly predicted examples
