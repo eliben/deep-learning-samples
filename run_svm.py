@@ -2,6 +2,7 @@ import numpy as np
 
 import cifar10
 import linear_svm
+import softmax
 import math_utils
 import timer
 
@@ -73,25 +74,15 @@ W = np.random.randn(10, 3073) * 0.0001
 
 with timer.Timer('SVM loss naive'):
     loss, grad = linear_svm.svm_loss_naive(W, X_train, y_train, 0.00001)
-print loss, grad
-
 with timer.Timer('SVM loss vectorized'):
     loss, grad = linear_svm.svm_loss_vectorized(W, X_train, y_train, 0.00001)
-print loss, grad
-#f = lambda w: linear_svm.svm_loss_naive(w, X_train, y_train, 0.0)[0]
-#math_utils.grad_check_sparse(f, W, grad, 10)
 
-#import k_nearest_neighbor
-#knn = k_nearest_neighbor.KNearestNeighbor()
-#knn.train(X_train, y_train)
+classifier = linear_svm.LinearSVM()
+#classifier = softmax.Softmax()
+loss_hist = classifier.train(X_train, y_train, learning_rate=1e-7, reg=5e4,
+                       num_iters=800, verbose=True)
 
-#with timer.Timer('Computing distances...'):
-    #dists = knn.compute_distances_no_loops(X_test)
-
-#with timer.Timer('Running label prediction...'):
-    #y_test_pred = knn.predict_labels(dists, k=5)
-
-## Compute and print the fraction of correctly predicted examples
-#num_correct = np.sum(y_test_pred == y_test)
-#accuracy = float(num_correct) / num_test
-#print 'Got %d / %d correct => accuracy: %f' % (num_correct, num_test, accuracy)
+y_train_pred = classifier.predict(X_train)
+print 'training accuracy: %f' % (np.mean(y_train == y_train_pred), )
+y_val_pred = classifier.predict(X_val)
+print 'validation accuracy: %f' % (np.mean(y_val == y_val_pred), )
