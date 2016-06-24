@@ -78,7 +78,12 @@ with timer.Timer('SVM loss vectorized'):
     loss, grad = linear_svm.svm_loss_vectorized(W, X_train, y_train, 0.00001)
 
 classifier = linear_svm.LinearSVM()
+
+# Note: the softmax classifier works but it's slow (I only have the
+# non-vectorized version implemented so far). Therefore it remains commented out
+# by default.
 #classifier = softmax.Softmax()
+
 loss_hist = classifier.train(X_train, y_train, learning_rate=1e-7, reg=5e4,
                        num_iters=800, verbose=True)
 
