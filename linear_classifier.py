@@ -71,4 +71,3 @@ class LinearClassifier:
         """
         y_pred = self.W.dot(X)
         return y_pred.argmax(axis=0)
-
