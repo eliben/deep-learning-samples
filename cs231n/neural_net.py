@@ -87,23 +87,28 @@ def two_layer_net(X, model, y=None, reg=0.0):
     # model.
     reg_loss = 0.5 * reg * (np.sum(W1 ** 2) + np.sum(W2 ** 2))
 
-    # If the targets are not given then jump out, we're done
-    if y is None:
-        return scores
-
-    # compute the loss
+    # Compute the loss.
     loss = data_loss + reg_loss
 
-    # compute the gradients
-    grads = {}
-    #############################################################################
-    # TODO: Compute the backward pass, computing the derivatives of the weights #
-    # and biases. Store the results in the grads dictionary. For example,       #
-    # grads['W1'] should store the gradient on W1, and be a matrix of same size #
-    #############################################################################
-    pass
-    #############################################################################
-    #                              END OF YOUR CODE                             #
-    #############################################################################
+    # Compute the gradients based on
+    # http://cs231n.github.io/neural-networks-case-study/
+    dscores = probs
+    dscores[range(N), y] -= 1
+    dscores /= N
 
-    return loss, grads
+    grads = {}
+    grads['W2'] = Hout.T.dot(dscores) + reg * W2
+    grads['b2'] = np.sum(dscores, axis=0)
+
+    # Next backprop into hidden layer
+    dhidden = dscores.dot(W2.T)
+    # Backprop the ReLU non-linearity
+    dhidden[Hout <= 0] = 0
+    grads['W1'] = X.T.dot(dhidden) + reg * W1
+    grads['b1'] = np.sum(dhidden, axis=0)
+
+    # Return scores or (loss, grads) based on y.
+    if y is None:
+        return scores
+    else:
+        return loss, grads

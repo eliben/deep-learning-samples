@@ -1,5 +1,6 @@
 import numpy as np
 
+import math_utils
 import neural_net
 
 
@@ -44,7 +45,10 @@ X, y = init_toy_data()
 
 loss, grads = neural_net.two_layer_net(X, model, y, reg=0.1)
 print(loss)
-print(grads)
+
+import pprint
+pprint.pprint(grads)
+
 #print(scores)
 #correct_scores = [[-0.5328368, 0.20031504, 0.93346689],
  #[-0.59412164, 0.15498488, 0.9040914 ],
