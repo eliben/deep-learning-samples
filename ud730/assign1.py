@@ -13,6 +13,10 @@ from six.moves import cPickle as pickle
 
 url = 'http://commondatastorage.googleapis.com/books1000/'
 last_percent_reported = None
+kNumClasses = 10
+
+# Uncomment this for reproducible randoms
+#np.random.seed(133)
 
 def download_progress_hook(count, blockSize, totalSize):
   """A hook to report the progress of a download. This is mostly intended for users with
@@ -47,9 +51,6 @@ def maybe_download(filename, expected_bytes, force=False):
 train_filename = maybe_download('notMNIST_large.tar.gz', 247336696)
 test_filename = maybe_download('notMNIST_small.tar.gz', 8458043)
 
-num_classes = 10
-np.random.seed(133)
-
 def maybe_extract(filename, force=False):
   root = os.path.splitext(os.path.splitext(filename)[0])[0]  # remove .tar.gz
   if os.path.isdir(root) and not force:
@@ -64,10 +65,10 @@ def maybe_extract(filename, force=False):
   data_folders = [
     os.path.join(root, d) for d in sorted(os.listdir(root))
     if os.path.isdir(os.path.join(root, d))]
-  if len(data_folders) != num_classes:
+  if len(data_folders) != kNumClasses:
     raise Exception(
       'Expected %d folders, one per class. Found %d instead.' % (
-        num_classes, len(data_folders)))
+        kNumClasses, len(data_folders)))
   print(data_folders)
   return data_folders
 
@@ -147,13 +148,79 @@ def check_dataset_balance(datasets):
     for ds in datasets:
         with open(ds) as f:
             data = pickle.load(f)
+            # Note: since most of these images are small (few hundred bytes),
+            # the actual size on disk of the input PNGs is larger because the
+            # minimal actual size occupied by each file is 4KB.
             print('Data size for %s is %d; bytesize=%d' % (
                 ds, len(data), data.nbytes))
 
-#with open(train_datasets[3]) as fD:
-    #dD = pickle.load(fD)
-    #show_image(dD[0])
-    #show_image(dD[1])
+#check_dataset_balance(train_datasets)
+#check_dataset_balance(test_datasets)
 
-check_dataset_balance(train_datasets)
-check_dataset_balance(test_datasets)
+def make_arrays(nb_rows, img_size):
+  if nb_rows:
+    dataset = np.ndarray((nb_rows, img_size, img_size), dtype=np.float32)
+    labels = np.ndarray(nb_rows, dtype=np.int32)
+  else:
+    dataset, labels = None, None
+  return dataset, labels
+
+def merge_datasets(pickle_files, train_size, valid_size=0):
+  num_classes = len(pickle_files)
+  valid_dataset, valid_labels = make_arrays(valid_size, image_size)
+  train_dataset, train_labels = make_arrays(train_size, image_size)
+  vsize_per_class = valid_size // num_classes
+  tsize_per_class = train_size // num_classes
+
+  start_v, start_t = 0, 0
+  end_v, end_t = vsize_per_class, tsize_per_class
+  end_l = vsize_per_class+tsize_per_class
+  for label, pickle_file in enumerate(pickle_files):
+    try:
+      with open(pickle_file, 'rb') as f:
+        letter_set = pickle.load(f)
+        # let's shuffle the letters to have random validation and training set
+        np.random.shuffle(letter_set)
+        if valid_dataset is not None:
+          valid_letter = letter_set[:vsize_per_class, :, :]
+          valid_dataset[start_v:end_v, :, :] = valid_letter
+          valid_labels[start_v:end_v] = label
+          start_v += vsize_per_class
+          end_v += vsize_per_class
+
+        train_letter = letter_set[vsize_per_class:end_l, :, :]
+        train_dataset[start_t:end_t, :, :] = train_letter
+        train_labels[start_t:end_t] = label
+        start_t += tsize_per_class
+        end_t += tsize_per_class
+    except Exception as e:
+      print('Unable to process data from', pickle_file, ':', e)
+      raise
+
+  return valid_dataset, valid_labels, train_dataset, train_labels
+
+train_size = 200000
+valid_size = 10000
+test_size = 10000
+
+print('Merging data sets and creating validation set...')
+valid_dataset, valid_labels, train_dataset, train_labels = merge_datasets(
+  train_datasets, train_size, valid_size)
+_, _, test_dataset, test_labels = merge_datasets(test_datasets, test_size)
+
+print('Training:', train_dataset.shape, train_labels.shape)
+print('Validation:', valid_dataset.shape, valid_labels.shape)
+print('Testing:', test_dataset.shape, test_labels.shape)
+
+def randomize(dataset, labels):
+  permutation = np.random.permutation(labels.shape[0])
+  shuffled_dataset = dataset[permutation,:,:]
+  shuffled_labels = labels[permutation]
+  return shuffled_dataset, shuffled_labels
+
+train_dataset, train_labels = randomize(train_dataset, train_labels)
+test_dataset, test_labels = randomize(test_dataset, test_labels)
+valid_dataset, valid_labels = randomize(valid_dataset, valid_labels)
+
+print(train_labels[133])
+show_image(train_dataset[133])
