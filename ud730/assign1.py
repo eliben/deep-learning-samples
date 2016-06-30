@@ -143,8 +143,17 @@ def show_image(imgarr):
     plt.imshow(imgarr, cmap='gray')
     plt.show()
 
+def check_dataset_balance(datasets):
+    for ds in datasets:
+        with open(ds) as f:
+            data = pickle.load(f)
+            print('Data size for %s is %d; bytesize=%d' % (
+                ds, len(data), data.nbytes))
 
-with open(train_datasets[3]) as fD:
-    dD = pickle.load(fD)
-    show_image(dD[0])
-    show_image(dD[1])
+#with open(train_datasets[3]) as fD:
+    #dD = pickle.load(fD)
+    #show_image(dD[0])
+    #show_image(dD[1])
+
+check_dataset_balance(train_datasets)
+check_dataset_balance(test_datasets)
