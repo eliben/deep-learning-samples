@@ -1,3 +1,4 @@
 *.gz
 notMNIST_*
 *.pickle
+text8.zip
