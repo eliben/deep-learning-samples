@@ -85,22 +85,48 @@ print('Most common words (+UNK)', count[:5])
 print('Sample data', data[:10])
 del words  # Hint to reduce memory.
 
-# State for generate_batch.
+# State for generate_batch_skipgram.
 data_index = 0
 
 
-def generate_batch(batch_size, num_skips, skip_window):
+def generate_batch_skipgram(batch_size, num_skips, skip_window):
+    """Generate a batch of data for training.
+
+    Args:
+        batch_size: Number of samples to generate in the batch.
+        skip_window:
+            How many words to consider around the target word, left and right.
+            With skip_window=2, in the sentence above for "consider" we'll
+            build the window [words, to, consider, around, the].
+        num_skips:
+            For skip-gram, we map target word to adjacent words in the window
+            around it. This parameter says how many adjacent word mappings to
+            add to the batch for each target word. Naturally it can't be more
+            than skip_window * 2.
+
+    Returns:
+        batch, labels - ndarrays with IDs.
+        batch: Row vector of size batch_size containing target words.
+        labels:
+            Column vector of size batch_size containing a randomly selected
+            adjacent word for every target word in 'batch'.
+    """
     global data_index
     assert batch_size % num_skips == 0
     assert num_skips <= 2 * skip_window
     batch = np.ndarray(shape=(batch_size), dtype=np.int32)
     labels = np.ndarray(shape=(batch_size, 1), dtype=np.int32)
     span = 2 * skip_window + 1  # [ skip_window target skip_window ]
+
+    # buffer is a sliding window through the 'data' list. We initially fill it
+    # with the first 'span' IDs in 'data'.
     buffer = collections.deque(maxlen=span)
-    # Fill initial window into the buffer
     for _ in range(span):
         buffer.append(data[data_index])
         data_index = (data_index + 1) % len(data)
+    # Generate the batch data in two nested loops. The outer loop takes the next
+    # target word from 'data'; the inner loop picks random 'num_skips' adjacent
+    # words to map from the target.
     for i in range(batch_size // num_skips):
         target = skip_window  # target label at the center of the buffer
         targets_to_avoid = [skip_window]
@@ -119,9 +145,10 @@ print('data:', [reverse_dictionary[di] for di in data[:8]])
 
 for num_skips, skip_window in [(2, 1), (4, 2)]:
     data_index = 0
-    batch, labels = generate_batch(batch_size=8,
-                                   num_skips=num_skips,
-                                   skip_window=skip_window)
+    batch, labels = generate_batch_skipgram(
+        batch_size=8,
+        num_skips=num_skips,
+        skip_window=skip_window)
     print('\nwith num_skips = %d and skip_window = %d:' %
           (num_skips, skip_window))
     print('    batch:', [reverse_dictionary[bi] for bi in batch])
@@ -149,6 +176,8 @@ with graph.as_default(), tf.device('/cpu:0'):
     valid_dataset = tf.constant(valid_examples, dtype=tf.int32)
 
     # Variables.
+    # The embeddings is a VxN matrix, where V is the vocabulary size and N
+    # is the embedding dimensionality.
     embeddings = tf.Variable(tf.random_uniform([vocabulary_size, embedding_size
                                                 ], -1.0, 1.0))
     softmax_weights = tf.Variable(tf.truncated_normal(
@@ -188,7 +217,7 @@ with tf.Session(graph=graph) as session:
     print('Initialized')
     average_loss = 0
     for step in range(num_steps):
-        batch_data, batch_labels = generate_batch(batch_size, num_skips,
+        batch_data, batch_labels = generate_batch_skipgram(batch_size, num_skips,
                                                   skip_window)
         feed_dict = {train_dataset: batch_data, train_labels: batch_labels}
         _, l = session.run([optimizer, loss], feed_dict=feed_dict)
