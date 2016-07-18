@@ -210,7 +210,7 @@ with graph.as_default(), tf.device('/cpu:0'):
     similarity = tf.matmul(valid_embeddings,
                            tf.transpose(normalized_embeddings))
 
-num_steps = 1001
+num_steps = 30001
 
 with tf.Session(graph=graph) as session:
     tf.initialize_all_variables().run()
@@ -244,7 +244,7 @@ with tf.Session(graph=graph) as session:
                 print(log)
     final_embeddings = normalized_embeddings.eval()
 
-num_points = 100
+num_points = 50
 
 tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
 two_d_embeddings = tsne.fit_transform(final_embeddings[1:num_points+1, :])
