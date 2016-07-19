@@ -21,7 +21,7 @@ try:
 except ImportError:
   HAS_SKLEARN = False
 
-from word_utils import read_data, build_dataset
+from word_utils import read_data, build_dataset, report_words_distance
 
 filename = 'text8.zip'
 words = read_data(filename)
@@ -30,6 +30,7 @@ words = read_data(filename)
 vocabulary_size = 50000
 data, count, dictionary, reverse_dictionary = build_dataset(words)
 
+print('Total # of words', len(words))
 print('Most common words (+UNK)', count[:5])
 print('Sample data', data[:10])
 del words  # Hint to reduce memory.
@@ -113,6 +114,14 @@ valid_window = 100  # Only pick dev samples in the head of the distribution.
 valid_examples = np.array(random.sample(range(valid_window), valid_size))
 num_sampled = 64  # Number of negative examples to sample.
 
+
+def do_report_distances(emb):
+    report_words_distance('apple', 'banana', dictionary, emb)
+    report_words_distance('apple', 'fruit', dictionary, emb)
+    report_words_distance('apple', 'hebrew', dictionary, emb)
+    report_words_distance('apple', 'help', dictionary, emb)
+    report_words_distance('apple', 'seven', dictionary, emb)
+
 graph = tf.Graph()
 
 with graph.as_default(), tf.device('/cpu:0'):
@@ -156,11 +165,13 @@ with graph.as_default(), tf.device('/cpu:0'):
     similarity = tf.matmul(valid_embeddings,
                            tf.transpose(normalized_embeddings))
 
-num_steps = 30001
+num_steps = 93001
 
 with tf.Session(graph=graph) as session:
     tf.initialize_all_variables().run()
     print('Initialized')
+    initial_embeddings = embeddings.eval()
+    do_report_distances(initial_embeddings)
     average_loss = 0
     for step in range(num_steps):
         batch_data, batch_labels = generate_batch_skipgram(batch_size, num_skips,
@@ -189,6 +200,10 @@ with tf.Session(graph=graph) as session:
                     log = '%s %s,' % (log, close_word)
                 print(log)
     final_embeddings = normalized_embeddings.eval()
+
+print('final_embeddings shape:', final_embeddings.shape)
+print('Reporting after training')
+do_report_distances(final_embeddings)
 
 num_points = 50
 

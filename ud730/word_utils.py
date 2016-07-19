@@ -1,7 +1,9 @@
 # Utils for word2vec models
+from __future__ import print_function
 
 import os, sys
 import collections
+import scipy.spatial
 from six.moves.urllib.request import urlretrieve
 import tensorflow as tf
 import zipfile
@@ -63,3 +65,17 @@ def build_dataset(words, vocabulary_size=50000):
     count[0][1] = unk_count
     reverse_dictionary = dict(zip(dictionary.values(), dictionary.keys()))
     return data, count, dictionary, reverse_dictionary
+
+
+def report_words_distance(w1, w2, dictionary, embeddings):
+    id1 = dictionary[w1]
+    id2 = dictionary[w2]
+    v1 = embeddings[id1]
+    v2 = embeddings[id2]
+    assert v1.shape == v2.shape
+    euc = scipy.spatial.distance.euclidean(v1, v2)
+    cos = scipy.spatial.distance.cosine(v1, v2)
+    print('Distance between %s and %s:' % (w1, w2))
+    print('  Euclidean:', euc)
+    print('  Cosine:', cos)
+
