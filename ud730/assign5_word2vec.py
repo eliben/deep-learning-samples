@@ -5,7 +5,6 @@ import numpy as np
 import os
 import random
 import tensorflow as tf
-import zipfile
 
 try:
   from matplotlib import pylab
@@ -22,74 +21,13 @@ try:
 except ImportError:
   HAS_SKLEARN = False
 
-url = 'http://mattmahoney.net/dc/'
+from word_utils import read_data, build_dataset
 
-
-def maybe_download(filename, expected_bytes):
-    """Download a file if not present, and make sure it's the right size."""
-    if not os.path.exists(filename):
-        filename, _ = urlretrieve(url + filename, filename)
-    statinfo = os.stat(filename)
-    if statinfo.st_size == expected_bytes:
-        print('Found and verified %s' % filename)
-    else:
-        print(statinfo.st_size)
-        raise Exception('Failed to verify ' + filename +
-                        '. Can you get to it with a browser?')
-    return filename
-
-
-filename = maybe_download('text8.zip', 31344016)
-
-
-def read_data(filename):
-    """Extract the first file enclosed in a zip file as a list of words"""
-    with zipfile.ZipFile(filename) as f:
-        data = tf.compat.as_str(f.read(f.namelist()[0])).split()
-    return data
-
-
+filename = 'text8.zip'
 words = read_data(filename)
-print('Data size %d, type=%s' % (len(words), type(words)))
-
 # Only the vocabulary_size most common words are retained in the dictionary. All
 # others are mapped to UNK.
 vocabulary_size = 50000
-
-
-def build_dataset(words):
-    """Returns:
-
-    data:
-        list of the same length as words, with each word replaced by a unique
-        numeric ID.
-    count:
-        counters for the vocabulary_size most common words in 'words'.
-    dictionary:
-        maps word->ID
-    reverse_dictionary:
-        maps ID->word. Note that if the Kth word in 'words' is WORD, and the
-        Kth ID in 'data' is 42, then reverse_dictionary[42] is WORD.
-    """
-    count = [['UNK', -1]]
-    count.extend(collections.Counter(words).most_common(vocabulary_size - 1))
-    dictionary = dict()
-    for word, _ in count:
-        dictionary[word] = len(dictionary)
-    data = list()
-    unk_count = 0
-    for word in words:
-        if word in dictionary:
-            index = dictionary[word]
-        else:
-            index = 0  # dictionary['UNK']
-            unk_count = unk_count + 1
-        data.append(index)
-    count[0][1] = unk_count
-    reverse_dictionary = dict(zip(dictionary.values(), dictionary.keys()))
-    return data, count, dictionary, reverse_dictionary
-
-
 data, count, dictionary, reverse_dictionary = build_dataset(words)
 
 print('Most common words (+UNK)', count[:5])
