@@ -6,10 +6,21 @@ import os
 import random
 import tensorflow as tf
 import zipfile
-from matplotlib import pylab
+
+try:
+  from matplotlib import pylab
+  HAS_PYLAB = True
+except ImportError:
+  HAS_PYLAB = False
+
 from six.moves import range
 from six.moves.urllib.request import urlretrieve
-from sklearn.manifold import TSNE
+
+try:
+  from sklearn.manifold import TSNE
+  HAS_SKLEARN = Trie
+except ImportError:
+  HAS_SKLEARN = False
 
 url = 'http://mattmahoney.net/dc/'
 
@@ -88,7 +99,6 @@ del words  # Hint to reduce memory.
 # State for generate_batch_skipgram.
 data_index = 0
 
-
 def generate_batch_skipgram(batch_size, num_skips, skip_window):
     """Generate a batch of data for training.
 
@@ -140,7 +150,6 @@ def generate_batch_skipgram(batch_size, num_skips, skip_window):
         data_index = (data_index + 1) % len(data)
     return batch, labels
 
-
 print('data:', [reverse_dictionary[di] for di in data[:8]])
 
 for num_skips, skip_window in [(2, 1), (4, 2)]:
@@ -169,7 +178,6 @@ num_sampled = 64  # Number of negative examples to sample.
 graph = tf.Graph()
 
 with graph.as_default(), tf.device('/cpu:0'):
-
     # Input data.
     train_dataset = tf.placeholder(tf.int32, shape=[batch_size])
     train_labels = tf.placeholder(tf.int32, shape=[batch_size, 1])
@@ -246,8 +254,9 @@ with tf.Session(graph=graph) as session:
 
 num_points = 50
 
-tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
-two_d_embeddings = tsne.fit_transform(final_embeddings[1:num_points+1, :])
+if HAS_SKLEARN:
+  tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=5000)
+  two_d_embeddings = tsne.fit_transform(final_embeddings[1:num_points+1, :])
 
 def plot(embeddings, labels):
   assert embeddings.shape[0] >= len(labels), 'More labels than embeddings'
@@ -260,5 +269,7 @@ def plot(embeddings, labels):
   pylab.show()
 
 words = [reverse_dictionary[i] for i in range(1, num_points+1)]
-plot(two_d_embeddings, words)
+
+if HAS_PYLAB:
+  plot(two_d_embeddings, words)
 

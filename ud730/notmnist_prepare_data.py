@@ -1,7 +1,6 @@
 # Prepare notMNIST data in a notMNIST.pickle file
 
 from __future__ import print_function
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import sys
