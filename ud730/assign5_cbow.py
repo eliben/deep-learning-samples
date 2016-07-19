@@ -1,4 +1,5 @@
 from __future__ import print_function
+import itertools
 import math
 import numpy as np
 import os
@@ -30,13 +31,13 @@ def generate_batch_cbow(data, batch_size, context_size):
     window_size = 2 * context_size + 1
     while True:
         context = np.zeros((batch_size, context_size * 2), dtype=np.int32)
-        label = np.zeros((batch_size,), dtype=np.int32)
+        label = np.zeros((batch_size, 1), dtype=np.int32)
         for b in range(batch_size):
             window_end = (data_index + window_size) % len(data)
             window = data[data_index:window_end]
             context[b, 0:context_size] = window[:context_size]
             context[b, context_size:] = window[context_size + 1:]
-            label[b] = window[context_size]
+            label[b, 0] = window[context_size]
             data_index = (data_index + 1) % len(data)
         yield (context, label)
 
@@ -72,9 +73,9 @@ except:
 print('First words in data:')
 print(data[:50])
 
-#gen = generate_batch_cbow(data, 10, 2)
-#for i in range(5):
-    #print(gen.next())
+gen = generate_batch_cbow(data, 10, 2)
+for i in range(5):
+    print(gen.next())
 
 batch_size = 128
 embedding_size = 128  # Dimension of the embedding vector.
@@ -113,3 +114,70 @@ with graph.as_default(), tf.device('/cpu:0'):
 
     # Model.
     # Look up embeddings for inputs, for each input...
+    # The shape should be (batch_size, context_full_size, embedding_size).
+    # We want to average all the context vectors within each batch, so we
+    # reduce-mean along dimension 1.
+    embed = tf.nn.embedding_lookup(embeddings, train_dataset)
+    embed_mean = tf.reduce_mean(embed, reduction_indices=[1])
+
+    # Compute the softmax loss, using a sample of the negative labels each time.
+    loss = tf.reduce_mean(
+        tf.nn.sampled_softmax_loss(softmax_weights, softmax_biases, embed_mean,
+                                   train_labels, num_sampled, vocabulary_size))
+
+    # Optimizer.
+    # Note: The optimizer will optimize the softmax_weights AND the embeddings.
+    # This is because the embeddings are defined as a variable quantity and the
+    # optimizer's `minimize` method will by default modify all variable
+    # quantities that contribute to the tensor it is passed. See docs on
+    # `tf.train.Optimizer.minimize()` for more details.
+    optimizer = tf.train.AdagradOptimizer(1.0).minimize(loss)
+
+    # Compute the similarity between minibatch examples and all embeddings.
+    # We use the cosine distance:
+    norm = tf.sqrt(tf.reduce_sum(tf.square(embeddings), 1, keep_dims=True))
+    normalized_embeddings = embeddings / norm
+    valid_embeddings = tf.nn.embedding_lookup(normalized_embeddings,
+                                              valid_dataset)
+    similarity = tf.matmul(valid_embeddings,
+                           tf.transpose(normalized_embeddings))
+
+num_steps = 23001
+
+with tf.Session(graph=graph) as session:
+    tf.initialize_all_variables().run()
+    print('Initialized')
+    print('embed shape:', embed.get_shape())
+    print('embed_mean shape:', embed_mean.get_shape())
+    initial_embeddings = embeddings.eval()
+    #do_report_distances(initial_embeddings)
+    average_loss = 0
+    batch_gen = generate_batch_cbow(data, batch_size, context_size)
+    for step, batch in itertools.izip(range(num_steps), batch_gen):
+        batch_data, batch_labels = batch
+        feed_dict = {train_dataset: batch_data, train_labels: batch_labels}
+        _, l = session.run([optimizer, loss], feed_dict=feed_dict)
+        average_loss += l
+        if step % 2000 == 0:
+            if step > 0:
+                average_loss = average_loss / 2000
+            # The average loss is an estimate of the loss over the last 2000
+            # batches.
+            print('Average loss at step %d: %f' % (step, average_loss))
+            average_loss = 0
+        # note that this is expensive (~20% slowdown if computed every 500
+        # steps)
+        if step % 10000 == 0:
+            sim = similarity.eval()
+            for i in range(valid_size):
+                valid_word = reverse_dictionary[valid_examples[i]]
+                top_k = 8  # number of nearest neighbors
+                nearest = (-sim[i, :]).argsort()[1:top_k + 1]
+                log = 'Nearest to %s:' % valid_word
+                for k in range(top_k):
+                    close_word = reverse_dictionary[nearest[k]]
+                    log = '%s %s,' % (log, close_word)
+                print(log)
+    final_embeddings = normalized_embeddings.eval()
+
+print('final_embeddings shape:', final_embeddings.shape)
