@@ -2,26 +2,33 @@
 Taken from Andrej Karpathy's min-char-rnn:
     https://gist.github.com/karpathy/d4dee566867f8291f086
 
+Modified in various ways for better introspection / customization.
+
 ----
 Minimal character-level Vanilla RNN model. Written by Andrej Karpathy (@karpathy)
 BSD License
 """
+from __future__ import print_function
+
 import numpy as np
 
 # data I/O
 data = open('input.txt', 'r').read() # should be simple plain text file
 chars = list(set(data))
 data_size, vocab_size = len(data), len(chars)
-print 'data has %d characters, %d unique.' % (data_size, vocab_size)
+print('data has %d characters, %d unique.' % (data_size, vocab_size))
 char_to_ix = { ch:i for i,ch in enumerate(chars) }
 ix_to_char = { i:ch for i,ch in enumerate(chars) }
+print('char_to_ix', char_to_ix)
+print('ix_to_char', ix_to_char)
 
 # hyperparameters
 hidden_size = 100 # size of hidden layer of neurons
 seq_length = 25 # number of steps to unroll the RNN for
 learning_rate = 1e-1
 
-# model parameters
+# Model parameters/weights -- these are shared among all steps.
+# Inputs are characters one-hot encoded in a vocab-sized vector.
 Wxh = np.random.randn(hidden_size, vocab_size)*0.01 # input to hidden
 Whh = np.random.randn(hidden_size, hidden_size)*0.01 # hidden to hidden
 Why = np.random.randn(vocab_size, hidden_size)*0.01 # hidden to output
@@ -95,15 +102,15 @@ while True:
   targets = [char_to_ix[ch] for ch in data[p+1:p+seq_length+1]]
 
   # sample from the model now and then
-  if n % 100 == 0:
+  if n % 500 == 0:
     sample_ix = sample(hprev, inputs[0], 200)
     txt = ''.join(ix_to_char[ix] for ix in sample_ix)
-    print '----\n %s \n----' % (txt, )
+    print('----\n %s \n----' % (txt, ))
 
   # forward seq_length characters through the net and fetch gradient
   loss, dWxh, dWhh, dWhy, dbh, dby, hprev = lossFun(inputs, targets, hprev)
   smooth_loss = smooth_loss * 0.999 + loss * 0.001
-  if n % 100 == 0: print 'iter %d, loss: %f' % (n, smooth_loss) # print progress
+  if n % 100 == 0: print('iter %d, loss: %f' % (n, smooth_loss))
 
   # perform parameter update with Adagrad
   for param, dparam, mem in zip([Wxh, Whh, Why, bh, by],
