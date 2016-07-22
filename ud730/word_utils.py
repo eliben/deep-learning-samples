@@ -34,6 +34,15 @@ def read_data(filename):
     return data
 
 
+def read_data_asstring(filename):
+    """Extract the first file enclosed in a zip file as a string"""
+    with zipfile.ZipFile(filename) as f:
+        for name in f.namelist():
+            # weird to 'return' on the first iteration but this is copy-pasted
+            # from assignment 6....
+            return tf.compat.as_str(f.read(name))
+
+
 def build_dataset(words, vocabulary_size=50000):
     """Returns:
 
