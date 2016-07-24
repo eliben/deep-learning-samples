@@ -51,7 +51,7 @@ def compute_cost(x, y, m, b):
     """Compute the MSE cost of a prediction based on m, b.
 
     x: inputs vector
-    y: actual outputs vector
+    y: observed outputs vector
     m, b: regression parameters
 
     Returns: a scalar cost.
@@ -67,7 +67,7 @@ def compute_cost(x, y, m, b):
 def gradient_descent(x, y, nsteps, learning_rate=0.1):
     """Runs gradient descent optimization to fit a line y^ = x * m + b.
 
-    x, y: input data and correct outputs.
+    x, y: input data and observed outputs.
     nsteps: how many steps to run the optimization for.
     learning_rate: learning rate of gradient descent.
 
@@ -107,18 +107,20 @@ def plot_cost_3D(x, y, costfunc, mb_history=None):
         for b_idx in range(N):
             cost[m_idx, b_idx] = costfunc(x, y, ms[m_idx], bs[b_idx])
     # Configure 3D plot.
-    fig = plt.figure(1)
-    ax = fig.gca(projection='3d')
-    ax.set_xlabel('b')
-    ax.set_ylabel('m')
+    fig = plt.figure()
+    fig.set_tight_layout(True)
+    ax1 = fig.add_subplot(1, 2, 1, projection='3d')
+    ax1.set_xlabel('b')
+    ax1.set_ylabel('m')
     msgrid, bsgrid = np.meshgrid(ms, bs)
-    surf = ax.plot_surface(msgrid, bsgrid, cost, cmap=cm.coolwarm)
+    surf = ax1.plot_surface(msgrid, bsgrid, cost, cmap=cm.coolwarm)
 
     # Configure contour plot.
-    plt.figure(2)
-    plt.contour(msgrid, bsgrid, cost)
-    plt.xlabel('b')
-    plt.ylabel('m')
+    ax2 = fig.add_subplot(1, 2, 2)
+    #plt.figure(2)
+    ax2.contour(msgrid, bsgrid, cost)
+    ax2.set_xlabel('b')
+    ax2.set_ylabel('m')
 
     if mb_history:
         ms, bs = zip(*mb_history)
@@ -141,10 +143,10 @@ if __name__ == '__main__':
 
     NSTEPS = 30
     mbcost = list(gradient_descent(x, y, NSTEPS))
-    #print(mbcost[-1])
+    print(mbcost[-1])
     mb_history = [(m, b) for m, b, _ in mbcost]
     #plot_cost_3D(x, y, compute_cost, mb_history)
-    plot_data(x, y, mb_history)
+    #plot_data(x, y, mb_history)
 
     #costs = [c for _, _, c in gradient_descent(x, y, 50)]
     #plot_cost_vs_step([item[2] for item in mbcost])
