@@ -1,7 +1,8 @@
 from __future__ import print_function
+from matplotlib import cm
+from matplotlib.animation import FuncAnimation
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
 import numpy as np
 
 
@@ -16,10 +17,33 @@ def generate_data(n, m=2.25, b=6.0, stddev=1.5):
     return x, y
 
 
-def plot_scatter_data(x, y):
-    plt.scatter(x, y, marker='x')
-    plt.xlabel('x')
-    plt.ylabel('y')
+def plot_data(x, y, mb_history=None):
+    """Plot the data: y as a function of x, in a scatterplot.
+
+    x, y: arrays of data.
+    mb_history:
+        if provided, it's a sequence of (m, b) pairs that are used to draw
+        animated lines on top of the scatterplot.
+    """
+    fig, ax = plt.subplots()
+    fig.set_tight_layout(True)
+
+    ax.scatter(x, y, marker='x')
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+
+    if mb_history:
+        m0, b0 = mb_history[0]
+        line, = ax.plot(x, x * m0 + b0, 'r-', linewidth=2.0)
+
+        def update(frame_i):
+            mi, bi = mb_history[frame_i]
+            line.set_ydata(x * mi + bi)
+            ax.set_title('Fit at iteration {0}'.format(frame_i))
+            return [line]
+
+        anim = FuncAnimation(fig, update, frames=range(len(mb_history)),
+                             interval=200)
     plt.show()
 
 
@@ -41,19 +65,28 @@ def compute_cost(x, y, m, b):
 
 
 def gradient_descent(x, y, nsteps, learning_rate=0.1):
+    """Runs gradient descent optimization to fit a line y^ = x * m + b.
+
+    x, y: input data and correct outputs.
+    nsteps: how many steps to run the optimization for.
+    learning_rate: learning rate of gradient descent.
+
+    Yields 'nsteps + 1' triplets of (m, b, cost) where m, b are the fit
+    parameters for the given step, and cost is their cost vs the real y.
+    """
     n = x.shape[0]
+    # Start with m and b initialized to 0s for the first try.
     m, b = 0, 0
+    yield m, b, compute_cost(x, y, m, b)
 
     for step in range(nsteps):
-        yield m, b, compute_cost(x, y, m, b)
         yhat = m * x + b
         diff = yhat - y
         dm = learning_rate * (diff * x).sum() * 2 / n
         db = learning_rate * diff.sum() * 2 / n
         m -= dm
         b -= db
-
-    yield m, b, compute_cost(x, y, m, b)
+        yield m, b, compute_cost(x, y, m, b)
 
 
 def plot_cost_3D(x, y, costfunc, mb_history=None):
@@ -105,10 +138,13 @@ if __name__ == '__main__':
 
     N = 500
     x, y = generate_data(N)
-    #plot_scatter_data(x, y)
 
-    mb_history = [(m, b) for m, b, _ in gradient_descent(x, y, 30)]
-    plot_cost_3D(x, y, compute_cost, mb_history)
+    NSTEPS = 30
+    mbcost = list(gradient_descent(x, y, NSTEPS))
+    #print(mbcost[-1])
+    mb_history = [(m, b) for m, b, _ in mbcost]
+    #plot_cost_3D(x, y, compute_cost, mb_history)
+    plot_data(x, y, mb_history)
 
     #costs = [c for _, _, c in gradient_descent(x, y, 50)]
-    #plot_cost_vs_step(costs)
+    #plot_cost_vs_step([item[2] for item in mbcost])
