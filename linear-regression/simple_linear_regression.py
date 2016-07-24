@@ -56,11 +56,14 @@ def gradient_descent(x, y, nsteps, learning_rate=0.1):
     yield m, b, compute_cost(x, y, m, b)
 
 
-def plot_cost_3D(x, y, costfunc):
+def plot_cost_3D(x, y, costfunc, mb_history=None):
     """Plot cost as 3D and contour.
 
     x, y: x and y values from the dataset
     costfunc: cost function with signature like compute_cost
+    mb_history:
+        if provided, it's a sequence of (m, b) pairs that are added as
+        crosshairs markers on top of the contour plot.
     """
     lim = 10.0
     N = 250
@@ -83,6 +86,11 @@ def plot_cost_3D(x, y, costfunc):
     plt.contour(msgrid, bsgrid, cost)
     plt.xlabel('b')
     plt.ylabel('m')
+
+    if mb_history:
+        ms, bs = zip(*mb_history)
+        plt.plot(bs, ms, 'rx', mew=3, ms=5)
+
     plt.show()
 
 
@@ -98,11 +106,9 @@ if __name__ == '__main__':
     N = 500
     x, y = generate_data(N)
     #plot_scatter_data(x, y)
-    #plot_cost_3D(x, y, compute_cost)
 
-    #print(compute_cost(x, y, m=40, b=10))
+    mb_history = [(m, b) for m, b, _ in gradient_descent(x, y, 30)]
+    plot_cost_3D(x, y, compute_cost, mb_history)
 
-    costs = [c for _, _, c in gradient_descent(x, y, 50)]
-    plot_cost_vs_step(costs)
-    #for m, b, cost in gradient_descent(x, y, 50):
-        #print(m, b, cost)
+    #costs = [c for _, _, c in gradient_descent(x, y, 50)]
+    #plot_cost_vs_step(costs)
