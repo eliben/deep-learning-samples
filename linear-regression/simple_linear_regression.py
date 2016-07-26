@@ -27,6 +27,8 @@ def plot_data(x, y, mb_history=None):
     """
     fig, ax = plt.subplots()
     fig.set_tight_layout(True)
+    fig.set_size_inches((8, 6))
+    save_dpi = 80
 
     ax.scatter(x, y, marker='x')
     ax.set_xlabel('x')
@@ -36,14 +38,18 @@ def plot_data(x, y, mb_history=None):
         m0, b0 = mb_history[0]
         line, = ax.plot(x, x * m0 + b0, 'r-', linewidth=2.0)
 
+        # Downsample mb_history by 2 to reduce the number of frames shown.
         def update(frame_i):
-            mi, bi = mb_history[frame_i]
+            mi, bi = mb_history[frame_i * 2]
             line.set_ydata(x * mi + bi)
-            ax.set_title('Fit at iteration {0}'.format(frame_i))
+            ax.set_title('Fit at iteration {0}'.format(frame_i * 2))
             return [line]
 
-        anim = FuncAnimation(fig, update, frames=range(len(mb_history)),
+        anim = FuncAnimation(fig, update, frames=range(len(mb_history) // 2),
                              interval=200)
+        anim.save('regressionfit.gif', dpi=save_dpi, writer='imagemagick')
+    else:
+        fig.savefig('linreg-data.png', dpi=save_dpi)
     plt.show()
 
 
@@ -134,6 +140,30 @@ def plot_cost_vs_step(costs):
     plt.show()
 
 
+def compute_mb_analytic(x, y):
+    """Given arrays of x, y computes m, b analytically.
+
+    Returns m, b, the determinant of the Hessian and the partial derivative of
+    cost by m twice, applied at x, y. For details see:
+    https://en.wikipedia.org/wiki/Second_partial_derivative_test
+    """
+    xbar = np.average(x)
+    ybar = np.average(y)
+    m = (xbar * ybar - np.average(x * y)) / (xbar ** 2 - np.average(x ** 2))
+    b = ybar - m * xbar
+    hessian_det = 4 * (np.average(x ** 2) - xbar ** 2)
+    cost_mm = 2 * (np.average(x ** 2))
+    return m, b, hessian_det, cost_mm
+
+
+def compute_rsquared(x, y, m, b):
+    yhat = m * x + b
+    diff = yhat - y
+    SE_line = np.dot(diff.T, diff)
+    SE_y = len(y) * y.var()
+    return 1 - SE_line / SE_y
+
+
 if __name__ == '__main__':
     # For reproducibility
     np.random.seed(42)
@@ -146,7 +176,12 @@ if __name__ == '__main__':
     print(mbcost[-1])
     mb_history = [(m, b) for m, b, _ in mbcost]
     #plot_cost_3D(x, y, compute_cost, mb_history)
-    #plot_data(x, y, mb_history)
+    plot_data(x, y)#, mb_history)
 
     #costs = [c for _, _, c in gradient_descent(x, y, 50)]
     #plot_cost_vs_step([item[2] for item in mbcost])
+
+    m, b, D, mse_mm = compute_mb_analytic(x, y)
+    rsquared = compute_rsquared(x, y, m, b)
+    print(m, b)
+    print(rsquared)
