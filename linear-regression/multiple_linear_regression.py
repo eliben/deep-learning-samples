@@ -58,15 +58,29 @@ def compute_cost(X, y, theta):
 
 
 def gradient_descent(X, y, nsteps, learning_rate=0.1):
+    """Runs gradient descent optimization to fit a line y^ = theta.dot(x).
+    
+    X: (k, n) each row is an input with n features (including an all-ones column
+       that should have been added beforehead).
+    y: (k, 1) observed output per input.
+    nsteps: how many steps to run the optimization for.
+    learning_rate: learning rate of gradient descent.
+
+    Yields 'nsteps + 1' pairs of (theta, cost) where theta is the fit parameter
+    shaped (n, 1) for that step, and its cost vs the real y.
+    """
     k, n = X.shape
     theta = np.zeros((n, 1))
     yield theta, compute_cost(X, y, theta)
 
     for step in range(nsteps):
+        # yhat becomes a (k, 1) array of predictions, per sample.
         yhat = np.dot(X, theta)
         diff = yhat - y
         dtheta = np.zeros((n, 1))
         for j in range(n):
+            # The sum over all samples is computed with a dot product between
+            # (y^-y) and the jth feature across all of X.
             dtheta[j, 0] = learning_rate * np.dot(diff.T, X[:, j]) / k
         theta -= dtheta
         yield theta, compute_cost(X, y, theta)
@@ -92,6 +106,11 @@ def split_dataset_to_train_test(dataset, train_proportion=0.8):
     X_test = shuffled_dataset[k_train:, :-1]
     y_test = shuffled_dataset[k_train:, -1].reshape(-1, 1)
     return X_train, y_train, X_test, y_test
+
+
+def plot_cost_vs_step(costs):
+    plt.plot(range(len(costs)), costs)
+    plt.show()
 
 
 def plot_correlation_heatmap(X, header):
@@ -126,5 +145,6 @@ if __name__ == '__main__':
     X_train_augmented = np.hstack((np.ones((ktrain, 1)), X_train_normalized))
 
     NSTEPS = 550
-    for theta, cost in gradient_descent(X_train_augmented, y_train, NSTEPS):
-        print(cost, "---->", list(theta.flat))
+    thetas_and_costs = list(gradient_descent(X_train_augmented,
+                                             y_train, NSTEPS))
+    plot_cost_vs_step([cost for _, cost in thetas_and_costs])
