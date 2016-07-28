@@ -24,8 +24,9 @@ print('ix_to_char', ix_to_char)
 
 # hyperparameters
 hidden_size = 100 # size of hidden layer of neurons
-seq_length = 25 # number of steps to unroll the RNN for
+seq_length = 2 # number of steps to unroll the RNN for
 learning_rate = 1e-1
+MAX_DATA = 1000000
 
 # Model parameters/weights -- these are shared among all steps.
 # Inputs are characters one-hot encoded in a vocab-sized vector.
@@ -93,7 +94,8 @@ n, p = 0, 0
 mWxh, mWhh, mWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
 mbh, mby = np.zeros_like(bh), np.zeros_like(by) # memory variables for Adagrad
 smooth_loss = -np.log(1.0/vocab_size)*seq_length # loss at iteration 0
-while True:
+
+while p < MAX_DATA:
   # prepare inputs (we're sweeping from left to right in steps seq_length long)
   if p+seq_length+1 >= len(data) or n == 0:
     hprev = np.zeros((hidden_size,1)) # reset RNN memory
@@ -102,7 +104,7 @@ while True:
   targets = [char_to_ix[ch] for ch in data[p+1:p+seq_length+1]]
 
   # sample from the model now and then
-  if n % 500 == 0:
+  if n % 1000 == 0:
     sample_ix = sample(hprev, inputs[0], 200)
     txt = ''.join(ix_to_char[ix] for ix in sample_ix)
     print('----\n %s \n----' % (txt, ))
@@ -110,7 +112,7 @@ while True:
   # forward seq_length characters through the net and fetch gradient
   loss, dWxh, dWhh, dWhy, dbh, dby, hprev = lossFun(inputs, targets, hprev)
   smooth_loss = smooth_loss * 0.999 + loss * 0.001
-  if n % 100 == 0: print('iter %d, loss: %f' % (n, smooth_loss))
+  if n % 200 == 0: print('iter %d (p=%d), loss: %f' % (n, p, smooth_loss))
 
   # perform parameter update with Adagrad
   for param, dparam, mem in zip([Wxh, Whh, Why, bh, by],
