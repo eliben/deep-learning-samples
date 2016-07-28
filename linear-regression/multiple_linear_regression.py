@@ -143,6 +143,15 @@ def plot_correlation_heatmap(X, header):
     plt.show()
 
 
+def sample_predictions_vs_truth(X, y, theta, nsamples=10):
+    """Display a sample of predictions vs. true values."""
+    print('Sample of predictions vs. true values')
+    yhat = np.dot(X, theta)
+    sample_indices = np.random.choice(X.shape[0], size=nsamples, replace=False)
+    for index in sample_indices:
+        print('{0}: yhat={1}, y={2}'.format(index, yhat[index][0], y[index][0]))
+
+
 if __name__ == '__main__':
     # For reproducibility
     np.random.seed(42)
@@ -161,7 +170,7 @@ if __name__ == '__main__':
     X_train_normalized, mu, sigma = feature_normalize(X_train)
     X_train_augmented = np.hstack((np.ones((ktrain, 1)), X_train_normalized))
 
-    NSTEPS = 25
+    NSTEPS = 85
     with Timer('Running gradient descent ({0} steps)'.format(NSTEPS)):
         thetas_and_costs = list(gradient_descent(X_train_augmented,
                                                  y_train, NSTEPS))
@@ -183,3 +192,4 @@ if __name__ == '__main__':
     print('Test set R^2:',
           compute_rsquared(X_test_augmented, y_test, last_theta))
 
+    sample_predictions_vs_truth(X_test_augmented, y_test, last_theta)
