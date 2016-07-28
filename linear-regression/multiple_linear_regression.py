@@ -59,7 +59,7 @@ def compute_cost(X, y, theta):
 
 def gradient_descent(X, y, nsteps, learning_rate=0.1):
     """Runs gradient descent optimization to fit a line y^ = theta.dot(x).
-    
+
     X: (k, n) each row is an input with n features (including an all-ones column
        that should have been added beforehead).
     y: (k, 1) observed output per input.
@@ -108,8 +108,25 @@ def split_dataset_to_train_test(dataset, train_proportion=0.8):
     return X_train, y_train, X_test, y_test
 
 
+def compute_rsquared(X, y, theta):
+    """Compute R^2 - the coefficeint of determination for theta.
+
+    X: (k, n) input.
+    y: (k, 1) observed output per input.
+    theta: (n, 1) regression parameters.
+    """
+    k = X.shape[0]
+    yhat = np.dot(X, theta)
+    diff = yhat - y
+    SE_line = np.dot(diff.T, diff)
+    SE_y = len(y) * y.var()
+    return (1 - SE_line / SE_y).flat[0]
+
+
 def plot_cost_vs_step(costs):
-    plt.plot(range(len(costs)), costs)
+    fig, ax = plt.subplots()
+    ax.plot(range(len(costs)), costs)
+    ax.set_yscale('log')
     plt.show()
 
 
@@ -144,7 +161,25 @@ if __name__ == '__main__':
     X_train_normalized, mu, sigma = feature_normalize(X_train)
     X_train_augmented = np.hstack((np.ones((ktrain, 1)), X_train_normalized))
 
-    NSTEPS = 550
-    thetas_and_costs = list(gradient_descent(X_train_augmented,
-                                             y_train, NSTEPS))
-    plot_cost_vs_step([cost for _, cost in thetas_and_costs])
+    NSTEPS = 25
+    with Timer('Running gradient descent ({0} steps)'.format(NSTEPS)):
+        thetas_and_costs = list(gradient_descent(X_train_augmented,
+                                                 y_train, NSTEPS))
+    #plot_cost_vs_step([cost for _, cost in thetas_and_costs][:100])
+
+    last_theta = thetas_and_costs[-1][0]
+    print(last_theta)
+
+    print('Training set MSE:',
+          compute_cost(X_train_augmented, y_train, last_theta))
+    print('Training set R^2:',
+          compute_rsquared(X_train_augmented, y_train, last_theta))
+
+    ktest = X_test.shape[0]
+    X_test_normalized = (X_test - mu) / sigma
+    X_test_augmented = np.hstack((np.ones((ktest, 1)), X_test_normalized))
+    print('Test set MSE:',
+          compute_cost(X_test_augmented, y_test, last_theta))
+    print('Test set R^2:',
+          compute_rsquared(X_test_augmented, y_test, last_theta))
+

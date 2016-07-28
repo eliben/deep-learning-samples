@@ -157,6 +157,13 @@ def compute_mb_analytic(x, y):
 
 
 def compute_rsquared(x, y, m, b):
+    """Compute R^2 - the coefficient of determination for m, b.
+
+    x, y: arrays of input, output.
+    m, b: regression parameters.
+
+    Returns the R^2 - a scalar.
+    """
     yhat = m * x + b
     diff = yhat - y
     SE_line = np.dot(diff.T, diff)
