@@ -56,9 +56,9 @@ def plot_data(x, y, mb_history=None):
 def compute_cost(x, y, m, b):
     """Compute the MSE cost of a prediction based on m, b.
 
-    x: inputs vector
-    y: observed outputs vector
-    m, b: regression parameters
+    x: inputs vector.
+    y: observed outputs vector.
+    m, b: regression parameters.
 
     Returns: a scalar cost.
     """
