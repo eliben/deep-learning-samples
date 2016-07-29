@@ -5,10 +5,6 @@ import numpy as np
 
 from timer import Timer
 
-# TODO:
-#
-# - split to training + test set
-# Try to train only high-correlation columns vs. all columns and report results.
 
 def read_data(filename):
     """Read data from the given CSV file.
