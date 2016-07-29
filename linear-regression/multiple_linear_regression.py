@@ -7,8 +7,7 @@ from timer import Timer
 
 # TODO:
 #
-# - split to training + test set
-# Try to train only high-correlation columns vs. all columns and report results.
+# - In test, compare with sklearn's fit for the normalization?
 
 def read_data(filename):
     """Read data from the given CSV file.
@@ -170,7 +169,7 @@ if __name__ == '__main__':
     X_train_normalized, mu, sigma = feature_normalize(X_train)
     X_train_augmented = np.hstack((np.ones((ktrain, 1)), X_train_normalized))
 
-    NSTEPS = 85
+    NSTEPS = 385
     with Timer('Running gradient descent ({0} steps)'.format(NSTEPS)):
         thetas_and_costs = list(gradient_descent(X_train_augmented,
                                                  y_train, NSTEPS))

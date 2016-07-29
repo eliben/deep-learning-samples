@@ -9,8 +9,8 @@ import numpy as np
 def generate_data(n, m=2.25, b=6.0, stddev=1.5):
     """Generate n data points approximating given line.
 
-    m, b: line slope and intercept
-    stddev: standard deviation of added error
+    m, b: line slope and intercept.
+    stddev: standard deviation of added error.
     """
     x = np.linspace(-2.0, 2.0, n)
     y = x * m + b + np.random.normal(loc=0, scale=stddev, size=n)
@@ -20,7 +20,7 @@ def generate_data(n, m=2.25, b=6.0, stddev=1.5):
 def plot_data(x, y, mb_history=None):
     """Plot the data: y as a function of x, in a scatterplot.
 
-    x, y: arrays of data.
+    x, y: vectors of data.
     mb_history:
         if provided, it's a sequence of (m, b) pairs that are used to draw
         animated lines on top of the scatterplot.
@@ -73,12 +73,14 @@ def compute_cost(x, y, m, b):
 def gradient_descent(x, y, nsteps, learning_rate=0.1):
     """Runs gradient descent optimization to fit a line y^ = x * m + b.
 
-    x, y: input data and observed outputs.
+    x, y: input data and observed outputs, as vectors.
     nsteps: how many steps to run the optimization for.
     learning_rate: learning rate of gradient descent.
 
     Yields 'nsteps + 1' triplets of (m, b, cost) where m, b are the fit
-    parameters for the given step, and cost is their cost vs the real y.
+    parameters for the given step, and cost is their cost vs the real y. The
+    first triplet has the initial m, b and cost; the rest carry results after
+    each of the iteration steps.
     """
     n = x.shape[0]
     # Start with m and b initialized to 0s for the first try.
@@ -86,6 +88,7 @@ def gradient_descent(x, y, nsteps, learning_rate=0.1):
     yield m, b, compute_cost(x, y, m, b)
 
     for step in range(nsteps):
+        # Update m and b following the formulae for gradient updates.
         yhat = m * x + b
         diff = yhat - y
         dm = learning_rate * (diff * x).sum() * 2 / n
@@ -172,12 +175,18 @@ def compute_rsquared(x, y, m, b):
 
 
 if __name__ == '__main__':
-    # For reproducibility
+    # Follow through the code here to see how the functions are used. No
+    # plotting is done by default. Uncomment relevant lines to produce plots.
+
+    # For reproducibility.
     np.random.seed(42)
 
+    # Generate some pseudo-random data we're goign to fit with linear
+    # regression.
     N = 500
     x, y = generate_data(N)
 
+    # Run gradient descent.
     NSTEPS = 30
     mbcost = list(gradient_descent(x, y, NSTEPS))
     print(mbcost[-1])
