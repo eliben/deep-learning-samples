@@ -5,9 +5,6 @@ import numpy as np
 
 from timer import Timer
 
-# TODO:
-#
-# - In test, compare with sklearn's fit for the normalization?
 
 def read_data(filename):
     """Read data from the given CSV file.
@@ -85,6 +82,17 @@ def gradient_descent(X, y, nsteps, learning_rate=0.1):
         yield theta, compute_cost(X, y, theta)
 
 
+def compute_normal_eqn(X, y):
+    """Compute theta using the normal equation.
+
+    X is the input matrix with a leftmost column of 1s.
+    """
+    XTX = np.dot(X.T, X)
+    XTX_inv = np.linalg.inv(XTX)
+    xdot = np.dot(XTX_inv, X.T)
+    return np.dot(xdot, y)
+
+
 def split_dataset_to_train_test(dataset, train_proportion=0.8):
     """Splits the dataset to a train set and test set.
 
@@ -132,7 +140,7 @@ def plot_cost_vs_step(costs):
 def plot_correlation_heatmap(X, header):
     """Plot a heatmap of the correlation matrix for X."""
     import seaborn
-    cm = np.corrcoef(xnorm.T)
+    cm = np.corrcoef(X.T)
     hm = seaborn.heatmap(cm,
             cbar=True,
             annot=True,
@@ -158,6 +166,7 @@ if __name__ == '__main__':
     filename = 'CCPP-dataset/data.csv'
     with Timer('reading data'):
         X, header = read_data(filename)
+    #plot_correlation_heatmap(X, header)
     print('Read {0} data samples from {1}'.format(len(X), filename))
     X_train, y_train, X_test, y_test = split_dataset_to_train_test(X)
     print('X_train:', X_train.shape)
@@ -169,14 +178,14 @@ if __name__ == '__main__':
     X_train_normalized, mu, sigma = feature_normalize(X_train)
     X_train_augmented = np.hstack((np.ones((ktrain, 1)), X_train_normalized))
 
-    NSTEPS = 385
+    NSTEPS = 500
     with Timer('Running gradient descent ({0} steps)'.format(NSTEPS)):
         thetas_and_costs = list(gradient_descent(X_train_augmented,
                                                  y_train, NSTEPS))
     #plot_cost_vs_step([cost for _, cost in thetas_and_costs][:100])
 
     last_theta = thetas_and_costs[-1][0]
-    print(last_theta)
+    print('Best theta found:', last_theta)
 
     print('Training set MSE:',
           compute_cost(X_train_augmented, y_train, last_theta))
@@ -192,3 +201,11 @@ if __name__ == '__main__':
           compute_rsquared(X_test_augmented, y_test, last_theta))
 
     sample_predictions_vs_truth(X_test_augmented, y_test, last_theta)
+
+    theta_from_normal_eqn = compute_normal_eqn(X_train_augmented, y_train)
+    print('Theta from normal equation:', theta_from_normal_eqn)
+
+    print('Test set MSE / normal:',
+          compute_cost(X_test_augmented, y_test, theta_from_normal_eqn))
+    print('Test set R^2 / normal:',
+          compute_rsquared(X_test_augmented, y_test, theta_from_normal_eqn))
