@@ -154,18 +154,12 @@ def plot_cost_vs_step(costs):
 
 
 def compute_mb_analytic(x, y):
-    """Given arrays of x, y computes m, b analytically.
-
-    Returns (m, b, determinant of the Hessian).
-    For details see:
-    https://en.wikipedia.org/wiki/Second_partial_derivative_test
-    """
+    """Given arrays of x, y computes m, b analytically."""
     xbar = np.average(x)
     ybar = np.average(y)
     m = (xbar * ybar - np.average(x * y)) / (xbar ** 2 - np.average(x ** 2))
     b = ybar - m * xbar
-    hessian_det = 4 * (np.average(x ** 2) - xbar ** 2)
-    return m, b, hessian_det
+    return m, b
 
 
 def compute_rsquared(x, y, m, b):
@@ -212,8 +206,8 @@ if __name__ == '__main__':
     # values returned by the gradient descent procedure.
     #plot_cost_3D(x, y, compute_cost, mb_history)
 
-    m, b, D = compute_mb_analytic(x, y)
-    print('Analytic: m={0}, b={1}, D={2}'.format(m, b, D))
+    m, b = compute_mb_analytic(x, y)
+    print('Analytic: m={0}, b={1}'.format(m, b))
 
     rsquared = compute_rsquared(x, y, m, b)
     print('Rsquared:', rsquared)
