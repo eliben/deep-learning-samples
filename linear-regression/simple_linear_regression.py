@@ -135,7 +135,6 @@ def plot_cost_3D(x, y, costfunc, mb_history=None):
 
     # Configure contour plot.
     ax2 = fig.add_subplot(1, 2, 2)
-    #plt.figure(2)
     ax2.contour(msgrid, bsgrid, cost)
     ax2.set_xlabel('b')
     ax2.set_ylabel('m')
@@ -191,7 +190,7 @@ if __name__ == '__main__':
     print('Generated {0} data points'.format(N))
 
     # Run gradient descent.
-    NSTEPS = 30
+    NSTEPS = 50
     with Timer('Running gradient descent [{0} steps]'.format(NSTEPS)):
         mbcost = list(gradient_descent(x, y, NSTEPS))
         mb_history = [(m, b) for m, b, _ in mbcost]
