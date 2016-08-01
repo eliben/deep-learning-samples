@@ -1,3 +1,9 @@
+# Example of solving simple (y(x) = mx + b) regression in Python.
+#
+# Uses only Numpy, and Matplotlib for plotting.
+#
+# Eli Bendersky (http://eli.thegreenplace.net)
+# This code is in the public domain
 from __future__ import print_function
 from matplotlib import cm
 from matplotlib.animation import FuncAnimation
@@ -5,22 +11,26 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 
+from timer import Timer
+
 
 def generate_data(n, m=2.25, b=6.0, stddev=1.5):
     """Generate n data points approximating given line.
 
     m, b: line slope and intercept.
     stddev: standard deviation of added error.
+
+    Returns pair x, y: arrays of length n.
     """
     x = np.linspace(-2.0, 2.0, n)
     y = x * m + b + np.random.normal(loc=0, scale=stddev, size=n)
     return x, y
 
 
-def plot_data(x, y, mb_history=None):
+def plot_data_scatterplot(x, y, mb_history=None):
     """Plot the data: y as a function of x, in a scatterplot.
 
-    x, y: vectors of data.
+    x, y: arrays of data.
     mb_history:
         if provided, it's a sequence of (m, b) pairs that are used to draw
         animated lines on top of the scatterplot.
@@ -56,8 +66,8 @@ def plot_data(x, y, mb_history=None):
 def compute_cost(x, y, m, b):
     """Compute the MSE cost of a prediction based on m, b.
 
-    x: inputs vector.
-    y: observed outputs vector.
+    x: inputs array.
+    y: observed outputs array.
     m, b: regression parameters.
 
     Returns: a scalar cost.
@@ -73,12 +83,12 @@ def compute_cost(x, y, m, b):
 def gradient_descent(x, y, nsteps, learning_rate=0.1):
     """Runs gradient descent optimization to fit a line y^ = x * m + b.
 
-    x, y: input data and observed outputs, as vectors.
+    x, y: input data and observed outputs, as array.
     nsteps: how many steps to run the optimization for.
     learning_rate: learning rate of gradient descent.
 
     Yields 'nsteps + 1' triplets of (m, b, cost) where m, b are the fit
-    parameters for the given step, and cost is their cost vs the real y. The
+    parameters for the given step, and cost is their cost vs. the real y. The
     first triplet has the initial m, b and cost; the rest carry results after
     each of the iteration steps.
     """
@@ -86,7 +96,6 @@ def gradient_descent(x, y, nsteps, learning_rate=0.1):
     # Start with m and b initialized to 0s for the first try.
     m, b = 0, 0
     yield m, b, compute_cost(x, y, m, b)
-
     for step in range(nsteps):
         # Update m and b following the formulae for gradient updates.
         yhat = m * x + b
@@ -101,8 +110,8 @@ def gradient_descent(x, y, nsteps, learning_rate=0.1):
 def plot_cost_3D(x, y, costfunc, mb_history=None):
     """Plot cost as 3D and contour.
 
-    x, y: x and y values from the dataset
-    costfunc: cost function with signature like compute_cost
+    x, y: arrays of data.
+    costfunc: cost function with signature like compute_cost.
     mb_history:
         if provided, it's a sequence of (m, b) pairs that are added as
         crosshairs markers on top of the contour plot.
@@ -139,6 +148,7 @@ def plot_cost_3D(x, y, costfunc, mb_history=None):
 
 
 def plot_cost_vs_step(costs):
+    """Given an array of costs, plots them vs. index."""
     plt.plot(range(len(costs)), costs)
     plt.show()
 
@@ -146,8 +156,8 @@ def plot_cost_vs_step(costs):
 def compute_mb_analytic(x, y):
     """Given arrays of x, y computes m, b analytically.
 
-    Returns m, b, the determinant of the Hessian and the partial derivative of
-    cost by m twice, applied at x, y. For details see:
+    Returns (m, b, determinant of the Hessian).
+    For details see:
     https://en.wikipedia.org/wiki/Second_partial_derivative_test
     """
     xbar = np.average(x)
@@ -155,8 +165,7 @@ def compute_mb_analytic(x, y):
     m = (xbar * ybar - np.average(x * y)) / (xbar ** 2 - np.average(x ** 2))
     b = ybar - m * xbar
     hessian_det = 4 * (np.average(x ** 2) - xbar ** 2)
-    cost_mm = 2 * (np.average(x ** 2))
-    return m, b, hessian_det, cost_mm
+    return m, b, hessian_det
 
 
 def compute_rsquared(x, y, m, b):
@@ -185,19 +194,26 @@ if __name__ == '__main__':
     # regression.
     N = 500
     x, y = generate_data(N)
+    print('Generated {0} data points'.format(N))
 
     # Run gradient descent.
     NSTEPS = 30
-    mbcost = list(gradient_descent(x, y, NSTEPS))
-    print(mbcost[-1])
-    mb_history = [(m, b) for m, b, _ in mbcost]
+    with Timer('Running gradient descent [{0} steps]'.format(NSTEPS)):
+        mbcost = list(gradient_descent(x, y, NSTEPS))
+        mb_history = [(m, b) for m, b, _ in mbcost]
+
+    print('Final m={0}, b={1}; cost={2}'.format(mbcost[-1][0], mbcost[-1][1],
+                                                mbcost[-1][2]))
+
+    # Plot the data in a scatterplot, with an animated line fit.
+    #plot_data_scatterplot(x, y, mb_history)
+
+    # Plot the cost function in 3D and as contours; add markers for the costs
+    # values returned by the gradient descent procedure.
     #plot_cost_3D(x, y, compute_cost, mb_history)
-    plot_data(x, y)#, mb_history)
 
-    #costs = [c for _, _, c in gradient_descent(x, y, 50)]
-    #plot_cost_vs_step([item[2] for item in mbcost])
+    m, b, D = compute_mb_analytic(x, y)
+    print('Analytic: m={0}, b={1}, D={2}'.format(m, b, D))
 
-    m, b, D, mse_mm = compute_mb_analytic(x, y)
     rsquared = compute_rsquared(x, y, m, b)
-    print(m, b)
-    print(rsquared)
+    print('Rsquared:', rsquared)
