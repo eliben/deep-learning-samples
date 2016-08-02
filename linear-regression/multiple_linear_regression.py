@@ -96,6 +96,8 @@ def compute_normal_eqn(X, y):
     column vector.
     """
     XTX = np.dot(X.T, X)
+    # Using linalg.inv here, which will bomb for a singular matrix.
+    # Alternatively, we could use linalg.pinv to compute a pseudo-inverse.
     XTX_inv = np.linalg.inv(XTX)
     xdot = np.dot(XTX_inv, X.T)
     return np.dot(xdot, y)
@@ -175,7 +177,9 @@ def sample_predictions_vs_truth(X, y, theta, nsamples=10):
     yhat = np.dot(X, theta)
     sample_indices = np.random.choice(X.shape[0], size=nsamples, replace=False)
     for index in sample_indices:
-        print('{0}: yhat={1}, y={2}'.format(index, yhat[index][0], y[index][0]))
+        print('  sample #{0}: yhat={1}, y={2}'.format(index,
+                                                      yhat[index][0],
+                                                      y[index][0]))
 
 
 if __name__ == '__main__':
@@ -191,6 +195,11 @@ if __name__ == '__main__':
     filename = 'CCPP-dataset/data.csv'
     with Timer('reading data'):
         X, header = read_CCPP_data(filename)
+
+    # Plot a heatmap for the correlation matrix of X. This requires the seaborn
+    # package. This heatmap is a useful visualization for finding features that
+    # are most correlated with the result, and features that are possibly
+    # collinear.
     #plot_correlation_heatmap(X, header)
 
     print('Read {0} data samples from {1}'.format(len(X), filename))
