@@ -1,6 +1,6 @@
-# Example of solving simple (y(x) = mx + b) regression in Python.
+# Example of solving simple linear (y(x) = mx + b) regression in Python.
 #
-# Uses only Numpy, and Matplotlib for plotting.
+# Uses only Numpy, with Matplotlib for plotting.
 #
 # Eli Bendersky (http://eli.thegreenplace.net)
 # This code is in the public domain
