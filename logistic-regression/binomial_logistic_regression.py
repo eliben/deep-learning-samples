@@ -24,7 +24,7 @@ def generate_data(n, num_neg_outliers=0):
     return np.vstack((negatives, outliers)), positives
 
 
-def plot_data_scatterplot(negatives, positives):
+def plot_data_scatterplot(negatives, positives, theta=None):
     """Plots data as a scatterplot.
 
     negatives: (n,2) array
@@ -38,6 +38,18 @@ def plot_data_scatterplot(negatives, positives):
     ax.scatter(negatives[:, 0], negatives[:, 1], c='red', marker='o',
                linewidths=0)
     ax.scatter(positives[:, 0], positives[:, 1], c='darkgreen', marker='x')
+
+    if theta is not None:
+        xs = np.linspace(-2, 6, 200)
+        ys = np.linspace(-2, 6, 200)
+        xsgrid, ysgrid = np.meshgrid(xs, ys)
+        plane = np.zeros_like(xsgrid)
+        for i in range(xsgrid.shape[0]):
+            for j in range(xsgrid.shape[1]):
+                plane[i, j] = np.array([1, xsgrid[i, j], ysgrid[i, j]]).dot(
+                    theta)
+        ax.contour(xsgrid, ysgrid, plane, levels=[0])
+
     plt.show()
 
 
@@ -57,13 +69,33 @@ def feature_normalize(X):
 
 def predict(X, theta):
     yhat = X.dot(theta)
-    return yhat >= 0
+    return np.sign(yhat)
 
 
 if __name__ == '__main__':
+    # For reproducibility
+    np.random.seed(42)
+
     neg, pos = generate_data(n=200, num_neg_outliers=10)
-    print(neg)
-    print(pos)
-    plot_data_scatterplot(neg, pos)
+    plot_data_scatterplot(neg, pos, np.array([5, -2, -1]))
+
+    # Attach labels (1.0 for positive, -1.0 for negative) to the data, so that
+    # we can shuffle it together with the labels.
+    pos = np.hstack((pos, np.full((pos.shape[0], 1), 1.0)))
+    neg = np.hstack((neg, np.full((neg.shape[0], 1), -1.0)))
+    full_dataset = np.random.permutation(np.vstack((pos, neg)))
+    X_train = full_dataset[:, 0:2]
+    y_train = full_dataset[:, 2].reshape(-1, 1)
+
+    X_train_normalized, mu, sigma = feature_normalize(X_train)
+    X_train_augmented = np.hstack((np.ones((X_train.shape[0], 1)),
+                                           X_train_normalized))
+
+    print(pos.shape, neg.shape, full_dataset.shape, X_train_normalized.shape, X_train_augmented.shape)
+
+    print(X_train_augmented[:10, :])
+    #print(neg)
+    #print(pos)
+
     #print(generate_data(10))
     #pass
