@@ -52,25 +52,23 @@ def plot_data_scatterplot(X, y, theta=None):
     fig.set_tight_layout(True)
 
     pos = [(X[k, 0], X[k, 1]) for k in range(X.shape[0]) if y[k, 0] == 1]
+    neg = [(X[k, 0], X[k, 1]) for k in range(X.shape[0]) if y[k, 0] == -1]
 
-    # TODO: finish this to plot from pos and neg (use zip?)
+    ax.scatter(*zip(*pos), c='darkgreen', marker='x')
+    ax.scatter(*zip(*neg), c='red', marker='o', linewidths=0)
 
-    #ax.scatter(negatives[:, 0], negatives[:, 1], c='red', marker='o',
-               #linewidths=0)
-    #ax.scatter(positives[:, 0], positives[:, 1], c='darkgreen', marker='x')
+    if theta is not None:
+        xs = np.linspace(-2, 6, 200)
+        ys = np.linspace(-2, 6, 200)
+        xsgrid, ysgrid = np.meshgrid(xs, ys)
+        plane = np.zeros_like(xsgrid)
+        for i in range(xsgrid.shape[0]):
+            for j in range(xsgrid.shape[1]):
+                plane[i, j] = np.array([1, xsgrid[i, j], ysgrid[i, j]]).dot(
+                    theta)
+        ax.contour(xsgrid, ysgrid, plane, levels=[0])
 
-    #if theta is not None:
-        #xs = np.linspace(-2, 6, 200)
-        #ys = np.linspace(-2, 6, 200)
-        #xsgrid, ysgrid = np.meshgrid(xs, ys)
-        #plane = np.zeros_like(xsgrid)
-        #for i in range(xsgrid.shape[0]):
-            #for j in range(xsgrid.shape[1]):
-                #plane[i, j] = np.array([1, xsgrid[i, j], ysgrid[i, j]]).dot(
-                    #theta)
-        #ax.contour(xsgrid, ysgrid, plane, levels=[0])
-
-    #plt.show()
+    plt.show()
 
 
 def feature_normalize(X):
@@ -113,7 +111,17 @@ def L01_loss(X, y, theta):
     return np.count_nonzero(results != y)
 
 
-def search_best_L01_loss(X, y, theta_start=None, npoints_per_t=20):
+def search_best_L01_loss(X, y, theta_start=None, npoints_per_t=200, tmargin=0.1):
+    """Hacky exhaustive search for the best L0/1 loss for given X and y.
+    
+    X: (k, n) data items.
+    y: (k, 1) result (+1 or -1) for each data item in X.
+    theta_start: (3, 1) theta to start search from -- assuming 
+    npoints_per_t: number of points to search per dimension of theta.
+    tmargin: search within [-tmargin, tmargin] of theta_start.
+
+    Returns a pair best_theta, best_loss.
+    """
     if theta_start is None:
         theta_start = np.array([[1], [1], [1]])
 
@@ -122,11 +130,14 @@ def search_best_L01_loss(X, y, theta_start=None, npoints_per_t=20):
     best_theta = theta_start
 
     assert theta_start.shape == (3, 1)
-    t0_range = np.linspace(theta_start[0, 0] + 5, theta_start[0, 0] - 5,
+    t0_range = np.linspace(theta_start[0, 0] + tmargin,
+                           theta_start[0, 0] - tmargin,
                            npoints_per_t)
-    t1_range = np.linspace(theta_start[1, 0] + 5, theta_start[1, 0] - 5,
+    t1_range = np.linspace(theta_start[1, 0] + tmargin,
+                           theta_start[1, 0] - tmargin,
                            npoints_per_t)
-    t2_range = np.linspace(theta_start[2, 0] + 5, theta_start[2, 0] - 5,
+    t2_range = np.linspace(theta_start[2, 0] + tmargin,
+                           theta_start[2, 0] - tmargin,
                            npoints_per_t)
     for t0 in t0_range:
         for t1 in t1_range:
@@ -143,18 +154,18 @@ def search_best_L01_loss(X, y, theta_start=None, npoints_per_t=20):
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
     argparser.add_argument('--plot', action='store_true', required=False)
+    argparser.add_argument('--search', action='store_true', required=False)
     args = argparser.parse_args()
 
     # For reproducibility
     np.random.seed(42)
 
     X_train, y_train = generate_data(400, num_neg_outliers=10)
-    print(X_train.shape, X_train[:10])
-    print(y_train.shape, y_train[:10])
-    theta = np.array([-5, 2, 1]).reshape(-1, 1)
+    print('X_train shape:', X_train.shape)
+    print('y_train shape:', y_train.shape)
 
-    #if args.plot:
-        #plot_data_scatterplot(neg, pos, theta)
+    # A pretty good theta determined by a long run of search_best_L01_loss.
+    theta = np.array([-2.809, 0.739, 0.706]).reshape(-1, 1)
 
     NORMALIZE = False
 
@@ -165,15 +176,23 @@ if __name__ == '__main__':
 
     X_train_augmented = np.hstack((np.ones((X_train.shape[0], 1)),
                                            X_train_normalized))
+    print('X_train_augmented shape:', X_train_augmented.shape)
 
-    print('total L01 loss:', L01_loss(X_train_augmented, y_train, theta))
+    if args.search:
+        with Timer('searching for best L01 loss'):
+            best_theta, best_loss = search_best_L01_loss(X_train_augmented,
+                                                         y_train,
+                                                         theta)
+    else:
+        best_theta, best_loss = theta, L01_loss(X_train_augmented, y_train,
+                                                theta)
 
-    with Timer('searching for best L01 loss'):
-        best_theta, best_loss = search_best_L01_loss(X_train_augmented, y_train,
-                                                     theta)
+    print('Best theta:\n', best_theta)
+    print('Best loss:', best_loss)
 
-    print(best_theta)
-    print(best_loss)
+    if args.plot:
+        plot_data_scatterplot(X_train, y_train, best_theta)
+
     #results = predict(X_train_augmented, theta)
     #print(results.shape)
     #print(X_train_augmented[:10])
