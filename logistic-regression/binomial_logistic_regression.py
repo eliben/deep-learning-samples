@@ -77,7 +77,7 @@ if __name__ == '__main__':
     np.random.seed(42)
 
     neg, pos = generate_data(n=200, num_neg_outliers=10)
-    theta = np.array([5, -2, -1]).reshape(-1, 1)
+    theta = np.array([-5, 2, 1]).reshape(-1, 1)
     plot_data_scatterplot(neg, pos, theta)
 
     # Attach labels (1.0 for positive, -1.0 for negative) to the data, so that
@@ -88,12 +88,22 @@ if __name__ == '__main__':
     X_train = full_dataset[:, 0:2]
     y_train = full_dataset[:, 2].reshape(-1, 1)
 
-    X_train_normalized, mu, sigma = feature_normalize(X_train)
+    NORMALIZE = False
+
+    if NORMALIZE:
+        X_train_normalized, mu, sigma = feature_normalize(X_train)
+    else:
+        X_train_normalized, mu, sigma = X_train, 0, 1
+
     X_train_augmented = np.hstack((np.ones((X_train.shape[0], 1)),
                                            X_train_normalized))
 
     results = predict(X_train_augmented, theta)
     print(results.shape)
+    print(X_train_augmented[:10])
+    for i in range(10):
+        print(y_train[i, 0], ' <> ', results[i, 0])
+    #print(results[:40])
     print(np.count_nonzero(results == y_train))
     #print(neg)
     #print(pos)
