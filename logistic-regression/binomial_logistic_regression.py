@@ -77,7 +77,8 @@ if __name__ == '__main__':
     np.random.seed(42)
 
     neg, pos = generate_data(n=200, num_neg_outliers=10)
-    plot_data_scatterplot(neg, pos, np.array([5, -2, -1]))
+    theta = np.array([5, -2, -1]).reshape(-1, 1)
+    plot_data_scatterplot(neg, pos, theta)
 
     # Attach labels (1.0 for positive, -1.0 for negative) to the data, so that
     # we can shuffle it together with the labels.
@@ -91,9 +92,9 @@ if __name__ == '__main__':
     X_train_augmented = np.hstack((np.ones((X_train.shape[0], 1)),
                                            X_train_normalized))
 
-    print(pos.shape, neg.shape, full_dataset.shape, X_train_normalized.shape, X_train_augmented.shape)
-
-    print(X_train_augmented[:10, :])
+    results = predict(X_train_augmented, theta)
+    print(results.shape)
+    print(np.count_nonzero(results == y_train))
     #print(neg)
     #print(pos)
 
