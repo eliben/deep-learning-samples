@@ -2,56 +2,75 @@ from __future__ import print_function
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
+from timer import Timer
 
 
 # TODO: shuffle data points before training?
-def generate_data(n, num_neg_outliers=0):
-    """Generates 2n data points: positives and negatives.
+def generate_data(k, num_neg_outliers=0):
+    """Generates k data items with correct labels (+1 or -1) for each item.
 
-    Returns a pair of two (n,2) arrays: first is for positives, second for
-    negatives. Out of n negatives, num_neg_outliers are outliers.
+    k: number of data points to generate.
+    num_neg_outliers: number of outliers for the negative samples
 
-    Each data point is x coordinate, y coordinate
+    Returns X (k, 2) - k data items in 2D, and y (k, 1) - the correct label
+    (+1 or -1) for each data item in X.
     """
-    nneg_regular = n - num_neg_outliers
-    negatives = (np.full((nneg_regular, 2), 1.0) +
-                 np.random.normal(scale=0.7, size=(nneg_regular, 2)))
-    positives = (np.full((n, 2), 3.0) +
-                 np.random.normal(scale=0.9, size=(n, 2)))
-
+    kneg, kpos = k / 2, k / 2
+    kneg_regular = kneg - num_neg_outliers
+    # Generate positive data items and negative data items; for negatives, the
+    # "regulars" are generated using different parameters from "outliers".
+    positives = (np.full((kpos, 2), 3.0) +
+                 np.random.normal(scale=0.9, size=(kpos, 2)))
     outliers = (np.full((num_neg_outliers, 2), 4.0) +
                 np.random.normal(scale=1.2, size=(num_neg_outliers, 2)))
+    negatives = (np.full((kneg_regular, 2), 1.0) +
+                 np.random.normal(scale=0.7, size=(kneg_regular, 2)))
 
-    return np.vstack((negatives, outliers)), positives
+    # Stack all items into the same array. To match y, first come all the
+    # positives then all the negatives.
+    X = np.vstack((positives, negatives, outliers))
+
+    # Create labels. We have kpos +1s followed by kneg -1s.
+    y = np.vstack((np.full((kpos, 1), 1.0), np.full((kneg, 1), -1.0)))
+
+    # Stack X and y together so we can shuffle them together.
+    Xy = np.hstack((X, y))
+    Xy = np.random.permutation(np.hstack((X, y)))
+
+    return Xy[:, 0:2], Xy[:, 2].reshape(-1, 1)
 
 
-def plot_data_scatterplot(negatives, positives, theta=None):
+def plot_data_scatterplot(X, y, theta=None):
     """Plots data as a scatterplot.
 
-    negatives: (n,2) array
-    positives: (n,2) array
+    X: (k, n) data items.
+    y: (k, 1) result (+1 or -1) for each data item in X.
 
-    Plots True data points as a green x, False as red o.
+    Plots +1 data points as a green x, -1 as red o.
     """
     fig, ax = plt.subplots()
     fig.set_tight_layout(True)
 
-    ax.scatter(negatives[:, 0], negatives[:, 1], c='red', marker='o',
-               linewidths=0)
-    ax.scatter(positives[:, 0], positives[:, 1], c='darkgreen', marker='x')
+    pos = [(X[k, 0], X[k, 1]) for k in range(X.shape[0]) if y[k, 0] == 1]
 
-    if theta is not None:
-        xs = np.linspace(-2, 6, 200)
-        ys = np.linspace(-2, 6, 200)
-        xsgrid, ysgrid = np.meshgrid(xs, ys)
-        plane = np.zeros_like(xsgrid)
-        for i in range(xsgrid.shape[0]):
-            for j in range(xsgrid.shape[1]):
-                plane[i, j] = np.array([1, xsgrid[i, j], ysgrid[i, j]]).dot(
-                    theta)
-        ax.contour(xsgrid, ysgrid, plane, levels=[0])
+    # TODO: finish this to plot from pos and neg (use zip?)
 
-    plt.show()
+    #ax.scatter(negatives[:, 0], negatives[:, 1], c='red', marker='o',
+               #linewidths=0)
+    #ax.scatter(positives[:, 0], positives[:, 1], c='darkgreen', marker='x')
+
+    #if theta is not None:
+        #xs = np.linspace(-2, 6, 200)
+        #ys = np.linspace(-2, 6, 200)
+        #xsgrid, ysgrid = np.meshgrid(xs, ys)
+        #plane = np.zeros_like(xsgrid)
+        #for i in range(xsgrid.shape[0]):
+            #for j in range(xsgrid.shape[1]):
+                #plane[i, j] = np.array([1, xsgrid[i, j], ysgrid[i, j]]).dot(
+                    #theta)
+        #ax.contour(xsgrid, ysgrid, plane, levels=[0])
+
+    #plt.show()
 
 
 def feature_normalize(X):
@@ -129,19 +148,13 @@ if __name__ == '__main__':
     # For reproducibility
     np.random.seed(42)
 
-    neg, pos = generate_data(n=200, num_neg_outliers=10)
+    X_train, y_train = generate_data(400, num_neg_outliers=10)
+    print(X_train.shape, X_train[:10])
+    print(y_train.shape, y_train[:10])
     theta = np.array([-5, 2, 1]).reshape(-1, 1)
 
-    if args.plot:
-        plot_data_scatterplot(neg, pos, theta)
-
-    # Attach labels (1.0 for positive, -1.0 for negative) to the data, so that
-    # we can shuffle it together with the labels.
-    pos = np.hstack((pos, np.full((pos.shape[0], 1), 1.0)))
-    neg = np.hstack((neg, np.full((neg.shape[0], 1), -1.0)))
-    full_dataset = np.random.permutation(np.vstack((pos, neg)))
-    X_train = full_dataset[:, 0:2]
-    y_train = full_dataset[:, 2].reshape(-1, 1)
+    #if args.plot:
+        #plot_data_scatterplot(neg, pos, theta)
 
     NORMALIZE = False
 
@@ -155,8 +168,9 @@ if __name__ == '__main__':
 
     print('total L01 loss:', L01_loss(X_train_augmented, y_train, theta))
 
-    best_theta, best_loss = search_best_L01_loss(X_train_augmented, y_train,
-                                                 theta)
+    with Timer('searching for best L01 loss'):
+        best_theta, best_loss = search_best_L01_loss(X_train_augmented, y_train,
+                                                     theta)
 
     print(best_theta)
     print(best_loss)
