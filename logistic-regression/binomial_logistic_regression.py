@@ -1,4 +1,5 @@
 from __future__ import print_function
+import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -68,17 +69,71 @@ def feature_normalize(X):
 
 
 def predict(X, theta):
+    """Make classification predictions for the data in X using theta.
+
+    X: (k, n) k rows of data items, each having n features; augmented.
+    theta: (n, 1) regression parameters.
+
+    Returns yhat (k, 1) - either +1 or -1 classification for each item.
+    """
     yhat = X.dot(theta)
     return np.sign(yhat)
 
 
+def L01_loss(X, y, theta):
+    """Compute the L0/1 loss for the data X using theta.
+    
+    X: (k, n) k rows of data items, each having n features; augmented.
+    y: (k, 1) correct classifications (+1 or -1) for each item.
+    theta: (n, 1) regression parameters.
+
+    Returns the total L0/1 loss over the whole data set. The total L0/1 loss
+    is the number of mispredicted items (where y doesn't match yhat).
+    """
+    results = predict(X, theta)
+    return np.count_nonzero(results != y)
+
+
+def search_best_L01_loss(X, y, theta_start=None, npoints_per_t=20):
+    if theta_start is None:
+        theta_start = np.array([[1], [1], [1]])
+
+    k = X.shape[0]
+    best_loss = k
+    best_theta = theta_start
+
+    assert theta_start.shape == (3, 1)
+    t0_range = np.linspace(theta_start[0, 0] + 5, theta_start[0, 0] - 5,
+                           npoints_per_t)
+    t1_range = np.linspace(theta_start[1, 0] + 5, theta_start[1, 0] - 5,
+                           npoints_per_t)
+    t2_range = np.linspace(theta_start[2, 0] + 5, theta_start[2, 0] - 5,
+                           npoints_per_t)
+    for t0 in t0_range:
+        for t1 in t1_range:
+            for t2 in t2_range:
+                theta = np.array([[t0], [t1], [t2]])
+                loss = L01_loss(X, y, theta)
+                if loss < best_loss:
+                    best_loss = loss
+                    best_theta = theta
+
+    return best_theta, best_loss
+
+
 if __name__ == '__main__':
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('--plot', action='store_true', required=False)
+    args = argparser.parse_args()
+
     # For reproducibility
     np.random.seed(42)
 
     neg, pos = generate_data(n=200, num_neg_outliers=10)
     theta = np.array([-5, 2, 1]).reshape(-1, 1)
-    plot_data_scatterplot(neg, pos, theta)
+
+    if args.plot:
+        plot_data_scatterplot(neg, pos, theta)
 
     # Attach labels (1.0 for positive, -1.0 for negative) to the data, so that
     # we can shuffle it together with the labels.
@@ -98,13 +153,20 @@ if __name__ == '__main__':
     X_train_augmented = np.hstack((np.ones((X_train.shape[0], 1)),
                                            X_train_normalized))
 
-    results = predict(X_train_augmented, theta)
-    print(results.shape)
-    print(X_train_augmented[:10])
-    for i in range(10):
-        print(y_train[i, 0], ' <> ', results[i, 0])
+    print('total L01 loss:', L01_loss(X_train_augmented, y_train, theta))
+
+    best_theta, best_loss = search_best_L01_loss(X_train_augmented, y_train,
+                                                 theta)
+
+    print(best_theta)
+    print(best_loss)
+    #results = predict(X_train_augmented, theta)
+    #print(results.shape)
+    #print(X_train_augmented[:10])
+    #for i in range(10):
+        #print(y_train[i, 0], ' <> ', results[i, 0])
     #print(results[:40])
-    print(np.count_nonzero(results == y_train))
+    #print(np.count_nonzero(results == y_train))
     #print(neg)
     #print(pos)
 
