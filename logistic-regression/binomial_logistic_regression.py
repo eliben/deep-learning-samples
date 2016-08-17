@@ -21,8 +21,10 @@ def generate_data(k, num_neg_outliers=0):
     # "regulars" are generated using different parameters from "outliers".
     positives = (np.full((kpos, 2), 3.0) +
                  np.random.normal(scale=0.9, size=(kpos, 2)))
-    outliers = (np.full((num_neg_outliers, 2), 4.0) +
-                np.random.normal(scale=1.2, size=(num_neg_outliers, 2)))
+    outliers = (np.hstack((np.ones((num_neg_outliers, 1)) * 3,
+                           np.ones((num_neg_outliers, 1)) * 5)) +
+
+                np.random.normal(scale=0.8, size=(num_neg_outliers, 2)))
     negatives = (np.full((kneg_regular, 2), 1.0) +
                  np.random.normal(scale=0.7, size=(kneg_regular, 2)))
 
@@ -40,11 +42,12 @@ def generate_data(k, num_neg_outliers=0):
     return Xy[:, 0:2], Xy[:, 2].reshape(-1, 1)
 
 
-def plot_data_scatterplot(X, y, theta=None):
+def plot_data_scatterplot(X, y, thetas=[]):
     """Plots data as a scatterplot.
 
     X: (k, n) data items.
     y: (k, 1) result (+1 or -1) for each data item in X.
+    thetas: list of theta arrays to plot contours.
 
     Plots +1 data points as a green x, -1 as red o.
     """
@@ -57,7 +60,7 @@ def plot_data_scatterplot(X, y, theta=None):
     ax.scatter(*zip(*pos), c='darkgreen', marker='x')
     ax.scatter(*zip(*neg), c='red', marker='o', linewidths=0)
 
-    if theta is not None:
+    for theta in thetas:
         xs = np.linspace(-2, 6, 200)
         ys = np.linspace(-2, 6, 200)
         xsgrid, ysgrid = np.meshgrid(xs, ys)
@@ -99,7 +102,7 @@ def predict(X, theta):
 
 def L01_loss(X, y, theta):
     """Compute the L0/1 loss for the data X using theta.
-    
+
     X: (k, n) k rows of data items, each having n features; augmented.
     y: (k, 1) correct classifications (+1 or -1) for each item.
     theta: (n, 1) regression parameters.
@@ -111,12 +114,13 @@ def L01_loss(X, y, theta):
     return np.count_nonzero(results != y)
 
 
-def search_best_L01_loss(X, y, theta_start=None, npoints_per_t=200, tmargin=0.1):
+def search_best_L01_loss(X, y, theta_start=None,
+                         npoints_per_t=150, tmargin=0.1):
     """Hacky exhaustive search for the best L0/1 loss for given X and y.
-    
+
     X: (k, n) data items.
     y: (k, 1) result (+1 or -1) for each data item in X.
-    theta_start: (3, 1) theta to start search from -- assuming 
+    theta_start: (3, 1) theta to start search from -- assuming
     npoints_per_t: number of points to search per dimension of theta.
     tmargin: search within [-tmargin, tmargin] of theta_start.
 
@@ -151,6 +155,34 @@ def search_best_L01_loss(X, y, theta_start=None, npoints_per_t=200, tmargin=0.1)
     return best_theta, best_loss
 
 
+def squared_loss(X, y, theta):
+    """
+    
+    Returns pair (loss, dtheta); loss is a scalar, dtheta is (n, 1) - the
+    gradient for each theta element.
+    """
+    k, n = X.shape
+    margin = y * X.dot(theta)
+    diff = margin - 1
+    loss = np.dot(diff.T, diff) / k
+
+    dtheta = np.zeros_like(theta)
+    for j in range(n):
+        dtheta[j, 0] = np.dot((diff * y).T, X[:, j]) / k
+    return loss.flat[0], dtheta
+
+
+def gradient_descent(X, y, lossfunc=None, nsteps=100, learning_rate=0.1):
+    k, n = X.shape
+    theta = np.ones((n, 1))
+    loss, dtheta = lossfunc(X, y, theta)
+    yield theta, loss
+    for step in range(nsteps):
+        theta -= learning_rate * dtheta
+        loss, dtheta = lossfunc(X, y, theta)
+        yield theta, loss
+    
+
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
     argparser.add_argument('--plot', action='store_true', required=False)
@@ -160,12 +192,9 @@ if __name__ == '__main__':
     # For reproducibility
     np.random.seed(42)
 
-    X_train, y_train = generate_data(400, num_neg_outliers=10)
+    X_train, y_train = generate_data(400, num_neg_outliers=20)
     print('X_train shape:', X_train.shape)
     print('y_train shape:', y_train.shape)
-
-    # A pretty good theta determined by a long run of search_best_L01_loss.
-    theta = np.array([-2.809, 0.739, 0.706]).reshape(-1, 1)
 
     NORMALIZE = False
 
@@ -177,6 +206,11 @@ if __name__ == '__main__':
     X_train_augmented = np.hstack((np.ones((X_train.shape[0], 1)),
                                            X_train_normalized))
     print('X_train_augmented shape:', X_train_augmented.shape)
+
+    # A pretty good theta determined by a long run of search_best_L01_loss.
+    theta = np.array([-1.0607, 0.2793, 0.2664]).reshape(-1, 1)
+    print('Initial theta:', theta)
+    print('Initial loss:', L01_loss(X_train_augmented, y_train, theta))
 
     if args.search:
         with Timer('searching for best L01 loss'):
@@ -190,9 +224,26 @@ if __name__ == '__main__':
     print('Best theta:\n', best_theta)
     print('Best loss:', best_loss)
 
-    if args.plot:
-        plot_data_scatterplot(X_train, y_train, best_theta)
+    #if args.plot:
+        #plot_data_scatterplot(X_train, y_train, best_theta)
 
+    print(squared_loss(X_train_augmented, y_train, best_theta))
+    print(squared_loss(X_train_augmented, y_train, np.array([[3], [-1], [-1]])))
+    print(squared_loss(X_train_augmented, y_train, np.array([[-3], [1], [1]])))
+
+    gradient_descent_iter = gradient_descent(X_train_augmented, y_train,
+                                             squared_loss,
+                                             nsteps=8000,
+                                             learning_rate=0.05)
+    for i, (theta, loss) in enumerate(gradient_descent_iter):
+        #print(i, ':', loss)
+        pass
+
+    print(theta)
+    print(L01_loss(X_train_augmented, y_train, theta))
+    if args.plot:
+        plot_data_scatterplot(X_train, y_train, [best_theta, theta])
+        #print(theta)
     #results = predict(X_train_augmented, theta)
     #print(results.shape)
     #print(X_train_augmented[:10])
