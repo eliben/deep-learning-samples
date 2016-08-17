@@ -155,11 +155,16 @@ def search_best_L01_loss(X, y, theta_start=None,
     return best_theta, best_loss
 
 
+# See the docstring of gradient_descent for the description of the signature of
+# loss functions.
 def squared_loss(X, y, theta):
-    """
-    
-    Returns pair (loss, dtheta); loss is a scalar, dtheta is (n, 1) - the
-    gradient for each theta element.
+    """Computes squared loss and gradient.
+
+    Based on mean square margin loss.
+
+    Note: the mean (division by k) helps; otherwise, the loss is very large and
+    tiny learning rate is required to prevent divergence in the beginning of
+    the search.
     """
     k, n = X.shape
     margin = y * X.dot(theta)
@@ -173,15 +178,31 @@ def squared_loss(X, y, theta):
 
 
 def gradient_descent(X, y, lossfunc=None, nsteps=100, learning_rate=0.1):
+    """Runs gradient descent optimization to minimize loss for X, y.
+
+    X: (k, n) data items.
+    y: (k, 1) result (+1 or -1) for each data item in X.
+    lossfunc:
+        a function computing loss and gradients.
+        Takes (X, y, theta). theta is a (n, 1) parameter array.
+        Returns (loss, dtheta) where loss is the numeric loss for this theta,
+        and dtheta is (n, 1) gradients for theta based on that loss.
+    nsteps: how many steps to run.
+    learning_rate: learning rate update (multiplier of gradient).
+
+    Yields 'nsteps + 1' pairs of (theta, loss). The first pair yielded is the
+    initial theta and its loss; the rest carry results after each of the
+    iteration steps.
+    """
     k, n = X.shape
-    theta = np.ones((n, 1))
+    theta = np.zeros((n, 1))
     loss, dtheta = lossfunc(X, y, theta)
     yield theta, loss
     for step in range(nsteps):
         theta -= learning_rate * dtheta
         loss, dtheta = lossfunc(X, y, theta)
         yield theta, loss
-    
+
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
@@ -233,26 +254,14 @@ if __name__ == '__main__':
 
     gradient_descent_iter = gradient_descent(X_train_augmented, y_train,
                                              squared_loss,
-                                             nsteps=8000,
+                                             nsteps=500,
                                              learning_rate=0.05)
     for i, (theta, loss) in enumerate(gradient_descent_iter):
-        #print(i, ':', loss)
+        print(i, ':', loss)
         pass
 
     print(theta)
     print(L01_loss(X_train_augmented, y_train, theta))
     if args.plot:
         plot_data_scatterplot(X_train, y_train, [best_theta, theta])
-        #print(theta)
-    #results = predict(X_train_augmented, theta)
-    #print(results.shape)
-    #print(X_train_augmented[:10])
-    #for i in range(10):
-        #print(y_train[i, 0], ' <> ', results[i, 0])
-    #print(results[:40])
-    #print(np.count_nonzero(results == y_train))
-    #print(neg)
-    #print(pos)
 
-    #print(generate_data(10))
-    #pass
