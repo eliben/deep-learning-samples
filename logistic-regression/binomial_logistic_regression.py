@@ -177,6 +177,18 @@ def squared_loss(X, y, theta):
     return loss.flat[0], dtheta
 
 
+def hinge_loss(X, y, theta):
+    k, n = X.shape
+    margin = y * X.dot(theta)
+    loss = np.sum(np.maximum(np.zeros_like(margin), 1 - margin)) / k
+
+    #dtheta = np.zeros_like(theta)
+    #for j in range(n):
+        #if np.dot(
+        #dtheta[j, 0] = np.dot(
+
+
+
 def gradient_descent(X, y, lossfunc=None, nsteps=100, learning_rate=0.1):
     """Runs gradient descent optimization to minimize loss for X, y.
 
