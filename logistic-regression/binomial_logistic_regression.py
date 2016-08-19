@@ -178,15 +178,30 @@ def squared_loss(X, y, theta):
 
 
 def hinge_loss(X, y, theta):
+    """Compute hinge loss and gradient.
+    
+    Note: no mean (division by k) is computed here; most hinge loss formulae
+    don't include it, and since the loss is (at most) linear it doesn't get too
+    large.
+    """
     k, n = X.shape
+    # margin is (k, 1)
     margin = y * X.dot(theta)
-    loss = np.sum(np.maximum(np.zeros_like(margin), 1 - margin)) / k
+    loss = np.sum(np.maximum(np.zeros_like(margin), 1 - margin))
 
-    #dtheta = np.zeros_like(theta)
-    #for j in range(n):
-        #if np.dot(
-        #dtheta[j, 0] = np.dot(
-
+    dtheta = np.zeros_like(theta)
+    # yx is (k, n) where the elementwise multiplication by y is broadcase across
+    # the whole X.
+    yx = y * X
+    # We're going to select columns of yx, and each column turns into a vector.
+    # Precompute the margin_selector vector which has for each j whether the
+    # margin for that j was < 1.
+    margin_selector = (margin < 1).ravel()
+    for j in range(n):
+        # Sum up the contributions to the jth theta element gradient from all
+        # input samples.
+        dtheta[j, 0] = np.sum(np.where(margin_selector, -yx[:, j], 0))
+    return loss, dtheta
 
 
 def gradient_descent(X, y, lossfunc=None, nsteps=100, learning_rate=0.1):

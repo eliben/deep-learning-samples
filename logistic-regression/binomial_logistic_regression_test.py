@@ -68,22 +68,27 @@ class Test(unittest.TestCase):
         theta = np.array([
             [0.2],
             [-1.5],
-            [0.35]])
+            [2.35]])
         y = np.array([
             [1],
             [-1],
             [1],
             [1]])
+        print('simple')
         loss, dtheta = hinge_loss_simple(X, y, theta)
+        print(loss)
+        print(dtheta)
+
+        print('vectorized')
+        loss, dtheta = hinge_loss(X, y, theta)
         print(loss)
         print(dtheta)
 
         def f(theta):
             return hinge_loss_simple(X, y, theta)[0]
 
+        print('numeric')
         print(eval_numerical_gradient(f, theta))
-        #for line in X:
-            #print(line.dot(theta))
 
         #self.assertAlmostEqual(
             #compute_cost(
