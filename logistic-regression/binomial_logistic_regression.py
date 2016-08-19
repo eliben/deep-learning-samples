@@ -156,7 +156,7 @@ def search_best_L01_loss(X, y, theta_start=None,
 
 # See the docstring of gradient_descent for the description of the signature of
 # loss functions.
-def squared_loss(X, y, theta):
+def square_loss(X, y, theta):
     """Computes squared loss and gradient.
 
     Based on mean square margin loss.
@@ -177,16 +177,11 @@ def squared_loss(X, y, theta):
 
 
 def hinge_loss(X, y, theta):
-    """Compute hinge loss and gradient.
-    
-    Note: no mean (division by k) is computed here; most hinge loss formulae
-    don't include it, and since the loss is (at most) linear it doesn't get too
-    large.
-    """
+    """Compute hinge loss and gradient."""
     k, n = X.shape
     # margin is (k, 1)
     margin = y * X.dot(theta)
-    loss = np.sum(np.maximum(np.zeros_like(margin), 1 - margin))
+    loss = np.sum(np.maximum(np.zeros_like(margin), 1 - margin)) / k
 
     dtheta = np.zeros_like(theta)
     # yx is (k, n) where the elementwise multiplication by y is broadcase across
@@ -195,11 +190,15 @@ def hinge_loss(X, y, theta):
     # We're going to select columns of yx, and each column turns into a vector.
     # Precompute the margin_selector vector which has for each j whether the
     # margin for that j was < 1.
+    # Note: still keeping an explicit look over n since I don't expect the
+    # number of features to be very large. It's possibly to fully vectorize this
+    # but that would make the computation even more obscure. I'll do that if
+    # performance becomes an issue with this version.
     margin_selector = (margin < 1).ravel()
     for j in range(n):
         # Sum up the contributions to the jth theta element gradient from all
         # input samples.
-        dtheta[j, 0] = np.sum(np.where(margin_selector, -yx[:, j], 0))
+        dtheta[j, 0] = np.sum(np.where(margin_selector, -yx[:, j], 0)) / k
     return loss, dtheta
 
 
@@ -232,8 +231,18 @@ def gradient_descent(X, y, lossfunc=None, nsteps=100, learning_rate=0.1):
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('--plot', action='store_true', required=False)
-    argparser.add_argument('--search', action='store_true', required=False)
+    argparser.add_argument('--plot', action='store_true', default=False,
+                           help='Produce scatterplot with fit contours')
+    argparser.add_argument('--search01', action='store_true', default=False,
+                           help='Run combinatorial search for best L0/1 loss')
+    argparser.add_argument('--verbose-gd', action='store_true', default=False,
+                           help='Verbose output from gradient-descent search')
+    argparser.add_argument('--losstype',
+                           choices=['square', 'hinge'],
+                           default='square',
+                           help='Type of loss function to use in gradient '
+                                'descent')
+
     args = argparser.parse_args()
 
     # For reproducibility
@@ -256,10 +265,10 @@ if __name__ == '__main__':
 
     # A pretty good theta determined by a long run of search_best_L01_loss.
     theta = np.array([-1.0607, 0.2793, 0.2664]).reshape(-1, 1)
-    print('Initial theta:', theta)
+    print('Initial theta:\n', theta)
     print('Initial loss:', L01_loss(X_train_augmented, y_train, theta))
 
-    if args.search:
+    if args.search01:
         with Timer('searching for best L01 loss'):
             best_theta, best_loss = search_best_L01_loss(X_train_augmented,
                                                          y_train,
@@ -271,23 +280,31 @@ if __name__ == '__main__':
     print('Best theta:\n', best_theta)
     print('Best loss:', best_loss)
 
-    #if args.plot:
-        #plot_data_scatterplot(X_train, y_train, best_theta)
+    if args.losstype == 'square':
+        lossfunc = square_loss
+        nsteps = 500
+        learning_rate = 0.01
+    elif args.losstype == 'hinge':
+        lossfunc = hinge_loss
+        nsteps = 1500
+        learning_rate = 0.05
+    else:
+        raise UnimplementedError(args.losstype)
 
-    print(squared_loss(X_train_augmented, y_train, best_theta))
-    print(squared_loss(X_train_augmented, y_train, np.array([[3], [-1], [-1]])))
-    print(squared_loss(X_train_augmented, y_train, np.array([[-3], [1], [1]])))
-
+    print('Running GD with loss: {0}, for {1} steps, learning_rate={2}'.format
+          (args.losstype, nsteps, learning_rate))
     gradient_descent_iter = gradient_descent(X_train_augmented, y_train,
-                                             squared_loss,
-                                             nsteps=500,
+                                             lossfunc,
+                                             nsteps=1500,
                                              learning_rate=0.05)
     for i, (theta, loss) in enumerate(gradient_descent_iter):
-        print(i, ':', loss)
+        if args.verbose_gd:
+            print(i, ':', loss)
         pass
 
     print(theta)
     print(L01_loss(X_train_augmented, y_train, theta))
     if args.plot:
+        print(best_theta)
+        print(theta)
         plot_data_scatterplot(X_train, y_train, [best_theta, theta])
-
