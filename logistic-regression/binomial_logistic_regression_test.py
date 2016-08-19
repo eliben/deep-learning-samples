@@ -59,7 +59,13 @@ def eval_numerical_gradient(f, x, verbose=True, h=1e-5):
 
 
 class Test(unittest.TestCase):
-    def test_hinge_loss(self):
+    def checkHingeLossSimpleVsVec(self, X, y, theta):
+        loss_vec, dtheta_vec = hinge_loss(X, y, theta)
+        loss_simple, dtheta_simple = hinge_loss_simple(X, y, theta)
+        self.assertAlmostEqual(loss_vec, loss_simple)
+        np.testing.assert_allclose(dtheta_vec, dtheta_simple)
+
+    def test_hinge_loss_small(self):
         X = np.array([
                 [0.1, 0.2, -0.3],
                 [0.6, -0.5, 0.1],
@@ -74,29 +80,13 @@ class Test(unittest.TestCase):
             [-1],
             [1],
             [1]])
-        print('simple')
-        loss, dtheta = hinge_loss_simple(X, y, theta)
-        print(loss)
-        print(dtheta)
+        self.checkHingeLossSimpleVsVec(X, y, theta)
 
-        print('vectorized')
-        loss, dtheta = hinge_loss(X, y, theta)
-        print(loss)
-        print(dtheta)
-
-        def f(theta):
-            return hinge_loss_simple(X, y, theta)[0]
-
-        print('numeric')
-        print(eval_numerical_gradient(f, theta))
-
-        #self.assertAlmostEqual(
-            #compute_cost(
-                #np.column_stack(([1, 2, 3], )),
-                #np.column_stack(([7, 3, 5], )),
-                #m=2,
-                #b=3),
-            #12.0)
+     #def test_hinge_loss_larger_random(self):
+         #np.random.seed(1)
+         #k, n = 20, 5
+         #X = np.random.uniform(low=0, high=1, size=(k,n))
+         #theta = np.random.
 
 
 if __name__ == '__main__':
