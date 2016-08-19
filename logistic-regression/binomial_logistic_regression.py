@@ -2,6 +2,7 @@ from __future__ import print_function
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 from timer import Timer
 
 
@@ -297,11 +298,16 @@ if __name__ == '__main__':
                                              lossfunc,
                                              nsteps=1500,
                                              learning_rate=0.05)
+    prev_loss = sys.float_info.max
+    converge_step = 0
     for i, (theta, loss) in enumerate(gradient_descent_iter):
         if args.verbose_gd:
             print(i, ':', loss)
-        pass
+        if abs(loss - prev_loss) < 1e-5 and converge_step == 0:
+            converge_step = i
+        prev_loss = loss
 
+    print('... loss converged at step {0}'.format(converge_step))
     print(theta)
     print(L01_loss(X_train_augmented, y_train, theta))
     if args.plot:
