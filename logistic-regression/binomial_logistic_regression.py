@@ -5,7 +5,6 @@ import numpy as np
 from timer import Timer
 
 
-# TODO: shuffle data points before training?
 def generate_data(k, num_neg_outliers=0):
     """Generates k data items with correct labels (+1 or -1) for each item.
 
