@@ -43,8 +43,8 @@ def get_mnist_data():
     http://deeplearning.net/tutorial/gettingstarted.html
 
     The pickle contains 3 sets in a tuple: training, validation and test data
-    sets. Each data set is a pair of data (N x 784) and numeric labels (N,)
-    where N is the set size.
+    sets. Each data set is a pair of numpy arrays: data (N x 784) and numeric
+    labels (N,) where N is the set size.
     """
     baseurl = 'http://thegreenplace.net/files/'
     filename = 'mnist.pkl.gz'
