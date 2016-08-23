@@ -1,3 +1,7 @@
+# Helper code for downloading and unpickling MNIST data.
+#
+# Eli Bendersky (http://eli.thegreenplace.net)
+# This code is in the public domain
 from __future__ import print_function
 import cPickle as pickle
 import gzip
@@ -25,21 +29,34 @@ def maybe_download(base_url, filename, expected_size, force=False):
         return False
 
 
-def load_mnist_from_gz(filename):
+def load_pickle_from_gz(filename):
+    """Load a pickle from a gzip archive."""
     with gzip.open(filename, 'rb') as f:
         return pickle.loads(f.read())
 
 
 def get_mnist_data():
+    """Get data sets for MNIST.
+
+    If needed, downloads the data as a pickled .gz archive; This is my mirror of
+    the archive originally taken from
+    http://deeplearning.net/tutorial/gettingstarted.html
+
+    The pickle contains 3 sets in a tuple: training, validation and test data
+    sets. Each data set is a pair of data (N x 784) and numeric labels (N,)
+    where N is the set size.
+    """
     baseurl = 'http://thegreenplace.net/files/'
     filename = 'mnist.pkl.gz'
     if maybe_download(baseurl, filename, expected_size=16168813):
-        return load_mnist_from_gz(filename)
+        return load_pickle_from_gz(filename)
     else:
         return None
 
-train, valid, test = get_mnist_data()
 
-print(train[0].shape, train[1].shape)
-print(valid[0].shape, valid[1].shape)
-print(test[0].shape, test[1].shape)
+if __name__ == '__main__':
+    train, valid, test = get_mnist_data()
+
+    print('Train shapes:', train[0].shape, train[1].shape)
+    print('Validation shapes:', validation[0].shape, validation[1].shape)
+    print('Test shapes:', test[0].shape, test[1].shape)
