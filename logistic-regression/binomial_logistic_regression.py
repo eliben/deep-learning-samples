@@ -179,7 +179,7 @@ def squared_loss(X, y, theta):
 
 def hinge_loss(X, y, theta):
     """Compute hinge loss and gradient.
-    
+
     Note: no mean (division by k) is computed here; most hinge loss formulae
     don't include it, and since the loss is (at most) linear it doesn't get too
     large.
