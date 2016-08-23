@@ -7,7 +7,7 @@ from binomial_logistic_regression import hinge_loss
 
 def hinge_loss_simple(X, y, theta):
     """Unvectorized version of hinge loss.
-    
+
     Closely follows the formulae without vectorizing optimizations, so it's
     easier to understand and correlate to the math.
     """
@@ -82,11 +82,21 @@ class Test(unittest.TestCase):
             [1]])
         self.checkHingeLossSimpleVsVec(X, y, theta)
 
-     #def test_hinge_loss_larger_random(self):
-         #np.random.seed(1)
-         #k, n = 20, 5
-         #X = np.random.uniform(low=0, high=1, size=(k,n))
-         #theta = np.random.
+    def test_hinge_loss_larger_random(self):
+         np.random.seed(1)
+         k, n = 20, 5
+         X = np.random.uniform(low=0, high=1, size=(k,n))
+         theta = np.random.randn(n, 1)
+         y = np.random.choice([-1, 1], size=(k,1))
+         self.checkHingeLossSimpleVsVec(X, y, theta)
+
+    def test_hinge_loss_even_larger_random(self):
+         np.random.seed(1)
+         k, n = 350, 15
+         X = np.random.uniform(low=0, high=1, size=(k,n))
+         theta = np.random.randn(n, 1) * 2
+         y = np.random.choice([-1, 1], size=(k,1))
+         self.checkHingeLossSimpleVsVec(X, y, theta)
 
 
 if __name__ == '__main__':
