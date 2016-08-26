@@ -10,6 +10,9 @@ from shutil import copyfileobj
 from urllib2 import urlopen
 from urlparse import urljoin
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 def maybe_download(base_url, filename, expected_size, force=False):
     """Download a file if not present, and make sure it's the right size."""
@@ -54,9 +57,20 @@ def get_mnist_data():
         return None
 
 
+def display_mnist_image(x, y=None):
+    xmat = x.reshape(28, 28)
+    plt.imshow(xmat, cmap='gray')
+    if y is not None:
+        plt.title('label={0}'.format(y))
+    plt.show()
+    #print(xmat)
+
+
 if __name__ == '__main__':
     train, valid, test = get_mnist_data()
 
     print('Train shapes:', train[0].shape, train[1].shape)
-    print('Validation shapes:', validation[0].shape, validation[1].shape)
+    print('Valid shapes:', valid[0].shape, valid[1].shape)
     print('Test shapes:', test[0].shape, test[1].shape)
+
+    display_mnist_image(train[0][20], train[1][20])
