@@ -58,12 +58,16 @@ def get_mnist_data():
 
 
 def display_mnist_image(x, y=None):
+    """Displays a single mnist image.
+
+    x: (784,) image vector, as stored in the mnist pickle.
+    y: optional numeric label
+    """
     xmat = x.reshape(28, 28)
     plt.imshow(xmat, cmap='gray')
     if y is not None:
         plt.title('label={0}'.format(y))
     plt.show()
-    #print(xmat)
 
 
 if __name__ == '__main__':

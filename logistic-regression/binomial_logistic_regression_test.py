@@ -2,7 +2,7 @@ from __future__ import print_function
 import numpy as np
 import unittest
 
-from binomial_logistic_regression import hinge_loss
+from binomial_logistic_regression import hinge_loss, square_loss
 
 
 def hinge_loss_simple(X, y, theta):
@@ -19,11 +19,11 @@ def hinge_loss_simple(X, y, theta):
         x_i = X[i, :]
         y_i = y[i, 0]
         m_i = x_i.dot(theta).flat[0] * y_i  # margin for i
-        loss += np.maximum(0, 1 - m_i)
+        loss += np.maximum(0, 1 - m_i) / k
         for j in range(n):
             # This data item contributes gradients to each of the theta
             # components.
-            dtheta[j, 0] += -y_i * x_i[j] if m_i < 1 else 0
+            dtheta[j, 0] += -y_i * x_i[j] / k if m_i < 1 else 0
     return loss, dtheta
 
 
@@ -58,7 +58,30 @@ def eval_numerical_gradient(f, x, verbose=True, h=1e-5):
     return grad
 
 
-class Test(unittest.TestCase):
+class TestSquareLoss(unittest.TestCase):
+    def test_simple_vs_numerical(self):
+        X = np.array([
+                [0.1, 0.2, -0.3],
+                [0.6, -0.5, 0.1],
+                [0.6, -0.4, 0.3],
+                [-0.2, 0.4, 2.2]])
+        theta = np.array([
+            [0.2],
+            [-1.5],
+            [2.35]])
+        y = np.array([
+            [1],
+            [-1],
+            [1],
+            [1]])
+
+        loss, grad = square_loss(X, y, theta)
+        gradnum = eval_numerical_gradient(
+            lambda theta: square_loss(X, y, theta)[0], theta, h=1e-8)
+        np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
+
+
+class TestHingeLoss(unittest.TestCase):
     def checkHingeLossSimpleVsVec(self, X, y, theta):
         loss_vec, dtheta_vec = hinge_loss(X, y, theta)
         loss_simple, dtheta_simple = hinge_loss_simple(X, y, theta)
