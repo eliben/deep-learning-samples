@@ -178,12 +178,13 @@ def square_loss(X, y, theta, reg_beta=0.0):
     return loss.flat[0], dtheta
 
 
-def hinge_loss(X, y, theta):
+def hinge_loss(X, y, theta, reg_beta=0.0):
     """Compute hinge loss and gradient."""
     k, n = X.shape
     # margin is (k, 1)
     margin = y * X.dot(theta)
-    loss = np.sum(np.maximum(np.zeros_like(margin), 1 - margin)) / k
+    loss = (np.sum(np.maximum(np.zeros_like(margin), 1 - margin)) / k +
+            np.dot(theta.T, theta) * reg_beta / 2)
 
     dtheta = np.zeros_like(theta)
     # yx is (k, n) where the elementwise multiplication by y is broadcase across
@@ -200,7 +201,8 @@ def hinge_loss(X, y, theta):
     for j in range(n):
         # Sum up the contributions to the jth theta element gradient from all
         # input samples.
-        dtheta[j, 0] = np.sum(np.where(margin_selector, -yx[:, j], 0)) / k
+        dtheta[j, 0] = (np.sum(np.where(margin_selector, -yx[:, j], 0)) / k +
+                        reg_beta * theta[j, 0])
     return loss, dtheta
 
 

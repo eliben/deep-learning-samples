@@ -5,7 +5,7 @@ import unittest
 from binomial_logistic_regression import hinge_loss, square_loss
 
 
-def hinge_loss_simple(X, y, theta):
+def hinge_loss_simple(X, y, theta, reg_beta=0.0):
     """Unvectorized version of hinge loss.
 
     Closely follows the formulae without vectorizing optimizations, so it's
@@ -24,10 +24,16 @@ def hinge_loss_simple(X, y, theta):
             # This data item contributes gradients to each of the theta
             # components.
             dtheta[j, 0] += -y_i * x_i[j] / k if m_i < 1 else 0
+
+    # Add regularization.
+    loss += np.dot(theta.T, theta) * reg_beta / 2
+    for j in range(n):
+        dtheta[j, 0] += reg_beta * theta[j, 0]
+
     return loss, dtheta
 
 
-def eval_numerical_gradient(f, x, verbose=True, h=1e-5):
+def eval_numerical_gradient(f, x, verbose=False, h=1e-5):
     """A naive implementation of numerical gradient of f at x.
 
     f: function taking a single array argument and returning a scalar.
@@ -100,15 +106,15 @@ class TestSquareLoss(unittest.TestCase):
         beta = 0.1
         loss, grad = square_loss(X, y, theta, reg_beta=beta)
         gradnum = eval_numerical_gradient(
-            lambda theta: square_loss(X, y, theta, reg_beta=0.1)[0],
+            lambda theta: square_loss(X, y, theta, reg_beta=beta)[0],
             theta, h=1e-8)
         np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
 
 
 class TestHingeLoss(unittest.TestCase):
-    def checkHingeLossSimpleVsVec(self, X, y, theta):
-        loss_vec, dtheta_vec = hinge_loss(X, y, theta)
-        loss_simple, dtheta_simple = hinge_loss_simple(X, y, theta)
+    def checkHingeLossSimpleVsVec(self, X, y, theta, reg_beta=0.0):
+        loss_vec, dtheta_vec = hinge_loss(X, y, theta, reg_beta)
+        loss_simple, dtheta_simple = hinge_loss_simple(X, y, theta, reg_beta)
         self.assertAlmostEqual(loss_vec, loss_simple)
         np.testing.assert_allclose(dtheta_vec, dtheta_simple)
 
@@ -127,7 +133,19 @@ class TestHingeLoss(unittest.TestCase):
             [-1],
             [1],
             [1]])
-        self.checkHingeLossSimpleVsVec(X, y, theta)
+        # Without regularization.
+        self.checkHingeLossSimpleVsVec(X, y, theta, reg_beta=0.0)
+
+        # With regularization.
+        beta = 0.05
+        self.checkHingeLossSimpleVsVec(X, y, theta, reg_beta=beta)
+
+        # With regularization, compare to numerical gradient.
+        loss, grad = hinge_loss(X, y, theta, reg_beta=beta)
+        gradnum = eval_numerical_gradient(
+            lambda theta: hinge_loss(X, y, theta, reg_beta=beta)[0],
+            theta, h=1e-8)
+        np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
 
     def test_hinge_loss_larger_random(self):
          np.random.seed(1)
