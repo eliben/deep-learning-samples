@@ -2,7 +2,7 @@ from __future__ import print_function
 import numpy as np
 import unittest
 
-from binomial_logistic_regression import hinge_loss, square_loss
+from regression_lib import hinge_loss, square_loss
 
 
 def hinge_loss_simple(X, y, theta, reg_beta=0.0):
