@@ -165,8 +165,7 @@ if __name__ == '__main__':
     else:
         X_train_normalized, mu, sigma = X_train, 0, 1
 
-    X_train_augmented = np.hstack((np.ones((X_train.shape[0], 1)),
-                                           X_train_normalized))
+    X_train_augmented = augment_1s_column(X_train)
     print('X_train_augmented shape:', X_train_augmented.shape)
 
     # A pretty good theta determined by a long run of search_best_L01_loss.

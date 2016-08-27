@@ -5,6 +5,16 @@
 import numpy as np
 
 
+def augment_1s_column(X):
+    """Augment the given data matrix with a first column of ones.
+
+    X: (k, n) k rows of data items, each having n features.
+
+    Returns a (k, n+1) matrix with an additional column of 1s at the start.
+    """
+    return np.hstack((np.ones((X.shape[0], 1)), X))
+
+
 def feature_normalize(X):
     """Normalize the feature matrix X.
 
@@ -79,7 +89,7 @@ def hinge_loss(X, y, theta, reg_beta=0.0):
         # input samples.
         dtheta[j, 0] = (np.sum(np.where(margin_selector, -yx[:, j], 0)) / k +
                         reg_beta * theta[j, 0])
-    return loss, dtheta
+    return loss.flat[0], dtheta
 
 
 def gradient_descent(X, y, lossfunc=None, nsteps=100, learning_rate=0.1):
