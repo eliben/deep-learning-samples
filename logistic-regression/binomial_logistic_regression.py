@@ -157,7 +157,7 @@ def search_best_L01_loss(X, y, theta_start=None,
 
 # See the docstring of gradient_descent for the description of the signature of
 # loss functions.
-def square_loss(X, y, theta):
+def square_loss(X, y, theta, reg_beta=0.0):
     """Computes squared loss and gradient.
 
     Based on mean square margin loss.
@@ -169,11 +169,12 @@ def square_loss(X, y, theta):
     k, n = X.shape
     margin = y * X.dot(theta)
     diff = margin - 1
-    loss = np.dot(diff.T, diff) / k
+    loss = np.dot(diff.T, diff) / k + np.dot(theta.T, theta) * reg_beta / 2
 
     dtheta = np.zeros_like(theta)
     for j in range(n):
         dtheta[j, 0] = 2 * np.dot((diff * y).T, X[:, j]) / k
+        dtheta[j, 0] += reg_beta * theta[j, 0]
     return loss.flat[0], dtheta
 
 

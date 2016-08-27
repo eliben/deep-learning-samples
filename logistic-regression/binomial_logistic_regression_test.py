@@ -59,7 +59,7 @@ def eval_numerical_gradient(f, x, verbose=True, h=1e-5):
 
 
 class TestSquareLoss(unittest.TestCase):
-    def test_simple_vs_numerical(self):
+    def test_simple_vs_numerical_noreg(self):
         X = np.array([
                 [0.1, 0.2, -0.3],
                 [0.6, -0.5, 0.1],
@@ -78,6 +78,30 @@ class TestSquareLoss(unittest.TestCase):
         loss, grad = square_loss(X, y, theta)
         gradnum = eval_numerical_gradient(
             lambda theta: square_loss(X, y, theta)[0], theta, h=1e-8)
+        np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
+
+    def test_simple_vs_numerical_withreg(self):
+        # Same test with a regularization factor.
+        X = np.array([
+                [0.1, 0.2, -0.3],
+                [0.6, -0.5, 0.1],
+                [0.6, -0.4, 0.3],
+                [-0.2, 0.4, 2.2]])
+        theta = np.array([
+            [0.2],
+            [-1.5],
+            [2.35]])
+        y = np.array([
+            [1],
+            [-1],
+            [1],
+            [1]])
+
+        beta = 0.1
+        loss, grad = square_loss(X, y, theta, reg_beta=beta)
+        gradnum = eval_numerical_gradient(
+            lambda theta: square_loss(X, y, theta, reg_beta=0.1)[0],
+            theta, h=1e-8)
         np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
 
 
