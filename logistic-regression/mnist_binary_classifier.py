@@ -51,10 +51,11 @@ if __name__ == '__main__':
     y_valid_binary = convert_y_to_binary(y_valid, 4)
 
     # Note: if we guess by saying "nothing is 4" we get ~90% accuracy
-    NSTEPS = 350
+    NSTEPS = 550
     LEARNING_RATE = 0.05
+    REG_BETA=0.02
 
-    lossfunc = lambda X, y, theta: hinge_loss(X, y, theta, reg_beta=0.01)
+    lossfunc = lambda X, y, theta: hinge_loss(X, y, theta, reg_beta=REG_BETA)
     gi = gradient_descent(X_train_augmented, y_train_binary, lossfunc,
                           nsteps=NSTEPS, learning_rate=LEARNING_RATE)
 
