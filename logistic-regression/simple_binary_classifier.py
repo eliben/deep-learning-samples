@@ -201,8 +201,8 @@ if __name__ == '__main__':
           (args.losstype, nsteps, learning_rate))
     gradient_descent_iter = gradient_descent(X_train_augmented, y_train,
                                              lossfunc,
-                                             nsteps=1500,
-                                             learning_rate=0.05)
+                                             nsteps=nsteps,
+                                             learning_rate=learning_rate)
     prev_loss = sys.float_info.max
     converge_step = 0
     for i, (theta, loss) in enumerate(gradient_descent_iter):
