@@ -173,8 +173,8 @@ def square_loss(X, y, theta, reg_beta=0.0):
 
     dtheta = np.zeros_like(theta)
     for j in range(n):
-        dtheta[j, 0] = 2 * np.dot((diff * y).T, X[:, j]) / k
-        dtheta[j, 0] += reg_beta * theta[j, 0]
+        dtheta[j, 0] = (2 * np.dot((diff * y).T, X[:, j]) / k +
+                        reg_beta * theta[j, 0])
     return loss.flat[0], dtheta
 
 
