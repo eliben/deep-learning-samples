@@ -2,7 +2,8 @@ from __future__ import print_function
 import numpy as np
 import unittest
 
-from regression_lib import hinge_loss, square_loss
+from regression_lib import (
+    hinge_loss, square_loss, predict_logistic_probability)
 
 
 def hinge_loss_simple(X, y, theta, reg_beta=0.0):
@@ -67,10 +68,10 @@ def eval_numerical_gradient(f, x, verbose=False, h=1e-5):
 class TestSquareLoss(unittest.TestCase):
     def test_simple_vs_numerical_noreg(self):
         X = np.array([
-                [0.1, 0.2, -0.3],
-                [0.6, -0.5, 0.1],
-                [0.6, -0.4, 0.3],
-                [-0.2, 0.4, 2.2]])
+            [0.1, 0.2, -0.3],
+            [0.6, -0.5, 0.1],
+            [0.6, -0.4, 0.3],
+            [-0.2, 0.4, 2.2]])
         theta = np.array([
             [0.2],
             [-1.5],
@@ -162,6 +163,38 @@ class TestHingeLoss(unittest.TestCase):
          theta = np.random.randn(n, 1) * 2
          y = np.random.choice([-1, 1], size=(k,1))
          self.checkHingeLossSimpleVsVec(X, y, theta)
+
+
+class TestPredictLogisticProbability(unittest.TestCase):
+    def test_close_to_zero(self):
+        # For very large negative z, predicted probability is close to zero.
+        X = np.array([
+            [10.0, 20.0],
+            [20.0, 30.0],
+            [30.0, 40.0]])
+        theta = np.array([[-5], [-6]])
+        p = predict_logistic_probability(X, theta)
+        np.testing.assert_allclose(p, np.zeros_like(p), atol=1e-8)
+
+    def test_close_to_one(self):
+        # For very large positive z, predicted probability is close to one.
+        X = np.array([
+            [10.0, 20.0],
+            [20.0, 30.0],
+            [30.0, 40.0]])
+        theta = np.array([[3], [4]])
+        p = predict_logistic_probability(X, theta)
+        np.testing.assert_allclose(p, np.ones_like(p), atol=1e-8)
+
+    def test_half(self):
+        # For z=0 we get probability 0.5
+        X = np.array([
+            [10.0, 20.0],
+            [20.0, 40.0],
+            [40.0, 80.0]])
+        theta = np.array([[-2], [1]])
+        p = predict_logistic_probability(X, theta)
+        np.testing.assert_allclose(p, np.full(p.shape, 0.5))
 
 
 if __name__ == '__main__':

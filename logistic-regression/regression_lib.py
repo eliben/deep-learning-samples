@@ -41,6 +41,30 @@ def predict_binary(X, theta):
     return np.sign(yhat)
 
 
+def sigmoid(z):
+    """Compute sigmoid function.
+
+    z: array of input values.
+
+    Returns array of outputs, sigmoid(z).
+    """
+    return 1 / (1 + np.exp(-z))
+
+
+def predict_logistic_probability(X, theta):
+    """Make classification predictions for the data in X using theta.
+
+    X: (k, n) k rows of data items, each having n features; augmented.
+    theta: (n, 1) logistic regression parameters.
+
+    Computes the logistic regression prediction. Returns yhat (k, 1) - number
+    in the range [0.0, 1.0) for each item. The number is the probability that
+    the item is classified as +1.
+    """
+    z = X.dot(theta)
+    return sigmoid(z)
+
+
 # See the docstring of gradient_descent for the description of the signature of
 # loss functions.
 def square_loss(X, y, theta, reg_beta=0.0):
