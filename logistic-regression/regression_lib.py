@@ -6,7 +6,7 @@ import numpy as np
 
 
 def augment_1s_column(X):
-    """Augment the given data matrix with a first column of ones.
+    """Augments the given data matrix with a first column of ones.
 
     X: (k, n) k rows of data items, each having n features.
 
@@ -16,7 +16,7 @@ def augment_1s_column(X):
 
 
 def feature_normalize(X):
-    """Normalize the feature matrix X.
+    """Normalizes the feature matrix X.
 
     Given a feature matrix X, where each row is a vector of features, normalizes
     each feature. Returns (X_norm, mu, sigma) where mu and sigma are the mean
@@ -30,7 +30,7 @@ def feature_normalize(X):
 
 
 def predict_binary(X, theta):
-    """Make classification predictions for the data in X using theta.
+    """Makes classification predictions for the data in X using theta.
 
     X: (k, n) k rows of data items, each having n features; augmented.
     theta: (n, 1) regression parameters.
@@ -42,7 +42,7 @@ def predict_binary(X, theta):
 
 
 def sigmoid(z):
-    """Compute sigmoid function.
+    """Computes sigmoid function.
 
     z: array of input values.
 
@@ -52,7 +52,7 @@ def sigmoid(z):
 
 
 def predict_logistic_probability(X, theta):
-    """Make classification predictions for the data in X using theta.
+    """Makes classification predictions for the data in X using theta.
 
     X: (k, n) k rows of data items, each having n features; augmented.
     theta: (n, 1) logistic regression parameters.
@@ -63,6 +63,16 @@ def predict_logistic_probability(X, theta):
     """
     z = X.dot(theta)
     return sigmoid(z)
+
+
+def cross_entropy_loss_binary(X, theta, y):
+    """Computes the cross-entropy loss for binary classification."""
+    k, n = X.shape
+    yhat_prob = predict_logistic_probability(X, theta)
+    loss = np.mean(np.where(y == 1,
+                            -np.log(yhat_prob),
+                            -np.log(1 - yhat_prob)))
+
 
 
 # See the docstring of gradient_descent for the description of the signature of
@@ -89,7 +99,7 @@ def square_loss(X, y, theta, reg_beta=0.0):
 
 
 def hinge_loss(X, y, theta, reg_beta=0.0):
-    """Compute hinge loss and gradient."""
+    """Computes hinge loss and gradient."""
     k, n = X.shape
     # margin is (k, 1)
     margin = y * X.dot(theta)
