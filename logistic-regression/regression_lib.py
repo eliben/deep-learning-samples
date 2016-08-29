@@ -73,10 +73,8 @@ def cross_entropy_loss_binary(X, y, theta):
                             -np.log(yhat_prob),
                             -np.log(1 - yhat_prob)))
 
-    dtheta = np.zeros_like(theta)
-    for j in range(n):
-        yh = np.where(y == 1, yhat_prob - 1, yhat_prob)
-        dtheta[j, 0] = np.dot(yh.T, X[:, j]) / k
+    yh = np.where(y == 1, yhat_prob - 1, yhat_prob)
+    dtheta = np.dot(yh.T, X).T / k
     return loss, dtheta
 
 
