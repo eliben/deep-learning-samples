@@ -35,13 +35,14 @@ def hinge_loss_simple(X, y, theta, reg_beta=0.0):
     return loss, dtheta
 
 
-def cross_entropy_loss_binary_simple(X, y, theta):
+def cross_entropy_loss_binary_simple(X, y, theta, reg_beta=0.0):
     """Unvectorized cross-entropy loss for binary classification."""
     k, n = X.shape
     yhat_prob = predict_logistic_probability(X, theta)
     loss = np.mean(np.where(y == 1,
                             -np.log(yhat_prob),
                             -np.log(1 - yhat_prob)))
+    loss += np.dot(theta.T, theta) * reg_beta / 2
 
     dtheta = np.zeros_like(theta)
     for i in range(k):
@@ -50,7 +51,8 @@ def cross_entropy_loss_binary_simple(X, y, theta):
                 dtheta[j, 0] += (yhat_prob[i, 0] - 1 ) * X[i, j]
             else:
                 dtheta[j, 0] += yhat_prob[i, 0] * X[i, j]
-    return loss, dtheta / k
+    dtheta = dtheta / k + reg_beta * theta
+    return loss, dtheta
 
 
 def eval_numerical_gradient(f, x, verbose=False, h=1e-5):
@@ -186,9 +188,9 @@ class TestHingeLoss(unittest.TestCase):
 
 class TestCrossEntropyBinaryLoss(unittest.TestCase):
     def checkXentLossSimpleVsVec(self, X, y, theta, reg_beta=0.0):
-        loss_vec, dtheta_vec = cross_entropy_loss_binary(X, y, theta)
+        loss_vec, dtheta_vec = cross_entropy_loss_binary(X, y, theta, reg_beta)
         loss_simple, dtheta_simple = cross_entropy_loss_binary_simple(
-            X, y, theta)
+            X, y, theta, reg_beta)
         self.assertAlmostEqual(loss_vec, loss_simple)
         np.testing.assert_allclose(dtheta_vec, dtheta_simple)
 
@@ -200,11 +202,13 @@ class TestCrossEntropyBinaryLoss(unittest.TestCase):
             [2.35]])
         y = np.array([[1]])
 
-        self.checkXentLossSimpleVsVec(X, y, theta)
+        self.checkXentLossSimpleVsVec(X, y, theta, reg_beta=0.0)
+        self.checkXentLossSimpleVsVec(X, y, theta, reg_beta=0.1)
 
-        loss, grad = cross_entropy_loss_binary_simple(X, y, theta)
+        loss, grad = cross_entropy_loss_binary_simple(X, y, theta, reg_beta=0.1)
         gradnum = eval_numerical_gradient(
-            lambda theta: cross_entropy_loss_binary_simple(X, y, theta)[0],
+            lambda theta: cross_entropy_loss_binary_simple(X, y, theta,
+                                                           reg_beta=0.1)[0],
             theta, h=1e-8)
         np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
 
@@ -224,11 +228,14 @@ class TestCrossEntropyBinaryLoss(unittest.TestCase):
             [1],
             [1]])
 
-        self.checkXentLossSimpleVsVec(X, y, theta)
+        self.checkXentLossSimpleVsVec(X, y, theta, reg_beta=0.0)
+        self.checkXentLossSimpleVsVec(X, y, theta, reg_beta=0.1)
 
-        loss, grad = cross_entropy_loss_binary_simple(X, y, theta)
+        loss, grad = cross_entropy_loss_binary_simple(X, y, theta, reg_beta=0.1)
         gradnum = eval_numerical_gradient(
-            lambda theta: cross_entropy_loss_binary_simple(X, y, theta)[0],
+            lambda theta: cross_entropy_loss_binary_simple(X, y,
+                                                           theta,
+                                                           reg_beta=0.1)[0],
             theta, h=1e-8)
         np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
 
@@ -251,11 +258,14 @@ class TestCrossEntropyBinaryLoss(unittest.TestCase):
             [1],
             [1]])
 
-        self.checkXentLossSimpleVsVec(X, y, theta)
+        self.checkXentLossSimpleVsVec(X, y, theta, reg_beta=0.0)
+        self.checkXentLossSimpleVsVec(X, y, theta, reg_beta=0.1)
 
-        loss, grad = cross_entropy_loss_binary_simple(X, y, theta)
+        loss, grad = cross_entropy_loss_binary_simple(X, y, theta, reg_beta=0.1)
         gradnum = eval_numerical_gradient(
-            lambda theta: cross_entropy_loss_binary_simple(X, y, theta)[0],
+            lambda theta: cross_entropy_loss_binary_simple(X, y,
+                                                           theta,
+                                                           reg_beta=0.1)[0],
             theta, h=1e-8)
         np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
 

@@ -65,16 +65,18 @@ def predict_logistic_probability(X, theta):
     return sigmoid(z)
 
 
-def cross_entropy_loss_binary(X, y, theta):
+def cross_entropy_loss_binary(X, y, theta, reg_beta=0.0):
     """Computes the cross-entropy loss for binary classification."""
     k, n = X.shape
     yhat_prob = predict_logistic_probability(X, theta)
     loss = np.mean(np.where(y == 1,
                             -np.log(yhat_prob),
                             -np.log(1 - yhat_prob)))
+    # Add regularization.
+    loss += np.dot(theta.T, theta) * reg_beta / 2
 
     yh = np.where(y == 1, yhat_prob - 1, yhat_prob)
-    dtheta = np.dot(yh.T, X).T / k
+    dtheta = np.dot(yh.T, X).T / k + reg_beta * theta
     return loss, dtheta
 
 
