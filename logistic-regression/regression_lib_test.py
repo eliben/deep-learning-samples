@@ -3,7 +3,8 @@ import numpy as np
 import unittest
 
 from regression_lib import (
-    hinge_loss, square_loss, predict_logistic_probability)
+    hinge_loss, square_loss, predict_logistic_probability,
+    cross_entropy_loss_binary)
 
 
 def hinge_loss_simple(X, y, theta, reg_beta=0.0):
@@ -35,7 +36,7 @@ def hinge_loss_simple(X, y, theta, reg_beta=0.0):
 
 
 def cross_entropy_loss_binary_simple(X, y, theta):
-    """Computes the cross-entropy loss for binary classification."""
+    """Unvectorized cross-entropy loss for binary classification."""
     k, n = X.shape
     yhat_prob = predict_logistic_probability(X, theta)
     loss = np.mean(np.where(y == 1,
@@ -49,7 +50,6 @@ def cross_entropy_loss_binary_simple(X, y, theta):
                 dtheta[j, 0] += (yhat_prob[i, 0] - 1 ) * X[i, j]
             else:
                 dtheta[j, 0] += yhat_prob[i, 0] * X[i, j]
-
     return loss, dtheta / k
 
 
@@ -185,6 +185,13 @@ class TestHingeLoss(unittest.TestCase):
 
 
 class TestCrossEntropyBinaryLoss(unittest.TestCase):
+    def checkXentLossSimpleVsVec(self, X, y, theta, reg_beta=0.0):
+        loss_vec, dtheta_vec = cross_entropy_loss_binary(X, y, theta)
+        loss_simple, dtheta_simple = cross_entropy_loss_binary_simple(
+            X, y, theta)
+        self.assertAlmostEqual(loss_vec, loss_simple)
+        np.testing.assert_allclose(dtheta_vec, dtheta_simple)
+
     def test_xent_loss_oneitem(self):
         X = np.array([[0.1, 0.2, -0.3]])
         theta = np.array([
@@ -192,6 +199,8 @@ class TestCrossEntropyBinaryLoss(unittest.TestCase):
             [-1.5],
             [2.35]])
         y = np.array([[1]])
+
+        self.checkXentLossSimpleVsVec(X, y, theta)
 
         loss, grad = cross_entropy_loss_binary_simple(X, y, theta)
         gradnum = eval_numerical_gradient(
@@ -214,6 +223,8 @@ class TestCrossEntropyBinaryLoss(unittest.TestCase):
             [-1],
             [1],
             [1]])
+
+        self.checkXentLossSimpleVsVec(X, y, theta)
 
         loss, grad = cross_entropy_loss_binary_simple(X, y, theta)
         gradnum = eval_numerical_gradient(
