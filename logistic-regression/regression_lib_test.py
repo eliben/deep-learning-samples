@@ -46,9 +46,9 @@ def cross_entropy_loss_binary_simple(X, y, theta):
     for i in range(k):
         for j in range(n):
             if y[i] == 1:
-                dtheta[j, 0] += (yhat_prob[j, 0] - 1 ) * X[i, j]
+                dtheta[j, 0] += (yhat_prob[i, 0] - 1 ) * X[i, j]
             else:
-                dtheta[j, 0] += yhat_prob[j, 0] * X[i, j]
+                dtheta[j, 0] += yhat_prob[i, 0] * X[i, j]
 
     return loss, dtheta / k
 
@@ -185,6 +185,20 @@ class TestHingeLoss(unittest.TestCase):
 
 
 class TestCrossEntropyBinaryLoss(unittest.TestCase):
+    def test_xent_loss_oneitem(self):
+        X = np.array([[0.1, 0.2, -0.3]])
+        theta = np.array([
+            [0.2],
+            [-1.5],
+            [2.35]])
+        y = np.array([[1]])
+
+        loss, grad = cross_entropy_loss_binary_simple(X, y, theta)
+        gradnum = eval_numerical_gradient(
+            lambda theta: cross_entropy_loss_binary_simple(X, y, theta)[0],
+            theta, h=1e-8)
+        np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
+
     def test_xent_loss_small(self):
         X = np.array([
                 [0.1, 0.2, -0.3],
@@ -205,10 +219,7 @@ class TestCrossEntropyBinaryLoss(unittest.TestCase):
         gradnum = eval_numerical_gradient(
             lambda theta: cross_entropy_loss_binary_simple(X, y, theta)[0],
             theta, h=1e-8)
-        print(loss)
-        print(grad)
-        print(gradnum)
-        #np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
+        np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
 
 
 class TestPredictLogisticProbability(unittest.TestCase):
