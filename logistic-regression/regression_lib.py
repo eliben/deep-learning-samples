@@ -65,7 +65,7 @@ def predict_logistic_probability(X, theta):
     return sigmoid(z)
 
 
-def cross_entropy_loss_binary(X, theta, y):
+def cross_entropy_loss_binary(X, y, theta):
     """Computes the cross-entropy loss for binary classification."""
     k, n = X.shape
     yhat_prob = predict_logistic_probability(X, theta)

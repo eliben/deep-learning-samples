@@ -34,6 +34,25 @@ def hinge_loss_simple(X, y, theta, reg_beta=0.0):
     return loss, dtheta
 
 
+def cross_entropy_loss_binary_simple(X, y, theta):
+    """Computes the cross-entropy loss for binary classification."""
+    k, n = X.shape
+    yhat_prob = predict_logistic_probability(X, theta)
+    loss = np.mean(np.where(y == 1,
+                            -np.log(yhat_prob),
+                            -np.log(1 - yhat_prob)))
+
+    dtheta = np.zeros_like(theta)
+    for i in range(k):
+        for j in range(n):
+            if y[i] == 1:
+                dtheta[j, 0] += (yhat_prob[j, 0] - 1 ) * X[i, j]
+            else:
+                dtheta[j, 0] += yhat_prob[j, 0] * X[i, j]
+
+    return loss, dtheta / k
+
+
 def eval_numerical_gradient(f, x, verbose=False, h=1e-5):
     """A naive implementation of numerical gradient of f at x.
 
@@ -163,6 +182,33 @@ class TestHingeLoss(unittest.TestCase):
          theta = np.random.randn(n, 1) * 2
          y = np.random.choice([-1, 1], size=(k,1))
          self.checkHingeLossSimpleVsVec(X, y, theta)
+
+
+class TestCrossEntropyBinaryLoss(unittest.TestCase):
+    def test_xent_loss_small(self):
+        X = np.array([
+                [0.1, 0.2, -0.3],
+                [0.6, -0.5, 0.1],
+                [0.6, -0.4, 0.3],
+                [-0.2, 0.4, 2.2]])
+        theta = np.array([
+            [0.2],
+            [-1.5],
+            [2.35]])
+        y = np.array([
+            [1],
+            [-1],
+            [1],
+            [1]])
+
+        loss, grad = cross_entropy_loss_binary_simple(X, y, theta)
+        gradnum = eval_numerical_gradient(
+            lambda theta: cross_entropy_loss_binary_simple(X, y, theta)[0],
+            theta, h=1e-8)
+        print(loss)
+        print(grad)
+        print(gradnum)
+        #np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
 
 
 class TestPredictLogisticProbability(unittest.TestCase):
