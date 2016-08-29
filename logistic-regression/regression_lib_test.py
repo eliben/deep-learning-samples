@@ -232,6 +232,33 @@ class TestCrossEntropyBinaryLoss(unittest.TestCase):
             theta, h=1e-8)
         np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
 
+    def test_xent_loss_larger(self):
+        X = np.array([
+                [0.1, 0.2, -0.3, 1.2],
+                [0.6, -0.5, 0.1, -0.1],
+                [0.6, -0.4, 0.3, 0.0],
+                [0.4, -0.3, 0.3, 0.0],
+                [-0.2, 0.4, 2.2, 0.7]])
+        theta = np.array([
+            [0.2],
+            [0.3],
+            [-1.5],
+            [2.35]])
+        y = np.array([
+            [1],
+            [-1],
+            [-1],
+            [1],
+            [1]])
+
+        self.checkXentLossSimpleVsVec(X, y, theta)
+
+        loss, grad = cross_entropy_loss_binary_simple(X, y, theta)
+        gradnum = eval_numerical_gradient(
+            lambda theta: cross_entropy_loss_binary_simple(X, y, theta)[0],
+            theta, h=1e-8)
+        np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
+
 
 class TestPredictLogisticProbability(unittest.TestCase):
     def test_close_to_zero(self):
