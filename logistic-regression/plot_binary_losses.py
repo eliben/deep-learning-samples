@@ -12,11 +12,18 @@ if __name__ == '__main__':
     fig.set_tight_layout(True)
 
     xs = np.linspace(-2, 2, 500)
+
+    # plot L0/1 loss
     ax.plot(xs, np.where(xs < 0, np.ones_like(xs), np.zeros_like(xs)),
-            color='r', linewidth=2.0)
+            color='r', linewidth=2.0, label='$L_{01}$')
+
+    # plot square loss
+    ax.plot(xs, (xs - 1) ** 2, linestyle='-.', label='$L_2$')
+
     ax.grid(True)
 
     plt.ylim((-1, 4))
+    ax.legend()
 
-    fig.savefig('01loss.png', dpi=80)
+    fig.savefig('loss.png', dpi=80)
     plt.show()
