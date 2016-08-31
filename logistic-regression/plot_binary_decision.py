@@ -3,11 +3,8 @@
 # Eli Bendersky (http://eli.thegreenplace.net)
 # This code is in the public domain
 from __future__ import print_function
-import argparse
 import matplotlib.pyplot as plt
 import numpy as np
-from timer import Timer
-import sys
 
 
 if __name__ == '__main__':
