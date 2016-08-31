@@ -32,6 +32,10 @@ def feature_normalize(X):
 def predict_binary(X, theta):
     """Makes classification predictions for the data in X using theta.
 
+    For a given data item x, the prediction is +1 if x.dot(theta) >= 0, and -1
+    otherwise. Note that this also works for logistic regression since for
+    x.dot(theta) >= 0 the sigmoid is >= 0.5 which we also consider +1.
+
     X: (k, n) k rows of data items, each having n features; augmented.
     theta: (n, 1) regression parameters.
 

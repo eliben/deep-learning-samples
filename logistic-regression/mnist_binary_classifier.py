@@ -31,14 +31,30 @@ def convert_y_to_binary(y, correct_digit):
 
 
 if __name__ == '__main__':
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument('--type',
+                           choices=['binary', 'logistic'],
+                           default='logistic',
+                           help='Type of classification: binary (yes/no result)'
+                                'or logistic (probability of "yes" result)')
+    argparser.add_argument('--nsteps', default=150, type=int,
+                           help='Number of steps for gradient descent')
+    argparser.add_argument('--display', default=-1, type=int,
+                           help='Display this image from the validation data '
+                                'set and exit')
+    args = argparser.parse_args()
+
     train, valid, test = get_mnist_data()
     X_train, y_train = train
     X_valid, y_valid = valid
 
-    #display_mnist_image(X_train[2], y_train[2])
+    if args.display > -1:
+        display_mnist_image(X_valid[args.display], y_valid[args.display])
+        sys.exit(1)
 
     # Normalization here create NaNs: there may be some columns that are always
-    # 0?
+    # 0 in the image? This isn't really necessary since MNIST data is mostly
+    # normalized.
     #X_train_normalized, mu, sigma = feature_normalize(X_train)
     #X_train_normalized = X_train
     X_train_augmented = augment_1s_column(X_train)
@@ -47,20 +63,22 @@ if __name__ == '__main__':
     # Convert y_train to binary "is this a 4", with +1 for a 4, -1 otherwise.
     # Also reshape it into a column vector as regression_lib expects.
     y_train_binary = convert_y_to_binary(y_train, 4)
-
     y_valid_binary = convert_y_to_binary(y_valid, 4)
 
     # Note: if we guess by saying "nothing is 4" we get ~90% accuracy
-    NSTEPS = 550
     LEARNING_RATE = 0.05
-    REG_BETA=0.02
+    REG_BETA=0.01
 
-    lossfunc = lambda X, y, theta: hinge_loss(X, y, theta, reg_beta=REG_BETA)
+    if args.type == 'binary':
+        # For binary classification, use hinge loss.
+        lossfunc = lambda X, y, theta: hinge_loss(X, y,
+                                                  theta, reg_beta=REG_BETA)
+    else:
+        # For logistic classification, use cross-entropy loss.
+        lossfunc = lambda X, y, theta: cross_entropy_loss_binary(
+            X, y, theta, reg_beta=REG_BETA)
     gi = gradient_descent(X_train_augmented, y_train_binary, lossfunc,
-                          nsteps=NSTEPS, learning_rate=LEARNING_RATE)
-
-    #display_mnist_image(X_valid[8878])
-    #sys.exit(1)
+                          nsteps=args.nsteps, learning_rate=LEARNING_RATE)
 
     for i, (theta, loss) in enumerate(gi):
         if i % 10 == 0 and i > 0:
@@ -72,11 +90,17 @@ if __name__ == '__main__':
 
         print(i, loss)
 
-    print('After {0} training steps...'.format(NSTEPS))
+    print('After {0} training steps...'.format(args.nsteps))
     yhat_valid = predict_binary(X_valid_augmented, theta)
+    if args.type == 'logistic':
+        yhat_prob = predict_logistic_probability(X_valid_augmented, theta)
     print('valid accuracy =', np.mean(yhat_valid == y_valid_binary))
 
     for i in range(yhat_valid.size):
         if yhat_valid[i][0] != y_valid_binary[i][0]:
             print('@ {0}: predict {1}, actual {2}'.format(
-                i, yhat_valid[i][0], y_valid_binary[i][0]))
+                i, yhat_valid[i][0], y_valid_binary[i][0]), end='')
+            if args.type == 'logistic':
+                print('; prob={0}'.format(yhat_prob[i][0]))
+            else:
+                print('')
