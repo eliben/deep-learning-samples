@@ -26,6 +26,8 @@ if __name__ == '__main__':
             plane[i, j] = np.array([1, xsgrid[i, j], ysgrid[i, j]]).dot(theta)
     ax.contour(xsgrid, ysgrid, plane, levels=[0])
     ax.grid(True)
+    ax.annotate(r'here $\hat{y}(x) > 0$', xy=(4, 4), fontsize=20)
+    ax.annotate(r'here $\hat{y}(x) < 0$', xy=(0, 0), fontsize=20)
 
     fig.savefig('line.png', dpi=80)
     plt.show()
