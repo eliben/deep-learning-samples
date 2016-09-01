@@ -16,7 +16,7 @@ def generate_data(k, num_neg_outliers=0):
     """Generates k data items with correct labels (+1 or -1) for each item.
 
     k: number of data points to generate.
-    num_neg_outliers: number of outliers for the negative samples
+    num_neg_outliers: number of outliers for the negative samples.
 
     Returns X (k, 2) - k data items in 2D, and y (k, 1) - the correct label
     (+1 or -1) for each data item in X.
@@ -29,7 +29,6 @@ def generate_data(k, num_neg_outliers=0):
                  np.random.normal(scale=0.9, size=(kpos, 2)))
     outliers = (np.hstack((np.ones((num_neg_outliers, 1)) * 3,
                            np.ones((num_neg_outliers, 1)) * 5)) +
-
                 np.random.normal(scale=0.8, size=(num_neg_outliers, 2)))
     negatives = (np.full((kneg_regular, 2), 1.0) +
                  np.random.normal(scale=0.7, size=(kneg_regular, 2)))
@@ -42,9 +41,7 @@ def generate_data(k, num_neg_outliers=0):
     y = np.vstack((np.full((kpos, 1), 1.0), np.full((kneg, 1), -1.0)))
 
     # Stack X and y together so we can shuffle them together.
-    Xy = np.hstack((X, y))
     Xy = np.random.permutation(np.hstack((X, y)))
-
     return Xy[:, 0:2], Xy[:, 2].reshape(-1, 1)
 
 
@@ -53,7 +50,7 @@ def plot_data_scatterplot(X, y, thetas=[]):
 
     X: (k, n) data items.
     y: (k, 1) result (+1 or -1) for each data item in X.
-    thetas: list of theta arrays to plot contours.
+    thetas: list of (theta array, label) pairs to plot contours.
 
     Plots +1 data points as a green x, -1 as red o.
     """
@@ -66,7 +63,8 @@ def plot_data_scatterplot(X, y, thetas=[]):
     ax.scatter(*zip(*pos), c='darkgreen', marker='x')
     ax.scatter(*zip(*neg), c='red', marker='o', linewidths=0)
 
-    for theta in thetas:
+    contours = []
+    for theta, _ in thetas:
         xs = np.linspace(-2, 6, 200)
         ys = np.linspace(-2, 6, 200)
         xsgrid, ysgrid = np.meshgrid(xs, ys)
@@ -75,8 +73,10 @@ def plot_data_scatterplot(X, y, thetas=[]):
             for j in range(xsgrid.shape[1]):
                 plane[i, j] = np.array([1, xsgrid[i, j], ysgrid[i, j]]).dot(
                     theta)
-        ax.contour(xsgrid, ysgrid, plane, levels=[0])
+        contours.append(ax.contour(xsgrid, ysgrid, plane, c='red', levels=[0]))
 
+    plt.legend([cs.collections[0] for cs in contours],
+               [label for theta, label in thetas])
     plt.show()
 
 
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     # For reproducibility
     np.random.seed(42)
 
-    X_train, y_train = generate_data(400, num_neg_outliers=20)
+    X_train, y_train = generate_data(400, num_neg_outliers=10)
     print('X_train shape:', X_train.shape)
     print('y_train shape:', y_train.shape)
 
@@ -169,7 +169,7 @@ if __name__ == '__main__':
     print('X_train_augmented shape:', X_train_augmented.shape)
 
     # A pretty good theta determined by a long run of search_best_L01_loss.
-    theta = np.array([-1.0607, 0.2793, 0.2664]).reshape(-1, 1)
+    theta = np.array([-0.9647, 0.2545, 0.2416]).reshape(-1, 1)
     print('Initial theta:\n', theta)
     print('Initial loss:', L01_loss(X_train_augmented, y_train, theta))
 
@@ -217,4 +217,5 @@ if __name__ == '__main__':
     if args.plot:
         print(best_theta)
         print(theta)
-        plot_data_scatterplot(X_train, y_train, [best_theta, theta])
+        plot_data_scatterplot(X_train, y_train,
+                              [(best_theta, 'L01'), (theta, args.losstype)])
