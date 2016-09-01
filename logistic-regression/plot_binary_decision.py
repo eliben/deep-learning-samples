@@ -25,7 +25,6 @@ if __name__ == '__main__':
     ax.grid(True)
     ax.annotate(r'here $\hat{y}(x) > 0$', xy=(4, 4), fontsize=20)
     ax.annotate(r'here $\hat{y}(x) < 0$', xy=(0, 0), fontsize=20)
-    ax.legend()
 
     fig.savefig('line.png', dpi=80)
     plt.show()
