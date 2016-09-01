@@ -20,6 +20,10 @@ if __name__ == '__main__':
     # plot square loss
     ax.plot(xs, (xs - 1) ** 2, linestyle='-.', label='$L_2$')
 
+    # plot hinge loss
+    ax.plot(xs, np.maximum(np.zeros_like(xs), 1 - xs),
+            color='g', linewidth=2.0, label='$L_h$')
+
     ax.grid(True)
 
     plt.ylim((-1, 4))
