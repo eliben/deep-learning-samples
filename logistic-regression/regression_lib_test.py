@@ -3,7 +3,7 @@ import numpy as np
 import unittest
 
 from regression_lib import (
-    hinge_loss, square_loss, predict_logistic_probability,
+    hinge_loss, square_loss, predict_logistic_probability, predict_binary,
     cross_entropy_loss_binary)
 
 
@@ -268,6 +268,18 @@ class TestCrossEntropyBinaryLoss(unittest.TestCase):
                                                            reg_beta=0.1)[0],
             theta, h=1e-8)
         np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
+
+
+class TestPredictBinary(unittest.TestCase):
+    def test_simple(self):
+        # Make sure positive gets +1, negative -1 and zero also gets +1.
+        theta = np.array([[2], [-1]])
+        X = np.array([
+            [7, 3],
+            [2, 4],
+            [-1, 1]])
+        yhat = predict_binary(X, theta)
+        np.testing.assert_equal(yhat, np.array([[1], [1], [-1]]))
 
 
 class TestPredictLogisticProbability(unittest.TestCase):

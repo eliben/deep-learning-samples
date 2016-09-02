@@ -42,6 +42,7 @@ def predict_binary(X, theta):
     Returns yhat (k, 1) - either +1 or -1 classification for each item.
     """
     yhat = X.dot(theta)
+    yhat[yhat == 0] = 1
     return np.sign(yhat)
 
 

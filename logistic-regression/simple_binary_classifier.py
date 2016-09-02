@@ -46,7 +46,7 @@ def generate_data(k, num_neg_outliers=0):
 
 
 def plot_data_scatterplot(X, y, thetas=[]):
-    """Plots data as a scatterplot.
+    """Plots data as a scatterplot, with contour lines for thetas.
 
     X: (k, n) data items.
     y: (k, 1) result (+1 or -1) for each data item in X.
@@ -83,7 +83,7 @@ def plot_data_scatterplot(X, y, thetas=[]):
 
 
 def L01_loss(X, y, theta):
-    """Compute the L0/1 loss for the data X using theta.
+    """Computes the L0/1 loss for the data X using theta.
 
     X: (k, n) k rows of data items, each having n features; augmented.
     y: (k, 1) correct classifications (+1 or -1) for each item.
