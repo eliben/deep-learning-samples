@@ -77,7 +77,9 @@ if __name__ == '__main__':
         # For logistic classification, use cross-entropy loss.
         lossfunc = lambda X, y, theta: cross_entropy_loss_binary(
             X, y, theta, reg_beta=REG_BETA)
-    gi = gradient_descent(X_train_augmented, y_train_binary, lossfunc,
+    gi = gradient_descent(X_train_augmented, y_train_binary,
+                          lossfunc=lossfunc,
+                          batch_size=256,
                           nsteps=args.nsteps, learning_rate=LEARNING_RATE)
 
     for i, (theta, loss) in enumerate(gi):

@@ -139,7 +139,14 @@ def hinge_loss(X, y, theta, reg_beta=0.0):
     return loss.flat[0], dtheta
 
 
-def gradient_descent(X, y, lossfunc=None, nsteps=100, learning_rate=0.1):
+def generate_batch(X, y, batch_size=256):
+    batch_indices = np.random.choice(X.shape[0], batch_size, replace=False)
+    return X[batch_indices, :], y[batch_indices]
+
+
+def gradient_descent(X, y, lossfunc=None, nsteps=100,
+                     batch_size=None,
+                     learning_rate=0.1):
     """Runs gradient descent optimization to minimize loss for X, y.
 
     X: (k, n) data items.
@@ -157,10 +164,21 @@ def gradient_descent(X, y, lossfunc=None, nsteps=100, learning_rate=0.1):
     iteration steps.
     """
     k, n = X.shape
-    theta = np.zeros((n, 1))
-    loss, dtheta = lossfunc(X, y, theta)
+    theta = np.random.randn(n, 1)
+
+    if batch_size is None:
+        loss, dtheta = lossfunc(X, y, theta)
+    else:
+        X_batch, y_batch = generate_batch(X, y, batch_size)
+        loss, dtheta = lossfunc(X_batch, y_batch, theta)
     yield theta, loss
+
     for step in range(nsteps):
         theta -= learning_rate * dtheta
-        loss, dtheta = lossfunc(X, y, theta)
+
+        if batch_size is None:
+            loss, dtheta = lossfunc(X, y, theta)
+        else:
+            X_batch, y_batch = generate_batch(X, y, batch_size)
+            loss, dtheta = lossfunc(X_batch, y_batch, theta)
         yield theta, loss

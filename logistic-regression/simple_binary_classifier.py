@@ -142,7 +142,7 @@ def run_gradient_descent_search(X, y, lossfunc, max_nsteps, learning_rate,
                                 verbose=False):
     """Helper function to run GD search for the given data and loss."""
     gradient_descent_iter = gradient_descent(X, y,
-                                             lossfunc,
+                                             lossfunc=lossfunc,
                                              nsteps=max_nsteps,
                                              learning_rate=learning_rate)
     # Run GD until the changes in loss converge to some small value, or until
