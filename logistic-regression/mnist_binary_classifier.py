@@ -66,8 +66,8 @@ if __name__ == '__main__':
     y_valid_binary = convert_y_to_binary(y_valid, 4)
 
     # Note: if we guess by saying "nothing is 4" we get ~90% accuracy
-    LEARNING_RATE = 0.05
-    REG_BETA=0.01
+    LEARNING_RATE = 0.08
+    REG_BETA=0.02
 
     if args.type == 'binary':
         # For binary classification, use hinge loss.
