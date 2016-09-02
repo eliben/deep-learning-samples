@@ -102,7 +102,7 @@ def search_best_L01_loss(X, y, theta_start=None,
 
     X: (k, n) data items.
     y: (k, 1) result (+1 or -1) for each data item in X.
-    theta_start: (3, 1) theta to start search from -- assuming
+    theta_start: (3, 1) theta to start search from.
     npoints_per_t: number of points to search per dimension of theta.
     tmargin: search within [-tmargin, tmargin] of theta_start.
 
@@ -110,12 +110,11 @@ def search_best_L01_loss(X, y, theta_start=None,
     """
     if theta_start is None:
         theta_start = np.array([[1], [1], [1]])
+    assert theta_start.shape == (3, 1)
 
     k = X.shape[0]
     best_loss = k
     best_theta = theta_start
-
-    assert theta_start.shape == (3, 1)
     t0_range = np.linspace(theta_start[0, 0] + tmargin,
                            theta_start[0, 0] - tmargin,
                            npoints_per_t)
@@ -135,6 +134,25 @@ def search_best_L01_loss(X, y, theta_start=None,
                     best_theta = theta
 
     return best_theta, best_loss
+
+
+def run_gradient_descent_search(X, y, lossfunc, nsteps, learning_rate,
+                                verbose=False):
+    gradient_descent_iter = gradient_descent(X, y,
+                                             lossfunc,
+                                             nsteps=nsteps,
+                                             learning_rate=learning_rate)
+    prev_loss = sys.float_info.max
+    converge_step = 0
+    for i, (theta, loss) in enumerate(gradient_descent_iter):
+        if verbose:
+            print(i, ':', loss)
+        if abs(loss - prev_loss) < 1e-5:
+            converge_step = i
+            break
+        prev_loss = loss
+    print('... loss converged at step {0}'.format(converge_step))
+    return theta
 
 
 if __name__ == '__main__':
@@ -180,44 +198,44 @@ if __name__ == '__main__':
             best_theta, best_loss = search_best_L01_loss(X_train_augmented,
                                                          y_train,
                                                          theta)
+        print('Best theta:\n', best_theta)
+        print('Best loss:', best_loss)
     else:
         best_theta, best_loss = theta, L01_loss(X_train_augmented, y_train,
                                                 theta)
 
-    print('Best theta:\n', best_theta)
-    print('Best loss:', best_loss)
+    # Run GD with square loss.
+    square_nsteps = 5000
+    square_learning_rate = 0.01
+    print('Running GD with square loss for {0} steps, learning_rate={1}'.format(
+        square_nsteps, square_learning_rate))
+    theta_square = run_gradient_descent_search(
+        X_train_augmented,
+        y_train,
+        lossfunc=square_loss,
+        nsteps=square_nsteps,
+        learning_rate=square_learning_rate,
+        verbose=args.verbose_gd)
+    print('Found theta:\n', theta_square)
+    print('0/1 loss:', L01_loss(X_train_augmented, y_train, theta_square))
 
-    if args.losstype == 'square':
-        lossfunc = square_loss
-        nsteps = 500
-        learning_rate = 0.01
-    elif args.losstype == 'hinge':
-        lossfunc = hinge_loss
-        nsteps = 1500
-        learning_rate = 0.05
-    else:
-        raise UnimplementedError(args.losstype)
+    # Run GD with hinge loss.
+    hinge_nsteps = 5000
+    hinge_learning_rate = 0.01
+    print('Running GD with hinge loss for {0} steps, learning_rate={1}'.format(
+        hinge_nsteps, hinge_learning_rate))
+    theta_hinge = run_gradient_descent_search(
+        X_train_augmented,
+        y_train,
+        lossfunc=hinge_loss,
+        nsteps=hinge_nsteps,
+        learning_rate=hinge_learning_rate,
+        verbose=args.verbose_gd)
+    print('Found theta:\n', theta_hinge)
+    print('0/1 loss:', L01_loss(X_train_augmented, y_train, theta_hinge))
 
-    print('Running GD with loss: {0}, for {1} steps, learning_rate={2}'.format
-          (args.losstype, nsteps, learning_rate))
-    gradient_descent_iter = gradient_descent(X_train_augmented, y_train,
-                                             lossfunc,
-                                             nsteps=nsteps,
-                                             learning_rate=learning_rate)
-    prev_loss = sys.float_info.max
-    converge_step = 0
-    for i, (theta, loss) in enumerate(gradient_descent_iter):
-        if args.verbose_gd:
-            print(i, ':', loss)
-        if abs(loss - prev_loss) < 1e-5 and converge_step == 0:
-            converge_step = i
-        prev_loss = loss
-
-    print('... loss converged at step {0}'.format(converge_step))
-    print(theta)
-    print(L01_loss(X_train_augmented, y_train, theta))
     if args.plot:
-        print(best_theta)
-        print(theta)
         plot_data_scatterplot(X_train, y_train,
-                              [(best_theta, 'L01'), (theta, args.losstype)])
+                              [(best_theta, '$L_{01}$'),
+                               (theta_square, '$L_2$'),
+                               (theta_hinge, '$L_h$')])
