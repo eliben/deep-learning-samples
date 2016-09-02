@@ -63,6 +63,7 @@ def plot_data_scatterplot(X, y, thetas=[]):
     ax.scatter(*zip(*pos), c='darkgreen', marker='x')
     ax.scatter(*zip(*neg), c='red', marker='o', linewidths=0)
 
+    colors = iter(('blue', 'purple', 'black'))
     contours = []
     for theta, _ in thetas:
         xs = np.linspace(-2, 6, 200)
@@ -73,7 +74,8 @@ def plot_data_scatterplot(X, y, thetas=[]):
             for j in range(xsgrid.shape[1]):
                 plane[i, j] = np.array([1, xsgrid[i, j], ysgrid[i, j]]).dot(
                     theta)
-        contours.append(ax.contour(xsgrid, ysgrid, plane, c='red', levels=[0]))
+        contours.append(ax.contour(xsgrid, ysgrid, plane,
+                                   colors=colors.next(), levels=[0]))
 
     plt.legend([cs.collections[0] for cs in contours],
                [label for theta, label in thetas])
