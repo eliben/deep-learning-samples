@@ -58,7 +58,7 @@ def get_mnist_data():
 
 
 def display_mnist_image(x, y=None):
-    """Displays a single mnist image.
+    """Displays a single mnist image with a label.
 
     x: (784,) image vector, as stored in the mnist pickle.
     y: optional numeric label
@@ -70,6 +70,17 @@ def display_mnist_image(x, y=None):
     plt.show()
 
 
+def display_multiple_images(xs):
+    """Displays multiple images side-by-side in subplots."""
+    fig = plt.figure()
+    fig.set_tight_layout(True)
+
+    for i, x in enumerate(xs):
+        ax = fig.add_subplot(1, len(xs), i + 1)
+        ax.imshow(x.reshape(28, 28), cmap='gray')
+    plt.show()
+
+
 if __name__ == '__main__':
     train, valid, test = get_mnist_data()
 
@@ -77,4 +88,9 @@ if __name__ == '__main__':
     print('Valid shapes:', valid[0].shape, valid[1].shape)
     print('Test shapes:', test[0].shape, test[1].shape)
 
-    display_mnist_image(train[0][20], train[1][20])
+    #display_mnist_image(train[0][20], train[1][20])
+
+    display_multiple_images((train[0][9974],
+                             train[0][9734],
+                             train[0][9161],
+                             train[0][8788]))
