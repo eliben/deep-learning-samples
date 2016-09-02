@@ -77,8 +77,10 @@ def plot_data_scatterplot(X, y, thetas=[]):
         contours.append(ax.contour(xsgrid, ysgrid, plane,
                                    colors=colors.next(), levels=[0]))
 
-    plt.legend([cs.collections[0] for cs in contours],
-               [label for theta, label in thetas])
+    if thetas:
+        plt.legend([cs.collections[0] for cs in contours],
+                   [label for theta, label in thetas])
+    fig.savefig('binary.png', dpi=80)
     plt.show()
 
 
