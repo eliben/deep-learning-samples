@@ -136,12 +136,15 @@ def search_best_L01_loss(X, y, theta_start=None,
     return best_theta, best_loss
 
 
-def run_gradient_descent_search(X, y, lossfunc, nsteps, learning_rate,
+def run_gradient_descent_search(X, y, lossfunc, max_nsteps, learning_rate,
                                 verbose=False):
+    """Helper function to run GD search for the given data and loss."""
     gradient_descent_iter = gradient_descent(X, y,
                                              lossfunc,
-                                             nsteps=nsteps,
+                                             nsteps=max_nsteps,
                                              learning_rate=learning_rate)
+    # Run GD until the changes in loss converge to some small value, or until
+    # max_nstepsis reached.
     prev_loss = sys.float_info.max
     converge_step = 0
     for i, (theta, loss) in enumerate(gradient_descent_iter):
@@ -163,11 +166,6 @@ if __name__ == '__main__':
                            help='Run combinatorial search for best L0/1 loss')
     argparser.add_argument('--verbose-gd', action='store_true', default=False,
                            help='Verbose output from gradient-descent search')
-    argparser.add_argument('--losstype',
-                           choices=['square', 'hinge'],
-                           default='square',
-                           help='Type of loss function to use in gradient '
-                                'descent')
 
     args = argparser.parse_args()
 
@@ -213,7 +211,7 @@ if __name__ == '__main__':
         X_train_augmented,
         y_train,
         lossfunc=square_loss,
-        nsteps=square_nsteps,
+        max_nsteps=square_nsteps,
         learning_rate=square_learning_rate,
         verbose=args.verbose_gd)
     print('Found theta:\n', theta_square)
@@ -228,7 +226,7 @@ if __name__ == '__main__':
         X_train_augmented,
         y_train,
         lossfunc=hinge_loss,
-        nsteps=hinge_nsteps,
+        max_nsteps=hinge_nsteps,
         learning_rate=hinge_learning_rate,
         verbose=args.verbose_gd)
     print('Found theta:\n', theta_hinge)
