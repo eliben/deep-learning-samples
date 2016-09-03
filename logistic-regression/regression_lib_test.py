@@ -4,7 +4,7 @@ import unittest
 
 from regression_lib import (
     hinge_loss, square_loss, predict_logistic_probability, predict_binary,
-    cross_entropy_loss_binary, generate_batch)
+    cross_entropy_loss_binary, generate_batch, gradient_descent)
 
 
 def hinge_loss_simple(X, y, theta, reg_beta=0.0):
@@ -346,6 +346,33 @@ class TestGenerateBatch(unittest.TestCase):
             self.assertEqual(len(set(ybt)), len(ybt))
             for row in ybt:
                 self.assertIn(row, yt)
+
+
+class TestGradientDescent(unittest.TestCase):
+    def test_applies_dtheta(self):
+        # Tests that gradient_descent applies dtheta to an internal theta as
+        # expected
+        k, n = 40, 3
+        dtheta = np.arange(1, n + 1).reshape(-1, 1)
+        learning_rate = 0.1
+        def lossfunc(X, y, theta):
+            return 0, dtheta
+
+        gi = gradient_descent(
+                X=np.ones((k, n)),
+                y=np.ones((k, 1)),
+                lossfunc=lossfunc,
+                nsteps=10,
+                learning_rate=learning_rate)
+
+        # Take note of initial theta: copy it since it's modified inside
+        # gradient_descent.
+        init_theta, _ = gi.next()
+        init_theta = init_theta.copy()
+
+        for i, (theta, _) in enumerate(gi, 1):
+            expected = init_theta - i * learning_rate * dtheta
+            np.testing.assert_allclose(expected, theta)
 
 
 if __name__ == '__main__':
