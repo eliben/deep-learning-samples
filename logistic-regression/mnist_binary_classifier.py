@@ -42,28 +42,34 @@ if __name__ == '__main__':
     argparser.add_argument('--display', default=-1, type=int,
                            help='Display this image from the validation data '
                                 'set and exit')
+    argparser.add_argument('--normalize', action='store_true', default=False,
+                           help='Normalize data: (x-mu)/sigma.')
     args = argparser.parse_args()
 
     train, valid, test = get_mnist_data()
     X_train, y_train = train
     X_valid, y_valid = valid
+    X_test, y_test = test
 
     if args.display > -1:
         display_mnist_image(X_valid[args.display], y_valid[args.display])
         sys.exit(1)
 
-    # Normalization here create NaNs: there may be some columns that are always
-    # 0 in the image? This isn't really necessary since MNIST data is mostly
-    # normalized.
-    #X_train_normalized, mu, sigma = feature_normalize(X_train)
-    #X_train_normalized = X_train
-    X_train_augmented = augment_1s_column(X_train)
-    X_valid_augmented = augment_1s_column(X_valid)
+    if args.normalize:
+        X_train_normalized, mu, sigma = feature_normalize(X_train)
+        X_train_augmented = augment_1s_column(X_train_normalized)
+        X_valid_augmented = augment_1s_column((X_valid - mu) / sigma)
+        X_test_augmented = augment_1s_column((X_test - mu) / sigma)
+    else:
+        X_train_augmented = augment_1s_column(X_train)
+        X_valid_augmented = augment_1s_column(X_valid)
+        X_test_augmented = augment_1s_column(X_test)
 
     # Convert y_train to binary "is this a 4", with +1 for a 4, -1 otherwise.
     # Also reshape it into a column vector as regression_lib expects.
     y_train_binary = convert_y_to_binary(y_train, 4)
     y_valid_binary = convert_y_to_binary(y_valid, 4)
+    y_test_binary = convert_y_to_binary(y_test, 4)
 
     # Note: if we guess by saying "nothing is 4" we get ~90% accuracy
     LEARNING_RATE = 0.08
@@ -83,26 +89,29 @@ if __name__ == '__main__':
                           nsteps=args.nsteps, learning_rate=LEARNING_RATE)
 
     for i, (theta, loss) in enumerate(gi):
-        if i % 10 == 0 and i > 0:
+        if i % 50 == 0 and i > 0:
+            print(i, loss)
             yhat = predict_binary(X_train_augmented, theta)
             print('train accuracy =', np.mean(yhat == y_train_binary))
 
             yhat_valid = predict_binary(X_valid_augmented, theta)
             print('valid accuracy =', np.mean(yhat_valid == y_valid_binary))
 
-        print(i, loss)
-
     print('After {0} training steps...'.format(args.nsteps))
+    print('loss =', loss)
     yhat_valid = predict_binary(X_valid_augmented, theta)
     if args.type == 'logistic':
         yhat_prob = predict_logistic_probability(X_valid_augmented, theta)
     print('valid accuracy =', np.mean(yhat_valid == y_valid_binary))
 
-    for i in range(yhat_valid.size):
-        if yhat_valid[i][0] != y_valid_binary[i][0]:
-            print('@ {0}: predict {1}, actual {2}'.format(
-                i, yhat_valid[i][0], y_valid_binary[i][0]), end='')
-            if args.type == 'logistic':
-                print('; prob={0}'.format(yhat_prob[i][0]))
-            else:
-                print('')
+    yhat_test = predict_binary(X_test_augmented, theta)
+    print('test accuracy =', np.mean(yhat_test == y_test_binary))
+
+    #for i in range(yhat_valid.size):
+        #if yhat_valid[i][0] != y_valid_binary[i][0]:
+            #print('@ {0}: predict {1}, actual {2}'.format(
+                #i, yhat_valid[i][0], y_valid_binary[i][0]), end='')
+            #if args.type == 'logistic':
+                #print('; prob={0}'.format(yhat_prob[i][0]))
+            #else:
+                #print('')

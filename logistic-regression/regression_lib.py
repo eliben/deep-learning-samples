@@ -20,8 +20,12 @@ def feature_normalize(X):
 
     Given a feature matrix X, where each row is a vector of features, normalizes
     each feature. Returns (X_norm, mu, sigma) where mu and sigma are the mean
-    and stddev of features (vectors). Where stddev is zero for a feature, it's
-    clamped to one.
+    and stddev of features (vectors).
+
+    Where stddev is zero for a feature, it's clamped to one. In X that means
+    all items had the same value for the feature. For normalizing other data,
+    sigma=1 means the feature remains its value with mean subtracted, and no
+    scaling.
     """
     num_features = X.shape[1]
     mu = X.mean(axis=0)
