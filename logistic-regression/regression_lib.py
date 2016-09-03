@@ -20,11 +20,13 @@ def feature_normalize(X):
 
     Given a feature matrix X, where each row is a vector of features, normalizes
     each feature. Returns (X_norm, mu, sigma) where mu and sigma are the mean
-    and stddev of features (vectors).
+    and stddev of features (vectors). Where stddev is zero for a feature, it's
+    clamped to one.
     """
     num_features = X.shape[1]
     mu = X.mean(axis=0)
     sigma = X.std(axis=0)
+    sigma[sigma == 0] = 1
     X_norm = (X - mu) / sigma
     return X_norm, mu, sigma
 

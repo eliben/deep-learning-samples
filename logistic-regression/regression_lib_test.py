@@ -4,7 +4,8 @@ import unittest
 
 from regression_lib import (
     hinge_loss, square_loss, predict_logistic_probability, predict_binary,
-    cross_entropy_loss_binary, generate_batch, gradient_descent)
+    cross_entropy_loss_binary, generate_batch, gradient_descent,
+    feature_normalize)
 
 
 def hinge_loss_simple(X, y, theta, reg_beta=0.0):
@@ -373,6 +374,30 @@ class TestGradientDescent(unittest.TestCase):
         for i, (theta, _) in enumerate(gi, 1):
             expected = init_theta - i * learning_rate * dtheta
             np.testing.assert_allclose(expected, theta)
+
+
+class TestFeatureNormalize(unittest.TestCase):
+    def test_simple(self):
+        X = np.array([
+            [3, 6],
+            [5, 14]])
+
+        X_norm, mu, sigma = feature_normalize(X)
+        np.testing.assert_equal(mu, np.array([4, 10]))
+        np.testing.assert_equal(sigma, np.array([1, 4]))
+        np.testing.assert_equal(X_norm, np.array([[-1, -1], [1, 1]]))
+
+    def test_with_nans(self):
+        # stddev of second feature is 0, so we'd get nan's if feature_normalize
+        # wasn't fixing them.
+        X = np.array([
+            [3, 6],
+            [5, 6]])
+        X_norm, mu, sigma = feature_normalize(X)
+        #print(feature_normalize(X))
+        np.testing.assert_equal(mu, np.array([4, 6]))
+        np.testing.assert_equal(sigma, np.array([1, 1]))
+        np.testing.assert_equal(X_norm, np.array([[-1, 0], [1, 0]]))
 
 
 if __name__ == '__main__':
