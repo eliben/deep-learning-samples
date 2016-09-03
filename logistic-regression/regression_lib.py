@@ -140,6 +140,13 @@ def hinge_loss(X, y, theta, reg_beta=0.0):
 
 
 def generate_batch(X, y, batch_size=256):
+    """Generate a randomized batch from X, y.
+
+    X (k, n), y (k, 1): as usual.
+    batch_size: size of the batch to create.
+
+    Returns X_batch (batch_size, n), y_batch (batch_size, 1) pair.
+    """
     batch_indices = np.random.choice(X.shape[0], batch_size, replace=False)
     return X[batch_indices, :], y[batch_indices]
 

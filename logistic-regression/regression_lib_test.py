@@ -4,7 +4,7 @@ import unittest
 
 from regression_lib import (
     hinge_loss, square_loss, predict_logistic_probability, predict_binary,
-    cross_entropy_loss_binary)
+    cross_entropy_loss_binary, generate_batch)
 
 
 def hinge_loss_simple(X, y, theta, reg_beta=0.0):
@@ -312,6 +312,40 @@ class TestPredictLogisticProbability(unittest.TestCase):
         theta = np.array([[-2], [1]])
         p = predict_logistic_probability(X, theta)
         np.testing.assert_allclose(p, np.full(p.shape, 0.5))
+
+
+def tuplize_2d_array(arr):
+    """Returns a list of tuples, each tuple being one row of arr."""
+    return [tuple(row) for row in arr]
+
+
+class TestGenerateBatch(unittest.TestCase):
+    def test_simple(self):
+        X = np.array([
+            [10.0, 20.0],
+            [12.0, 22.0],
+            [13.0, 24.0],
+            [20.0, 40.0],
+            [40.0, 80.0]])
+        y = np.array([[3], [4], [5], [9], [10]])
+
+        Xt = tuplize_2d_array(X)
+        yt = tuplize_2d_array(y)
+
+        for _ in range(10):
+            X_batch, y_batch = generate_batch(X, y, batch_size=3)
+            Xbt = tuplize_2d_array(X_batch)
+            ybt = tuplize_2d_array(yt)
+
+            # Make sure the items in Xbt are unique and each comes from Xt.
+            self.assertEqual(len(set(Xbt)), len(Xbt))
+            for row in Xbt:
+                self.assertIn(row, Xt)
+
+            # ... same for yt.
+            self.assertEqual(len(set(ybt)), len(ybt))
+            for row in ybt:
+                self.assertIn(row, yt)
 
 
 if __name__ == '__main__':
