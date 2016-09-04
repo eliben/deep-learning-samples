@@ -16,7 +16,7 @@ if __name__ == '__main__':
     x = np.linspace(-6, 6, 200)
     y = sigmoid(x)
 
-    ax.plot(x, y, 'k-', linewidth=2)
+    ax.plot(x, y, 'b-', linewidth=2)
     ax.grid(True)
 
     fig.savefig('sigmoid.png', dpi=80)

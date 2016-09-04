@@ -91,7 +91,7 @@ def cross_entropy_loss_binary(X, y, theta, reg_beta=0.0):
 
     yh = np.where(y == 1, yhat_prob - 1, yhat_prob)
     dtheta = np.dot(yh.T, X).T / k + reg_beta * theta
-    return loss, dtheta
+    return loss.flat[0], dtheta
 
 
 # See the docstring of gradient_descent for the description of the signature of

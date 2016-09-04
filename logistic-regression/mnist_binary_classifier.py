@@ -39,11 +39,14 @@ if __name__ == '__main__':
                                 'or logistic (probability of "yes" result)')
     argparser.add_argument('--nsteps', default=150, type=int,
                            help='Number of steps for gradient descent')
-    argparser.add_argument('--display', default=-1, type=int,
-                           help='Display this image from the validation data '
+    argparser.add_argument('--display-test', default=-1, type=int,
+                           help='Display this image from the test data '
                                 'set and exit')
     argparser.add_argument('--normalize', action='store_true', default=False,
                            help='Normalize data: (x-mu)/sigma.')
+    argparser.add_argument('--report-mistakes', action='store_true',
+                           default=False,
+                           help='Report all mistakes made in classification')
     args = argparser.parse_args()
 
     train, valid, test = get_mnist_data()
@@ -51,8 +54,9 @@ if __name__ == '__main__':
     X_valid, y_valid = valid
     X_test, y_test = test
 
-    if args.display > -1:
-        display_mnist_image(X_valid[args.display], y_valid[args.display])
+    if args.display_test > -1:
+        display_mnist_image(X_valid[args.display_test],
+                            y_valid[args.display_test])
         sys.exit(1)
 
     if args.normalize:
@@ -83,7 +87,8 @@ if __name__ == '__main__':
         # For logistic classification, use cross-entropy loss.
         lossfunc = lambda X, y, theta: cross_entropy_loss_binary(
             X, y, theta, reg_beta=REG_BETA)
-    gi = gradient_descent(X_train_augmented, y_train_binary,
+    gi = gradient_descent(X_train_augmented,
+                          y_train_binary,
                           lossfunc=lossfunc,
                           batch_size=256,
                           nsteps=args.nsteps, learning_rate=LEARNING_RATE)
@@ -91,27 +96,31 @@ if __name__ == '__main__':
     for i, (theta, loss) in enumerate(gi):
         if i % 50 == 0 and i > 0:
             print(i, loss)
+            # We use predict_binary for both binary and logistic classification.
+            # See comment on predict_binary to understand why it works for
+            # logistic as well.
             yhat = predict_binary(X_train_augmented, theta)
-            print('train accuracy =', np.mean(yhat == y_train_binary))
-
             yhat_valid = predict_binary(X_valid_augmented, theta)
+
+            print('train accuracy =', np.mean(yhat == y_train_binary))
             print('valid accuracy =', np.mean(yhat_valid == y_valid_binary))
 
     print('After {0} training steps...'.format(args.nsteps))
     print('loss =', loss)
     yhat_valid = predict_binary(X_valid_augmented, theta)
-    if args.type == 'logistic':
-        yhat_prob = predict_logistic_probability(X_valid_augmented, theta)
-    print('valid accuracy =', np.mean(yhat_valid == y_valid_binary))
-
     yhat_test = predict_binary(X_test_augmented, theta)
+
+    if args.type == 'logistic':
+        yhat_test_prob = predict_logistic_probability(X_test_augmented, theta)
+    print('valid accuracy =', np.mean(yhat_valid == y_valid_binary))
     print('test accuracy =', np.mean(yhat_test == y_test_binary))
 
-    #for i in range(yhat_valid.size):
-        #if yhat_valid[i][0] != y_valid_binary[i][0]:
-            #print('@ {0}: predict {1}, actual {2}'.format(
-                #i, yhat_valid[i][0], y_valid_binary[i][0]), end='')
-            #if args.type == 'logistic':
-                #print('; prob={0}'.format(yhat_prob[i][0]))
-            #else:
-                #print('')
+    if args.report_mistakes:
+        for i in range(yhat_test.size):
+            if yhat_test[i][0] != y_test_binary[i][0]:
+                print('@ {0}: predict {1}, actual {2}'.format(
+                    i, yhat_test[i][0], y_test_binary[i][0]), end='')
+                if args.type == 'logistic':
+                    print('; prob={0}'.format(yhat_test_prob[i][0]))
+                else:
+                    print('')
