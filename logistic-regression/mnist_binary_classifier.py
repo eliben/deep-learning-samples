@@ -55,8 +55,8 @@ if __name__ == '__main__':
     X_test, y_test = test
 
     if args.display_test > -1:
-        display_mnist_image(X_valid[args.display_test],
-                            y_valid[args.display_test])
+        display_mnist_image(X_test[args.display_test],
+                            y_test[args.display_test])
         sys.exit(1)
 
     if args.normalize:
@@ -109,11 +109,12 @@ if __name__ == '__main__':
     print('loss =', loss)
     yhat_valid = predict_binary(X_valid_augmented, theta)
     yhat_test = predict_binary(X_test_augmented, theta)
-
-    if args.type == 'logistic':
-        yhat_test_prob = predict_logistic_probability(X_test_augmented, theta)
     print('valid accuracy =', np.mean(yhat_valid == y_valid_binary))
     print('test accuracy =', np.mean(yhat_test == y_test_binary))
+
+    # For logistic, get predicted probabilities as well.
+    if args.type == 'logistic':
+        yhat_test_prob = predict_logistic_probability(X_test_augmented, theta)
 
     if args.report_mistakes:
         for i in range(yhat_test.size):
