@@ -7,7 +7,6 @@
 # This code is in the public domain
 from __future__ import print_function
 import argparse
-import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
@@ -22,6 +21,8 @@ if __name__ == '__main__':
                            default='logistic',
                            help='Type of classification: binary (yes/no result)'
                                 'or logistic (probability of "yes" result).')
+    argparser.add_argument('--set-seed', default=-1, type=int,
+                           help='Set random seed to this number (if > 0).')
     argparser.add_argument('--nsteps', default=150, type=int,
                            help='Number of steps for gradient descent.')
     argparser.add_argument('--recognize-digit', default=4, type=int,
@@ -35,6 +36,9 @@ if __name__ == '__main__':
                            default=False,
                            help='Report all mistakes made in classification.')
     args = argparser.parse_args()
+
+    if args.set_seed > 0:
+        np.random.seed(args.set_seed)
 
     (X_train, y_train), (X_valid, y_valid), (X_test, y_test) = get_mnist_data()
 

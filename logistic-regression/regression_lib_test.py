@@ -199,6 +199,16 @@ class TestCrossEntropyBinaryLoss(unittest.TestCase):
         self.assertAlmostEqual(loss_vec, loss_simple)
         np.testing.assert_allclose(dtheta_vec, dtheta_simple)
 
+    def test_xent_no_inf(self):
+        X = np.array([[100, 200, 300]])
+        theta = np.array([
+            [1.0],
+            [1.1],
+            [1.2]])
+        y = np.array([[1]])
+        loss, grad = cross_entropy_loss_binary(X, y, theta)
+        self.assertGreater(loss, 0.0)
+
     def test_xent_loss_oneitem(self):
         X = np.array([[0.1, 0.2, -0.3]])
         theta = np.array([

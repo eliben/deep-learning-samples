@@ -62,7 +62,13 @@ def sigmoid(z):
 
     Returns array of outputs, sigmoid(z).
     """
-    return 1 / (1 + np.exp(-z))
+    # Note: this version of sigmoid tries to avoid overflows in the computation
+    # of e^(-z), by using an alternative formulation when z is negative, to get
+    # 0. e^z / (1+e^z) is equivalent to the definition of sigmoid, but we won't
+    # get e^(-z) to overflow when z is very negative.
+    return np.where(z >= 0,
+                    1 / (1 + np.exp(-z)),
+                    np.exp(z) / (1 + np.exp(z)))
 
 
 def predict_logistic_probability(X, theta):
@@ -72,17 +78,27 @@ def predict_logistic_probability(X, theta):
     theta: (n, 1) logistic regression parameters.
 
     Computes the logistic regression prediction. Returns yhat (k, 1) - number
-    in the range [0.0, 1.0) for each item. The number is the probability that
+    in the range (0.0, 1.0) for each item. The number is the probability that
     the item is classified as +1.
     """
     z = X.dot(theta)
     return sigmoid(z)
+    return sz
 
 
 def cross_entropy_loss_binary(X, y, theta, reg_beta=0.0):
     """Computes the cross-entropy loss for binary classification."""
     k, n = X.shape
-    yhat_prob = predict_logistic_probability(X, theta)
+    # Calls to predict_logistic_probability may produce probabilities that are
+    # 0.0 and 1.0, due to the exponent in sigmoid and the large numbers
+    # involved. np.log on 0.0 overflows, so we clip the input of np.log to
+    # values very close to 0 instead.
+    eps = np.finfo(np.float32).eps
+    yhat_prob = np.clip(predict_logistic_probability(X, theta),
+            #a_min=0, a_max=1)
+                        a_min=eps,
+                        a_max=1.0-eps)
+    print(yhat_prob)
     loss = np.mean(np.where(y == 1,
                             -np.log(yhat_prob),
                             -np.log(1 - yhat_prob)))
