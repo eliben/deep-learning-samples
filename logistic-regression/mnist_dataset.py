@@ -41,9 +41,8 @@ def load_pickle_from_gz(filename):
 def get_mnist_data():
     """Get data sets for MNIST.
 
-    If needed, downloads the data as a pickled .gz archive; This is my mirror of
-    the archive originally taken from
-    http://deeplearning.net/tutorial/gettingstarted.html
+    If needed, downloads the data as a pickled .gz archive; Taken from my mirror
+    of the archive at http://deeplearning.net/tutorial/gettingstarted.html.
 
     The pickle contains 3 sets in a tuple: training, validation and test data
     sets. Each data set is a pair of numpy arrays: data (N x 784) and numeric

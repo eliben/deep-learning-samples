@@ -36,23 +36,22 @@ if __name__ == '__main__':
                            choices=['binary', 'logistic'],
                            default='logistic',
                            help='Type of classification: binary (yes/no result)'
-                                'or logistic (probability of "yes" result)')
+                                'or logistic (probability of "yes" result).')
     argparser.add_argument('--nsteps', default=150, type=int,
-                           help='Number of steps for gradient descent')
+                           help='Number of steps for gradient descent.')
+    argparser.add_argument('--recognize-digit', default=4, type=int,
+                           help='Digit to recognize in training.')
     argparser.add_argument('--display-test', default=-1, type=int,
                            help='Display this image from the test data '
-                                'set and exit')
+                                'set and exit.')
     argparser.add_argument('--normalize', action='store_true', default=False,
                            help='Normalize data: (x-mu)/sigma.')
     argparser.add_argument('--report-mistakes', action='store_true',
                            default=False,
-                           help='Report all mistakes made in classification')
+                           help='Report all mistakes made in classification.')
     args = argparser.parse_args()
 
-    train, valid, test = get_mnist_data()
-    X_train, y_train = train
-    X_valid, y_valid = valid
-    X_test, y_test = test
+    (X_train, y_train), (X_valid, y_valid), (X_test, y_test) = get_mnist_data()
 
     if args.display_test > -1:
         display_mnist_image(X_test[args.display_test],
@@ -60,6 +59,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if args.normalize:
+        print('Normalizing data...')
         X_train_normalized, mu, sigma = feature_normalize(X_train)
         X_train_augmented = augment_1s_column(X_train_normalized)
         X_valid_augmented = augment_1s_column((X_valid - mu) / sigma)
@@ -69,13 +69,15 @@ if __name__ == '__main__':
         X_valid_augmented = augment_1s_column(X_valid)
         X_test_augmented = augment_1s_column(X_test)
 
-    # Convert y_train to binary "is this a 4", with +1 for a 4, -1 otherwise.
-    # Also reshape it into a column vector as regression_lib expects.
-    y_train_binary = convert_y_to_binary(y_train, 4)
-    y_valid_binary = convert_y_to_binary(y_valid, 4)
-    y_test_binary = convert_y_to_binary(y_test, 4)
+    # Convert y_train to binary "is this a the digit D", with +1 for a 4, -1
+    # otherwise. Also reshape it into a column vector as regression_lib expects.
+    D = args.recognize_digit
+    print('Training for digit', D)
+    y_train_binary = convert_y_to_binary(y_train, D)
+    y_valid_binary = convert_y_to_binary(y_valid, D)
+    y_test_binary = convert_y_to_binary(y_test, D)
 
-    # Note: if we guess by saying "nothing is 4" we get ~90% accuracy
+    # Hyperparameters.
     LEARNING_RATE = 0.08
     REG_BETA=0.02
 
@@ -91,7 +93,8 @@ if __name__ == '__main__':
                           y_train_binary,
                           lossfunc=lossfunc,
                           batch_size=256,
-                          nsteps=args.nsteps, learning_rate=LEARNING_RATE)
+                          nsteps=args.nsteps,
+                          learning_rate=LEARNING_RATE)
 
     for i, (theta, loss) in enumerate(gi):
         if i % 50 == 0 and i > 0:
@@ -101,7 +104,6 @@ if __name__ == '__main__':
             # logistic as well.
             yhat = predict_binary(X_train_augmented, theta)
             yhat_valid = predict_binary(X_valid_augmented, theta)
-
             print('train accuracy =', np.mean(yhat == y_train_binary))
             print('valid accuracy =', np.mean(yhat_valid == y_valid_binary))
 
