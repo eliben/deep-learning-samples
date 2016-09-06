@@ -80,6 +80,20 @@ def display_multiple_images(xs):
     plt.show()
 
 
+def convert_y_to_binary(y, correct_digit):
+    """Converts a vector y taken from MNIST data to binary "is it this digit".
+
+    y: array of digits.
+    correct_digit: the digit we expect to be "correct"
+
+    Returns array of +1 or -1; +1 where the original y had the "correct" digit,
+    and -1 otherwise. The returned array is always a column vector.
+    """
+    return np.where(y == correct_digit,
+                    np.ones_like(y),
+                    -1 * np.ones_like(y)).reshape(y.size, 1)
+
+
 if __name__ == '__main__':
     train, valid, test = get_mnist_data()
 
