@@ -1,4 +1,4 @@
-# Helper code for downloading and unpickling MNIST data.
+# Helper code for downloading, unpickling and displaying MNIST data.
 #
 # Eli Bendersky (http://eli.thegreenplace.net)
 # This code is in the public domain

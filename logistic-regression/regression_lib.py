@@ -157,7 +157,9 @@ def generate_batch(X, y, batch_size=256):
     return X[batch_indices, :], y[batch_indices]
 
 
-def gradient_descent(X, y, lossfunc=None, nsteps=100,
+def gradient_descent(X, y,
+                     lossfunc=None,
+                     nsteps=100,
                      batch_size=None,
                      learning_rate=0.1):
     """Runs gradient descent optimization to minimize loss for X, y.
@@ -170,6 +172,9 @@ def gradient_descent(X, y, lossfunc=None, nsteps=100,
         Returns (loss, dtheta) where loss is the numeric loss for this theta,
         and dtheta is (n, 1) gradients for theta based on that loss.
     nsteps: how many steps to run.
+    batch_size:
+        if None, the whole data set is used for every step. If a number,
+        batches of batch_size randomly-selected data items are used.
     learning_rate: learning rate update (multiplier of gradient).
 
     Yields 'nsteps + 1' pairs of (theta, loss). The first pair yielded is the
