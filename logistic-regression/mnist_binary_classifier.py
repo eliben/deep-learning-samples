@@ -82,11 +82,11 @@ if __name__ == '__main__':
     REG_BETA=0.02
 
     if args.type == 'binary':
-        # For binary classification, use hinge loss.
+        print('Training binary classifier with hinge loss...')
         lossfunc = lambda X, y, theta: hinge_loss(X, y,
                                                   theta, reg_beta=REG_BETA)
     else:
-        # For logistic classification, use cross-entropy loss.
+        print('Training logistic classifier with cross-entropy loss...')
         lossfunc = lambda X, y, theta: cross_entropy_loss_binary(
             X, y, theta, reg_beta=REG_BETA)
     gi = gradient_descent(X_train_augmented,
