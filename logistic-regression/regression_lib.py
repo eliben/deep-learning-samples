@@ -95,10 +95,8 @@ def cross_entropy_loss_binary(X, y, theta, reg_beta=0.0):
     # values very close to 0 instead.
     eps = np.finfo(np.float32).eps
     yhat_prob = np.clip(predict_logistic_probability(X, theta),
-            #a_min=0, a_max=1)
                         a_min=eps,
                         a_max=1.0-eps)
-    print(yhat_prob)
     loss = np.mean(np.where(y == 1,
                             -np.log(yhat_prob),
                             -np.log(1 - yhat_prob)))
