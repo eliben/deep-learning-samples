@@ -81,6 +81,7 @@ if __name__ == '__main__':
         with open(args.save_thetas, 'wb') as f:
             pickle.dump(thetas, f)
 
+    # TODO: report prediction accuracy comparing to actual y_test
     probs = [predict_logistic_probability(X_test_augmented, theta)
              for theta in thetas]
     print([p.shape for p in probs])
