@@ -82,9 +82,22 @@ if __name__ == '__main__':
             pickle.dump(thetas, f)
 
     # TODO: report prediction accuracy comparing to actual y_test
+    # may be useful to slap all predictions together into ndarray to use
+    # argmax
+    # Compute probabiliites for every digit and stack them into a (k, 10) matrix
+    # where allprobs[i, j] is the predicted probability for test sample i being
+    # the digit j. Note that these probabilities come from different classifiers
+    # so they don't add up to 1.
     probs = [predict_logistic_probability(X_test_augmented, theta)
              for theta in thetas]
-    print([p.shape for p in probs])
+    allprobs = np.hstack(probs)
+    print(allprobs.shape)
+
+    predictions = np.argmax(allprobs, axis=1)
+    print(predictions.shape)
+    print(y_test.shape)
+
+    print('test accuracy =', np.mean(predictions == y_test))
     for i in range(50):
-        print('real={0}'.format(y_test[i]))
-        print('probs={0}'.format(' '.join(str(p[i, 0]) for p in probs)))
+        print('{0}: real={1} pred={2}'.format(i, y_test[i], predictions[i]))
+        print('  probs=', ' '.join('{0:.2f}'.format(p) for p in allprobs[i, :]))
