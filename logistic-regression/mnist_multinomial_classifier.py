@@ -36,6 +36,13 @@ if __name__ == '__main__':
                            help='Number of steps for gradient descent.')
     argparser.add_argument('--set-seed', default=-1, type=int,
                            help='Set random seed to this number (if > 0).')
+    argparser.add_argument('--load-thetas', type=str,
+                           metavar='filename',
+                           help='Load trained thetas from this pickle file '
+                                'instead of training.')
+    argparser.add_argument('--save-thetas', type=str,
+                           metavar='filename',
+                           help='Save trained thetas to this pickle file.')
     args = argparser.parse_args()
 
     if args.set_seed > 0:
@@ -54,13 +61,25 @@ if __name__ == '__main__':
         X_valid_augmented = augment_1s_column(X_valid)
         X_test_augmented = augment_1s_column(X_test)
 
-    thetas = []
-    for digit in range(2):
-        print('Training for digit {0}...'.format(digit))
-        thetas.append(train_for_digit(X_train_augmented,
-                                      y_train,
-                                      digit=digit,
-                                      nsteps=args.nsteps))
+    if args.load_thetas:
+        print('Loading thetas from "{0}"'.format(args.load_thetas))
+        with open(args.load_thetas, 'rb') as f:
+            thetas = pickle.load(f)
+    else:
+        # Train a logistic classifier for every image [0..9]; thetas[n] will
+        # hold the regression parameters for recognizing digit n.
+        thetas = []
+        for digit in range(10):
+            print('Training for digit {0}...'.format(digit))
+            thetas.append(train_for_digit(X_train_augmented,
+                                          y_train,
+                                          digit=digit,
+                                          nsteps=args.nsteps))
+
+    if args.save_thetas:
+        print('Saving thetas to "{0}"'.format(args.save_thetas))
+        with open(args.save_thetas, 'wb') as f:
+            pickle.dump(thetas, f)
 
     probs = [predict_logistic_probability(X_test_augmented, theta)
              for theta in thetas]
