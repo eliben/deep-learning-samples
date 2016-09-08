@@ -83,7 +83,6 @@ def predict_logistic_probability(X, theta):
     """
     z = X.dot(theta)
     return sigmoid(z)
-    return sz
 
 
 def cross_entropy_loss_binary(X, y, theta, reg_beta=0.0):
