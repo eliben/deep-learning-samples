@@ -199,21 +199,6 @@ class TestCrossEntropyBinaryLoss(unittest.TestCase):
         self.assertAlmostEqual(loss_vec, loss_simple)
         np.testing.assert_allclose(dtheta_vec, dtheta_simple)
 
-    #def test_xent_no_overflow_from_1(self):
-        #X = np.array([[100, 200, 300]])
-        #theta = np.array([
-            #[1.0],
-            #[1.1],
-            #[1.2]])
-        #y = np.array([[1]])
-        ## Due to the large values in X, sigmoid(X.dot(theta)) would be exactly
-        ## 1.0, which causes the np.log(1-yhat_prob) computation inside
-        ## cross_entropy_loss_binary to overflow to inf. Clipping in
-        ## cross_entropy_loss_binary should prevent this by replacing the exact
-        ## 1.0 with a number very close to 1.0
-        #loss, grad = cross_entropy_loss_binary(X, y, theta)
-        #self.assertGreater(loss, 0.0)
-
     def test_xent_no_overflow_from_0(self):
         X = np.array([[100, 200, 300]])
         theta = np.array([
