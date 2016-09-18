@@ -1,3 +1,10 @@
+# A multiclass logistic regression (OvA) for MNIST digits.
+#
+# Trains 10 different logistic regressions, one for each digit, and classifies
+# new inputs based on the highest probability among all the trained classifiers.
+#
+# Eli Bendersky (http://eli.thegreenplace.net)
+# This code is in the public domain
 from __future__ import print_function
 import argparse
 import numpy as np
@@ -7,7 +14,9 @@ from mnist_dataset import *
 from regression_lib import *
 
 
-def train_for_digit(X, y, digit, nsteps, learning_rate=0.08, reg_beta=0.02):
+def train_for_digit(X, y, digit, nsteps, learning_rate=0.12, reg_beta=0.02):
+    """Train a logistic regression binary classifier for recognizing the digit.
+    """
     y_binary = convert_y_to_binary(y, digit)
 
     lossfunc = lambda X, y, theta: cross_entropy_loss_binary(
@@ -42,7 +51,8 @@ if __name__ == '__main__':
                                 'instead of training.')
     argparser.add_argument('--save-thetas', type=str,
                            metavar='filename',
-                           help='Save trained thetas to this pickle file.')
+                           help='Save trained thetas to this pickle file. '
+                                'Helpful since training can take a long time.')
     argparser.add_argument('--report-mistakes', action='store_true',
                            default=False,
                            help='Report all mistakes made in classification.')
@@ -84,7 +94,7 @@ if __name__ == '__main__':
         with open(args.save_thetas, 'wb') as f:
             pickle.dump(thetas, f)
 
-    # Compute probabiliites for every digit and stack them into a (k, 10) matrix
+    # Compute probabilities for every digit and stack them into a (k, 10) matrix
     # where allprobs[i, j] is the predicted probability for test sample i being
     # the digit j. Note that these probabilities come from different classifiers
     # so they don't add up to 1.
