@@ -88,6 +88,7 @@ if __name__ == '__main__':
                                           y_train,
                                           digit=digit,
                                           nsteps=args.nsteps))
+    print('thetas shape:', ', '.join([str(theta.shape) for theta in thetas]))
 
     if args.save_thetas:
         print('Saving thetas to "{0}"'.format(args.save_thetas))

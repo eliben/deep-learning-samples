@@ -1,5 +1,7 @@
-# Experiments with softmax and its numerical stability.
-
+# Experiments with softmax and its numerical stability
+#
+# Eli Bendersky (http://eli.thegreenplace.net)
+# This code is in the public domain
 import numpy as np
 
 
