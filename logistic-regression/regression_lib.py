@@ -66,9 +66,13 @@ def sigmoid(z):
     # of e^(-z), by using an alternative formulation when z is negative, to get
     # 0. e^z / (1+e^z) is equivalent to the definition of sigmoid, but we won't
     # get e^(-z) to overflow when z is very negative.
-    return np.where(z >= 0,
-                    1 / (1 + np.exp(-z)),
-                    np.exp(z) / (1 + np.exp(z)))
+    # Since both the x and y arguments to np.where are evaluated by Python, we
+    # may still get overflow warnings for large z elements; therefore we ignore
+    # warnings during this computation.
+    with np.errstate(over='ignore', invalid='ignore'):
+        return np.where(z >= 0,
+                        1 / (1 + np.exp(-z)),
+                        np.exp(z) / (1 + np.exp(z)))
 
 
 def predict_logistic_probability(X, theta):

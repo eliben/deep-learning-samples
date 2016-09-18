@@ -68,7 +68,7 @@ if __name__ == '__main__':
 
     # Hyperparameters.
     LEARNING_RATE = 0.08
-    REG_BETA=0.02
+    REG_BETA=0.03
 
     if args.type == 'binary':
         print('Training binary classifier with hinge loss...')

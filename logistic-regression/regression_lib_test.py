@@ -9,7 +9,7 @@ import unittest
 from regression_lib import (
     hinge_loss, square_loss, predict_logistic_probability, predict_binary,
     cross_entropy_loss_binary, generate_batch, gradient_descent,
-    feature_normalize)
+    feature_normalize, sigmoid)
 
 
 def hinge_loss_simple(X, y, theta, reg_beta=0.0):
