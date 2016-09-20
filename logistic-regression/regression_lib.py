@@ -75,6 +75,17 @@ def sigmoid(z):
                         np.exp(z) / (1 + np.exp(z)))
 
 
+def softmax(z):
+    """Computes softmax function.
+
+    z: array of input values.
+
+    Returns an array of outputs with the same shape as z."""
+    z -= np.max(z)
+    exps = np.exp(z)
+    return exps / np.sum(exps)
+
+
 def predict_logistic_probability(X, theta):
     """Makes classification predictions for the data in X using theta.
 

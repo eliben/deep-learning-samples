@@ -20,6 +20,6 @@ def stablesoftmax(x):
 
 if __name__ == '__main__':
     #pa = [2945.0, 2945.5]
-    pa = [1000, 2000, 3000]
+    pa = np.array([[1000], [2000], [3000]])
     print(softmax(pa))
     print(stablesoftmax(pa))
