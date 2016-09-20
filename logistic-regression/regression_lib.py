@@ -90,7 +90,11 @@ def predict_logistic_probability(X, theta):
 
 
 def cross_entropy_loss_binary(X, y, theta, reg_beta=0.0):
-    """Computes the cross-entropy loss for binary classification."""
+    """Computes the cross-entropy loss for binary classification.
+
+    Applies the cross-entropy loss function to sigmoid activation for X and
+    theta.
+    """
     k, n = X.shape
     # Calls to predict_logistic_probability may produce probabilities that are
     # 0.0 and 1.0, due to the exponent in sigmoid and the large numbers
