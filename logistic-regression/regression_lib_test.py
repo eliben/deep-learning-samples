@@ -306,15 +306,15 @@ class TestSoftmaxGradient(unittest.TestCase):
             [0.9],
             [-0.3],
             [-0.5]])
-        print('softmaz of z is', softmax(z))
-        print('z=', z)
         grad = softmax_gradient_simple(z)
-        print(grad)
 
         for i in range(z.shape[0]):
-            gradnum = eval_numerical_gradient(
-                lambda z: softmax(z)[i, 0], z)
-            print(i, gradnum)
+            # Compute numerical gradient for output Si w.r.t. all inputs
+            # j=0...N-1; this computes one row of the jacobian.
+            gradnum = eval_numerical_gradient(lambda z: softmax(z)[i, 0], z)
+            np.testing.assert_allclose(grad[i, :].ravel(),
+                                       gradnum.ravel(),
+                                       rtol=1e-4)
 
 
 class TestPredictBinary(unittest.TestCase):
