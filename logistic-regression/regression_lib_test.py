@@ -7,6 +7,7 @@ import numpy as np
 import unittest
 
 from regression_lib import *
+from timer import Timer
 
 
 def hinge_loss_simple(X, y, theta, reg_beta=0.0):
@@ -300,6 +301,11 @@ class TestCrossEntropyBinaryLoss(unittest.TestCase):
 
 
 class TestSoftmaxGradient(unittest.TestCase):
+    def checkSoftmaxGradientSimpleVsVec(self, z):
+        dz_vec = softmax_gradient(z)
+        dz_simple = softmax_gradient_simple(z)
+        np.testing.assert_allclose(dz_vec, dz_simple)
+
     def test_simple_vs_numerical(self):
         z = np.array([
             [0.2],
@@ -312,9 +318,28 @@ class TestSoftmaxGradient(unittest.TestCase):
             # Compute numerical gradient for output Si w.r.t. all inputs
             # j=0...N-1; this computes one row of the jacobian.
             gradnum = eval_numerical_gradient(lambda z: softmax(z)[i, 0], z)
-            np.testing.assert_allclose(grad[i, :].ravel(),
-                                       gradnum.ravel(),
+            np.testing.assert_allclose(grad[i, :].flatten(),
+                                       gradnum.flatten(),
                                        rtol=1e-4)
+
+    def test_simple_vs_vectorized_small(self):
+        z = np.array([
+            [0.2],
+            [0.9]])
+        self.checkSoftmaxGradientSimpleVsVec(z)
+
+    def test_simple_vs_vectorized_larger(self):
+        z = np.array([
+            [1.2],
+            [0],
+            [-0.01],
+            [2.12],
+            [-0.9]])
+        self.checkSoftmaxGradientSimpleVsVec(z)
+
+    def test_simple_vs_vectorized_random(self):
+        z = np.random.uniform(low=-2.0, high=2.0, size=(100,1))
+        self.checkSoftmaxGradientSimpleVsVec(z)
 
 
 class TestPredictBinary(unittest.TestCase):

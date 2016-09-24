@@ -86,6 +86,22 @@ def softmax(z):
     return exps / np.sum(exps)
 
 
+def softmax_gradient(z):
+    """Computes the gradient of the softmax function.
+
+    z: array of input values where the gradient is computed.
+
+    Returns the full Jacobian of S(z): D (N, N) where DjSi is the partial
+    derivative of Si w.r.t. input j.
+    """
+    Sz = softmax(z)
+    # -SjSi can be computed using an outer product between Sz and itself. Then
+    # we add back Si for the i=j cases by adding a diagonal matrix with the
+    # values of Si on its diagonal.
+    dz = -np.outer(Sz, Sz) + np.diag(Sz.flatten())
+    return dz
+
+
 def predict_logistic_probability(X, theta):
     """Makes classification predictions for the data in X using theta.
 
