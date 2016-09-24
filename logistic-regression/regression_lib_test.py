@@ -6,10 +6,7 @@ from __future__ import print_function
 import numpy as np
 import unittest
 
-from regression_lib import (
-    hinge_loss, square_loss, predict_logistic_probability, predict_binary,
-    cross_entropy_loss_binary, generate_batch, gradient_descent,
-    feature_normalize, sigmoid)
+from regression_lib import *
 
 
 def hinge_loss_simple(X, y, theta, reg_beta=0.0):
@@ -58,6 +55,23 @@ def cross_entropy_loss_binary_simple(X, y, theta, reg_beta=0.0):
                 dtheta[j, 0] += yhat_prob[i, 0] * X[i, j]
     dtheta = dtheta / k + reg_beta * theta
     return loss, dtheta
+
+
+def softmax_gradient_simple(z):
+    """Unvectorized computation of the gradient of softmax.
+
+    z: (N, 1) column array of input values.
+
+    Returns dz (N, N) the Jacobian matrix of softmax(z) at the given z. dz[i, j]
+    is DjSi - the partial derivative of Si w.r.t. input j.
+    """
+    Sz = softmax(z)
+    N = z.shape[0]
+    dz = np.zeros((N, N))
+    for i in range(N):
+        for j in range(N):
+            dz[i, j] = Sz[i, 0] * (np.float32(i == j) - Sz[j, 0])
+    return dz
 
 
 def eval_numerical_gradient(f, x, verbose=False, h=1e-5):
@@ -283,6 +297,24 @@ class TestCrossEntropyBinaryLoss(unittest.TestCase):
                                                            reg_beta=0.1)[0],
             theta, h=1e-8)
         np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
+
+
+class TestSoftmaxGradient(unittest.TestCase):
+    def test_simple_vs_numerical(self):
+        z = np.array([
+            [0.2],
+            [0.9],
+            [-0.3],
+            [-0.5]])
+        print('softmaz of z is', softmax(z))
+        print('z=', z)
+        grad = softmax_gradient_simple(z)
+        print(grad)
+
+        for i in range(z.shape[0]):
+            gradnum = eval_numerical_gradient(
+                lambda z: softmax(z)[i, 0], z)
+            print(i, gradnum)
 
 
 class TestPredictBinary(unittest.TestCase):

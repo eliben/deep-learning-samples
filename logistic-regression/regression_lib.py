@@ -81,8 +81,8 @@ def softmax(z):
     z: array of input values.
 
     Returns an array of outputs with the same shape as z."""
-    z -= np.max(z)
-    exps = np.exp(z)
+    shiftz = z - np.max(z)
+    exps = np.exp(shiftz)
     return exps / np.sum(exps)
 
 

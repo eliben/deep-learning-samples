@@ -13,8 +13,8 @@ def softmax(x):
 
 def stablesoftmax(x):
     """Compute the softmax of vector x in a numerically stable way."""
-    x -= np.max(x)
-    exps = np.exp(x)
+    shiftx = x - np.max(x)
+    exps = np.exp(shiftx)
     return exps / np.sum(exps)
 
 
