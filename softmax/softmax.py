@@ -23,8 +23,8 @@ def softmax_gradient(z):
 
     z: array of input values where the gradient is computed.
 
-    Returns the full Jacobian of S(z): D (N, N) where DjSi is the partial
-    derivative of Si w.r.t. input j.
+    Returns dz (N, N) the Jacobian matrix of softmax(z) at the given z. dz[i, j]
+    is DjSi - the partial derivative of Si w.r.t. input j.
     """
     Sz = softmax(z)
     # -SjSi can be computed using an outer product between Sz and itself. Then
@@ -51,8 +51,36 @@ def softmax_gradient_simple(z):
     return dz
 
 
+def softmax_layer(x, W):
+    """Computes a "softmax layer" for input vector x and weight matrix W.
+    
+    A softmax layer is a fully connected layer followed by the softmax function.
+    Mathematically it's softmax(W.dot(x)).
+
+    x: (N, 1) input vector with N features.
+    W: (T, N) matrix of weights for N features and T output classes.
+
+    Returns s (T, 1) the result of applying softmax to W.dot(x)
+    """
+    N = x.shape[0]
+    T = W.shape[0]
+    assert W.shape[1] == N
+    assert x.shape[1] == 1
+    logits = W.dot(x)
+    return softmax(logits)
+
+
 if __name__ == '__main__':
     #pa = [2945.0, 2945.5]
-    pa = np.array([[1000], [2000], [3000]])
-    print(softmax(pa))
-    print(stablesoftmax(pa))
+    #pa = np.array([[1000], [2000], [3000]])
+    #print(softmax(pa))
+    #print(stablesoftmax(pa))
+
+    W = np.array([
+        [2, 3, 4],
+        [3, 5, -1]])
+    x = np.array([
+        [0.1],
+        [-0.2],
+        [0.3]])
+    print(softmax_layer(x, W))
