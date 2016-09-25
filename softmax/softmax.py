@@ -74,8 +74,19 @@ def softmax_layer(x, W):
 def fully_connected_gradient(x, W):
     N = x.shape[0]
     T = W.shape[0]
-    
-    
+    NT = N * T
+    D = np.zeros((T, NT))
+    for i in range(T):
+        for t in range(T):
+            for n in range(N):
+                # Computing gradient of the ith output w.r.t. W[t, n]. Its index
+                # in the D matrix is: (i, t*N + n)
+                # The ith output only depends on the ith row in W. Otherwise the
+                # derivative is zero. In the ith row, each weight is multiplied
+                # by the respective x.
+                if t == i:
+                    D[i, i*N + n] = x[n]
+    return D
 
 
 if __name__ == '__main__':

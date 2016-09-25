@@ -81,5 +81,23 @@ class TestSoftmaxGradient(unittest.TestCase):
         z = np.random.uniform(low=-2.0, high=2.0, size=(100,1))
         self.checkSoftmaxGradientSimpleVsVec(z)
 
+
+class TestFullyConnectedGradient(unittest.TestCase):
+    def test_small(self):
+        W = np.array([
+            [2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0]])
+        x = np.array([
+            [-2.0],
+            [6.0],
+            [1.6]])
+        grad = fully_connected_gradient(x, W)
+
+        for t in range(W.shape[0]):
+            # This computes the t'th row in the Jacobian
+            gradnum = eval_numerical_gradient(lambda W: W.dot(x)[t, 0], W)
+            np.testing.assert_allclose(grad[t, :], gradnum.flatten(order='C'))
+
+
 if __name__ == '__main__':
     unittest.main()
