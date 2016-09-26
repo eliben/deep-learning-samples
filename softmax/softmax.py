@@ -52,25 +52,6 @@ def softmax_gradient_simple(z):
     return D
 
 
-def softmax_layer(x, W):
-    """Computes a "softmax layer" for input vector x and weight matrix W.
-
-    A softmax layer is a fully connected layer followed by the softmax function.
-    Mathematically it's softmax(W.dot(x)).
-
-    x: (N, 1) input vector with N features.
-    W: (T, N) matrix of weights for N features and T output classes.
-
-    Returns s (T, 1) the result of applying softmax to W.dot(x)
-    """
-    N = x.shape[0]
-    T = W.shape[0]
-    assert W.shape[1] == N
-    assert x.shape[1] == 1
-    logits = W.dot(x)
-    return softmax(logits)
-
-
 def fully_connected_gradient(x, W):
     """Computes the gradient of a fully connected layer w.r.t. the weights.
 
@@ -98,6 +79,38 @@ def fully_connected_gradient(x, W):
                 if t == i:
                     D[i, i*N + n] = x[n]
     return D
+
+
+def softmax_layer(x, W):
+    """Computes a "softmax layer" for input vector x and weight matrix W.
+
+    A softmax layer is a fully connected layer followed by the softmax function.
+    Mathematically it's softmax(W.dot(x)).
+
+    x: (N, 1) input vector with N features.
+    W: (T, N) matrix of weights for N features and T output classes.
+
+    Returns s (T, 1) the result of applying softmax to W.dot(x)
+    """
+    logits = W.dot(x)
+    return softmax(logits)
+
+
+def softmax_layer_gradient(x, W):
+    """Computes the gradient of a "softmax layer" for weight matrix W.
+
+    x: (N, 1) input
+    W: (T, N) weights
+
+    A fully connected layer acting on the input x is: W.dot(x). This function
+    computes the full Jacobian matrix of this formula. The W matrix is flattened
+    in row-major order to rows of the Jacobian, such that DijFCt is the
+    derivative of output t (the t'th row of W.dot(x)) w.r.t. W[i, j].
+
+    Returns D (T, N * T)
+    """
+    logits = W.dot(x)
+    return softmax_gradient(logits).dot(fully_connected_gradient(x, W))
 
 
 if __name__ == '__main__':

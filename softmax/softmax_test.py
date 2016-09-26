@@ -99,5 +99,41 @@ class TestFullyConnectedGradient(unittest.TestCase):
             np.testing.assert_allclose(grad[t, :], gradnum.flatten(order='C'))
 
 
+
+class TestSoftmaxLayerGradient(unittest.TestCase):
+    def test_small(self):
+        W = np.array([
+            [2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0]])
+        x = np.array([
+            [-2.0],
+            [2.0],
+            [1.6]])
+        grad = softmax_layer_gradient(x, W)
+
+        for t in range(W.shape[0]):
+            gradnum = eval_numerical_gradient(
+                lambda W: softmax_layer(x, W)[t, 0], W)
+            np.testing.assert_allclose(grad[t, :], gradnum.flatten(order='C'))
+
+    def test_bigger(self):
+        W = np.array([
+            [2.0, 3.0, 4.0, 1.0],
+            [1.0, 1.0, 1.0, -0.1],
+            [1.1, 2.1, 3.1, 2.3],
+            [1.4, -3.3, -1.0, 1.1]])
+        x = np.array([
+            [-0.1],
+            [0.3],
+            [-0.2],
+            [0.6]])
+        grad = softmax_layer_gradient(x, W)
+
+        for t in range(W.shape[0]):
+            gradnum = eval_numerical_gradient(
+                lambda W: softmax_layer(x, W)[t, 0], W)
+            np.testing.assert_allclose(grad[t, :], gradnum.flatten(order='C'))
+
+
 if __name__ == '__main__':
     unittest.main()
