@@ -145,6 +145,27 @@ def cross_entropy_loss(p, y):
     return -np.sum(y * np.log(p))
 
 
+def cross_entropy_loss_gradient(p, y):
+    """Gradient of the cross-entropy loss function for p and y.
+    
+    p: (T, 1) vector of predicted probabilities.
+    y: (T, 1) vector of expected probabilities; must be one-hot -- one and only
+              one element of y is 1; the rest are 0.
+
+    Returns a (1, T) Jacobian for this function.
+    """
+    assert(p.shape == y.shape and p.shape[1] == 1)
+    # py is the value of p at the index where y == 1 (one and only one such
+    # index is expected for a one-hot y).
+    py = p[y == 1]
+    assert(py.size == 1)
+    # D is zeros everywhere except at the index where y == 1. The final D has
+    # to be a row-vector.
+    D = np.zeros_like(p)
+    D[y == 1] = -1/py.flat[0]
+    return D.flatten()
+
+
 if __name__ == '__main__':
     #pa = [2945.0, 2945.5]
     #pa = np.array([[1000], [2000], [3000]])
