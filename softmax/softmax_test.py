@@ -101,6 +101,20 @@ class TestFullyConnectedGradient(unittest.TestCase):
 
 
 class TestSoftmaxLayerGradient(unittest.TestCase):
+    def checkForData(self, x, W, rtol=1e-5, atol=1e-8):
+        # Set custom rtol/atol to the ones used by numpy.isclose; by default
+        # assert_allclose uses atol=0 which is problematic for values very close
+        # to zero.
+        grad = softmax_layer_gradient(x, W)
+        grad_direct = softmax_layer_gradient_direct(x, W)
+        np.testing.assert_allclose(grad, grad_direct, rtol=rtol, atol=atol)
+
+        for t in range(W.shape[0]):
+            gradnum = eval_numerical_gradient(
+                lambda W: softmax_layer(x, W)[t, 0], W)
+            np.testing.assert_allclose(grad[t, :], gradnum.flatten(order='C'),
+                                       rtol=rtol, atol=atol)
+
     def test_small(self):
         W = np.array([
             [2.0, 3.0, 4.0],
@@ -109,14 +123,7 @@ class TestSoftmaxLayerGradient(unittest.TestCase):
             [-2.0],
             [2.0],
             [1.6]])
-        grad = softmax_layer_gradient(x, W)
-        grad_direct = softmax_layer_gradient_direct(x, W)
-        np.testing.assert_allclose(grad, grad_direct)
-
-        for t in range(W.shape[0]):
-            gradnum = eval_numerical_gradient(
-                lambda W: softmax_layer(x, W)[t, 0], W)
-            np.testing.assert_allclose(grad[t, :], gradnum.flatten(order='C'))
+        self.checkForData(x, W)
 
     def test_bigger(self):
         W = np.array([
@@ -129,14 +136,15 @@ class TestSoftmaxLayerGradient(unittest.TestCase):
             [0.3],
             [-0.2],
             [0.6]])
-        grad = softmax_layer_gradient(x, W)
-        grad_direct = softmax_layer_gradient_direct(x, W)
-        np.testing.assert_allclose(grad, grad_direct)
+        self.checkForData(x, W)
 
-        for t in range(W.shape[0]):
-            gradnum = eval_numerical_gradient(
-                lambda W: softmax_layer(x, W)[t, 0], W)
-            np.testing.assert_allclose(grad[t, :], gradnum.flatten(order='C'))
+    def test_random_big(self):
+        np.random.seed(42)
+        N = 80
+        T = 10
+        W = np.random.uniform(low=-2.0, high=2.0, size=(T, N))
+        x = np.random.uniform(low=-1.0, high=1.0, size=(N, 1))
+        self.checkForData(x, W)
 
 
 if __name__ == '__main__':
