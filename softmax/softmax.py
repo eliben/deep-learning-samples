@@ -68,16 +68,16 @@ def fully_connected_gradient(x, W):
     N = x.shape[0]
     T = W.shape[0]
     D = np.zeros((T, N * T))
-    for i in range(T):
-        for t in range(T):
-            for n in range(N):
-                # Computing gradient of the ith output w.r.t. W[t, n]. Its index
-                # in the D matrix is: (i, t*N + n)
-                # The ith output only depends on the ith row in W. Otherwise the
-                # derivative is zero. In the ith row, each weight is multiplied
-                # by the respective x.
+    for t in range(T):
+        for i in range(T):
+            for j in range(N):
+                # Computing gradient of the t'th output w.r.t. W[i, j]. Its
+                # index in the D matrix is: (t, i*N + j)
+                # The t'th output only depends on the t'th row in W. Otherwise
+                # the derivative is zero. In the t'th row, each weight is
+                # multiplied by the respective x.
                 if t == i:
-                    D[i, i*N + n] = x[n]
+                    D[t, i*N + j] = x[j]
     return D
 
 
