@@ -113,6 +113,26 @@ def softmax_layer_gradient(x, W):
     return softmax_gradient(logits).dot(fully_connected_gradient(x, W))
 
 
+def softmax_layer_gradient_direct(x, W):
+    """Computes the gradient of a "softmax layer" for weight matrix W.
+
+    Arguments and return value exactly the same as for softmax_layer_gradient.
+    The difference is that this function computes the Jacobian "directly" by
+    assigning each cell in the matrix, rather than explicitly computing the
+    matrix multiplication of the two composed Jacobians.
+    """
+    N = x.shape[0]
+    T = W.shape[0]
+    S = softmax_layer(x, W)
+    D = np.zeros((T, N * T))
+    for t in range(T):
+        for i in range(T):
+            for j in range(N):
+                DiSt = S[t, 0] * (np.float32(i == t) - S[i, 0])
+                D[t, i*N + j] = DiSt * x[j, 0]
+    return D
+
+
 if __name__ == '__main__':
     #pa = [2945.0, 2945.5]
     #pa = np.array([[1000], [2000], [3000]])

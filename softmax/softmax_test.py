@@ -110,6 +110,8 @@ class TestSoftmaxLayerGradient(unittest.TestCase):
             [2.0],
             [1.6]])
         grad = softmax_layer_gradient(x, W)
+        grad_direct = softmax_layer_gradient_direct(x, W)
+        np.testing.assert_allclose(grad, grad_direct)
 
         for t in range(W.shape[0]):
             gradnum = eval_numerical_gradient(
@@ -128,6 +130,8 @@ class TestSoftmaxLayerGradient(unittest.TestCase):
             [-0.2],
             [0.6]])
         grad = softmax_layer_gradient(x, W)
+        grad_direct = softmax_layer_gradient_direct(x, W)
+        np.testing.assert_allclose(grad, grad_direct)
 
         for t in range(W.shape[0]):
             gradnum = eval_numerical_gradient(
