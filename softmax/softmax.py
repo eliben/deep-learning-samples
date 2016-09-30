@@ -133,6 +133,18 @@ def softmax_layer_gradient_direct(x, W):
     return D
 
 
+def cross_entropy_loss(p, y):
+    """Cross-entropy loss between predicted and expected probabilities.
+
+    p: vector of predicted probabilities.
+    y: vector of expected probabilities. Has to be the same shape as p.
+
+    Returns a scalar.
+    """
+    assert(p.shape == y.shape)
+    return -np.sum(y * np.log(p))
+
+
 if __name__ == '__main__':
     #pa = [2945.0, 2945.5]
     #pa = np.array([[1000], [2000], [3000]])

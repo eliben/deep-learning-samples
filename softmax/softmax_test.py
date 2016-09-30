@@ -147,5 +147,15 @@ class TestSoftmaxLayerGradient(unittest.TestCase):
         self.checkForData(x, W)
 
 
+class TestCrossEntropyLoss(unittest.TestCase):
+    def test_cross_entropy_with_onehot_y(self):
+        # Simple test of the cross_entropy_loss function with a one-hot y
+        # typical in classification tasks.
+        p = np.vstack((1.2, 2.1, 3.1, 4.8, 0.75))
+        y = np.vstack((0, 0, 0, 1, 0))
+        xent = cross_entropy_loss(p, y)
+        np.testing.assert_allclose(xent, -np.log(4.8))
+
+
 if __name__ == '__main__':
     unittest.main()
