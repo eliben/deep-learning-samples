@@ -166,6 +166,19 @@ def cross_entropy_loss_gradient(p, y):
     return D.flatten()
 
 
+def softmax_cross_entropy_loss_gradient(x, W, y):
+    """Computes the gradient of a cross-entropy loss for a softmax layer.
+    
+    x: (N, 1) input
+    W: (T, N) weights
+    y: (T, 1) correct labels (one-hot vector with one element 1.0, others 0.0)
+
+    Returns D (1, N * T)
+    """
+    p = softmax_layer(x, W)
+    return cross_entropy_loss_gradient(p, y).dot(softmax_layer_gradient(x, W))
+
+
 if __name__ == '__main__':
     #pa = [2945.0, 2945.5]
     #pa = np.array([[1000], [2000], [3000]])

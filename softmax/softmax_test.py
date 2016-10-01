@@ -99,7 +99,6 @@ class TestFullyConnectedGradient(unittest.TestCase):
             np.testing.assert_allclose(grad[t, :], gradnum.flatten(order='C'))
 
 
-
 class TestSoftmaxLayerGradient(unittest.TestCase):
     def checkForData(self, x, W, rtol=1e-5, atol=1e-8):
         # Set custom rtol/atol to the ones used by numpy.isclose; by default
@@ -159,6 +158,48 @@ class TestCrossEntropyLossAndGradient(unittest.TestCase):
         grad = cross_entropy_loss_gradient(p, y)
         gradnum = eval_numerical_gradient(lambda z: cross_entropy_loss(z, y), p)
         np.testing.assert_allclose(grad, gradnum.flatten())
+
+
+class TestSoftmaxCrossEntropyLossGradient(unittest.TestCase):
+    def checkForData(self, x, W, y, rtol=1e-5, atol=1e-8):
+        # Set custom rtol/atol to the ones used by numpy.isclose; by default
+        # assert_allclose uses atol=0 which is problematic for values very close
+        # to zero.
+        grad = softmax_cross_entropy_loss_gradient(x, W, y)
+
+        gradnum = eval_numerical_gradient(
+            lambda W: cross_entropy_loss(softmax_layer(x, W), y), W)
+        np.testing.assert_allclose(grad, gradnum.flatten(order='C'),
+                                   rtol=rtol, atol=atol)
+
+    def test_small(self):
+        W = np.array([
+            [2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0]])
+        x = np.array([
+            [-2.0],
+            [2.0],
+            [1.6]])
+        y0 = np.array([
+            [1.0],
+            [0.0]])
+        y1 = np.array([
+            [0.0],
+            [1.0]])
+        self.checkForData(x, W, y0)
+        self.checkForData(x, W, y1)
+
+    def test_random_big(self):
+        np.random.seed(42)
+        N = 30
+        T = 10
+        W = np.random.uniform(low=-2.0, high=2.0, size=(T, N))
+        x = np.random.uniform(low=-1.0, high=1.0, size=(N, 1))
+
+        for i in range(T):
+            y = np.zeros((T, 1))
+            y[i] = 1.0
+            self.checkForData(x, W, y)
 
 
 if __name__ == '__main__':
