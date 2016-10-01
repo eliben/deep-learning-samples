@@ -179,6 +179,26 @@ def softmax_cross_entropy_loss_gradient(x, W, y):
     return cross_entropy_loss_gradient(p, y).dot(softmax_layer_gradient(x, W))
 
 
+def softmax_cross_entropy_loss_gradient_direct(x, W, y):
+    """Computes the gradient of a cross-entropy loss for a softmax layer.
+
+    Arguments and return value exactly the same as for
+    softmax_cross_entropy_loss_gradient. The difference is that this function
+    computes the Jacobian "directly" by assigning each cell in the matrix,
+    rather than explicitly computing the matrix multiplication of the two
+    composed Jacobians.
+    """
+    N = x.shape[0]
+    T = W.shape[0]
+    S = softmax_layer(x, W)
+    D = np.zeros(N * T)
+    yindex = np.argwhere(y == 1)[0, 0]
+    for i in range(T):
+        for j in range(N):
+            D[i*N + j] = (S[i, 0] - np.float32(i == yindex)) * x[j, 0]
+    return D
+
+
 if __name__ == '__main__':
     #pa = [2945.0, 2945.5]
     #pa = np.array([[1000], [2000], [3000]])

@@ -166,6 +166,8 @@ class TestSoftmaxCrossEntropyLossGradient(unittest.TestCase):
         # assert_allclose uses atol=0 which is problematic for values very close
         # to zero.
         grad = softmax_cross_entropy_loss_gradient(x, W, y)
+        grad_direct = softmax_cross_entropy_loss_gradient_direct(x, W, y)
+        np.testing.assert_allclose(grad, grad_direct, rtol=rtol, atol=atol)
 
         gradnum = eval_numerical_gradient(
             lambda W: cross_entropy_loss(softmax_layer(x, W), y), W)
