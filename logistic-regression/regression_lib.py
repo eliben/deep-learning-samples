@@ -103,6 +103,41 @@ def softmax_gradient(z):
     return dz
 
 
+def softmax_layer(x, W):
+    """Computes a "softmax layer" for input vector x and weight matrix W.
+
+    A softmax layer is a fully connected layer followed by the softmax function.
+    Mathematically it's softmax(W.dot(x)).
+
+    x: (N, 1) input vector with N features.
+    W: (T, N) matrix of weights for N features and T output classes.
+
+    Returns s (T, 1) the result of applying softmax to W.dot(x)
+    """
+    logits = W.dot(x)
+    return softmax(logits)
+
+
+def softmax_cross_entropy_loss_gradient(x, W, y):
+    """Computes the gradient of a cross-entropy loss for a softmax layer.
+
+    x: (N, 1) input
+    W: (T, N) weights
+    y: (T, 1) correct labels (one-hot vector with one element 1.0, others 0.0)
+
+    Returns D (1, N * T)
+    """
+    N = x.shape[0]
+    T = W.shape[0]
+    S = softmax_layer(x, W)
+    D = np.zeros(N * T)
+    yindex = np.argwhere(y == 1)[0, 0]
+    for i in range(T):
+        for j in range(N):
+            D[i*N + j] = (S[i, 0] - np.float32(i == yindex)) * x[j, 0]
+    return D
+
+
 def predict_logistic_probability(X, theta):
     """Makes classification predictions for the data in X using theta.
 
