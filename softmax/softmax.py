@@ -147,7 +147,7 @@ def cross_entropy_loss(p, y):
 
 def cross_entropy_loss_gradient(p, y):
     """Gradient of the cross-entropy loss function for p and y.
-    
+
     p: (T, 1) vector of predicted probabilities.
     y: (T, 1) vector of expected probabilities; must be one-hot -- one and only
               one element of y is 1; the rest are 0.
@@ -168,7 +168,7 @@ def cross_entropy_loss_gradient(p, y):
 
 def softmax_cross_entropy_loss_gradient(x, W, y):
     """Computes the gradient of a cross-entropy loss for a softmax layer.
-    
+
     x: (N, 1) input
     W: (T, N) weights
     y: (T, 1) correct labels (one-hot vector with one element 1.0, others 0.0)
