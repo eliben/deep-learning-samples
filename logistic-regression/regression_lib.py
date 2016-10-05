@@ -75,67 +75,29 @@ def sigmoid(z):
                         np.exp(z) / (1 + np.exp(z)))
 
 
-def softmax(z):
-    """Computes softmax function.
-
-    z: array of input values.
-
-    Returns an array of outputs with the same shape as z."""
-    # For numerical stability: make the maximum of z's to be 0.
-    shiftz = z - np.max(z)
-    exps = np.exp(shiftz)
-    return exps / np.sum(exps)
-
-
-def softmax_gradient(z):
-    """Computes the gradient of the softmax function.
-
-    z: array of input values where the gradient is computed.
-
-    Returns the full Jacobian of S(z): D (N, N) where DjSi is the partial
-    derivative of Si w.r.t. input j.
+def softmax_cross_entropy_loss(X, y, W, reg_beta=0.0):
     """
-    Sz = softmax(z)
-    # -SjSi can be computed using an outer product between Sz and itself. Then
-    # we add back Si for the i=j cases by adding a diagonal matrix with the
-    # values of Si on its diagonal.
-    dz = -np.outer(Sz, Sz) + np.diag(Sz.flatten())
-    return dz
-
-
-def softmax_layer(x, W):
-    """Computes a "softmax layer" for input vector x and weight matrix W.
-
-    A softmax layer is a fully connected layer followed by the softmax function.
-    Mathematically it's softmax(W.dot(x)).
-
-    x: (N, 1) input vector with N features.
-    W: (T, N) matrix of weights for N features and T output classes.
-
-    Returns s (T, 1) the result of applying softmax to W.dot(x)
+    X: (k, n) k rows of data items, each having n features; augmented.
+    y: (k,) a number in the closed interval [0..t-1] - the correct class, for
+            each of the k inputs.
+    W: (n, t) t is the number of classes.
     """
-    logits = W.dot(x)
-    return softmax(logits)
-
-
-def softmax_cross_entropy_loss_gradient(x, W, y):
-    """Computes the gradient of a cross-entropy loss for a softmax layer.
-
-    x: (N, 1) input
-    W: (T, N) weights
-    y: (T, 1) correct labels (one-hot vector with one element 1.0, others 0.0)
-
-    Returns D (1, N * T)
-    """
-    N = x.shape[0]
-    T = W.shape[0]
-    S = softmax_layer(x, W)
-    D = np.zeros(N * T)
-    yindex = np.argwhere(y == 1)[0, 0]
-    for i in range(T):
-        for j in range(N):
-            D[i*N + j] = (S[i, 0] - np.float32(i == yindex)) * x[j, 0]
-    return D
+    k = X.shape[0]
+    # Compute logits: (k, t)
+    logits = X.dot(W)
+    print(logits.shape)
+    print(logits)
+    # Vectorized sofmax computation on every row of logits. The normalization
+    # is done as a sum of columns, which is then broadcast over exp_logits.
+    # The result is also (k, t)
+    exp_logits = np.exp(logits)
+    softmax = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+    print(softmax.shape)
+    print(softmax)
+    logprobs = -np.log(softmax[range(k), y])
+    print(logprobs)
+    loss = np.sum(logprobs) / k
+    return loss
 
 
 def predict_logistic_probability(X, theta):

@@ -300,48 +300,6 @@ class TestCrossEntropyBinaryLoss(unittest.TestCase):
         np.testing.assert_allclose(grad, gradnum, rtol=1e-4)
 
 
-class TestSoftmaxGradient(unittest.TestCase):
-    def checkSoftmaxGradientSimpleVsVec(self, z):
-        dz_vec = softmax_gradient(z)
-        dz_simple = softmax_gradient_simple(z)
-        np.testing.assert_allclose(dz_vec, dz_simple)
-
-    def test_simple_vs_numerical(self):
-        z = np.array([
-            [0.2],
-            [0.9],
-            [-0.3],
-            [-0.5]])
-        grad = softmax_gradient_simple(z)
-
-        for i in range(z.shape[0]):
-            # Compute numerical gradient for output Si w.r.t. all inputs
-            # j=0...N-1; this computes one row of the jacobian.
-            gradnum = eval_numerical_gradient(lambda z: softmax(z)[i, 0], z)
-            np.testing.assert_allclose(grad[i, :].flatten(),
-                                       gradnum.flatten(),
-                                       rtol=1e-4)
-
-    def test_simple_vs_vectorized_small(self):
-        z = np.array([
-            [0.2],
-            [0.9]])
-        self.checkSoftmaxGradientSimpleVsVec(z)
-
-    def test_simple_vs_vectorized_larger(self):
-        z = np.array([
-            [1.2],
-            [0],
-            [-0.01],
-            [2.12],
-            [-0.9]])
-        self.checkSoftmaxGradientSimpleVsVec(z)
-
-    def test_simple_vs_vectorized_random(self):
-        z = np.random.uniform(low=-2.0, high=2.0, size=(100,1))
-        self.checkSoftmaxGradientSimpleVsVec(z)
-
-
 class TestPredictBinary(unittest.TestCase):
     def test_simple(self):
         # Make sure positive gets +1, negative -1 and zero also gets +1.
@@ -469,6 +427,23 @@ class TestFeatureNormalize(unittest.TestCase):
         np.testing.assert_equal(mu, np.array([4, 6]))
         np.testing.assert_equal(sigma, np.array([1, 1]))
         np.testing.assert_equal(X_norm, np.array([[-1, 0], [1, 0]]))
+
+
+class TestSoftmaxCrossEntropyLoss(unittest.TestCase):
+    def test_trivial(self):
+        # Compares loss with hard-coded results from the CS231n sample
+        # at http://cs231n.github.io/linear-classify/
+        X = np.array([
+            [1.0, -15, 22, -44, 56]])
+        W = np.array([
+            [0.0, 0.2, -0.3],
+            [0.01, 0.7, 0.0],
+            [-0.05, 0.2, -0.45],
+            [0.1, 0.05, -0.2],
+            [0.05, 0.16, 0.03]])
+        y = np.array([2])
+        loss = softmax_cross_entropy_loss(X, y, W)
+        np.testing.assert_allclose(loss, 1.04, rtol=1e-3)
 
 
 if __name__ == '__main__':
