@@ -102,7 +102,17 @@ def softmax_cross_entropy_loss(X, y, W, reg_beta=0.0):
 
     # Add regularization loss.
     loss += np.sum(W * W) * reg_beta / 2
-    return loss
+
+    # Compute gradient for the weights in a vectorized way. Again for vectorized
+    # indexing [range(k), y] selects the yth weight in each row.
+    dW = softmax
+    dW[range(k), y] -= 1
+    dW = np.dot(X.T, dW) / k
+
+    # Gradient of regularization.
+    dW += W * reg_beta
+
+    return loss, dW
 
 
 def predict_logistic_probability(X, theta):

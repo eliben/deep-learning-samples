@@ -423,7 +423,6 @@ class TestFeatureNormalize(unittest.TestCase):
             [3, 6],
             [5, 6]])
         X_norm, mu, sigma = feature_normalize(X)
-        #print(feature_normalize(X))
         np.testing.assert_equal(mu, np.array([4, 6]))
         np.testing.assert_equal(sigma, np.array([1, 1]))
         np.testing.assert_equal(X_norm, np.array([[-1, 0], [1, 0]]))
@@ -442,8 +441,20 @@ class TestSoftmaxCrossEntropyLoss(unittest.TestCase):
             [0.1, 0.05, -0.2],
             [0.05, 0.16, 0.03]])
         y = np.array([2])
-        loss = softmax_cross_entropy_loss(X, y, W, reg_beta=0.0)
+        loss, dW = softmax_cross_entropy_loss(X, y, W, reg_beta=0.0)
         np.testing.assert_allclose(loss, 1.04, rtol=1e-3)
+
+        grad_num = eval_numerical_gradient(
+            f=lambda W: softmax_cross_entropy_loss(X, y, W, reg_beta=0.0)[0],
+            x=W)
+        np.testing.assert_allclose(dW, grad_num)
+
+        # Now repeat with a different reg_beta
+        _, dWreg01 = softmax_cross_entropy_loss(X, y, W, reg_beta=0.1)
+        grad_num01 = eval_numerical_gradient(
+            f=lambda W: softmax_cross_entropy_loss(X, y, W, reg_beta=0.1)[0],
+            x=W)
+        np.testing.assert_allclose(dWreg01, grad_num01)
 
 
 if __name__ == '__main__':
