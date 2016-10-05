@@ -429,6 +429,14 @@ class TestFeatureNormalize(unittest.TestCase):
 
 
 class TestSoftmaxCrossEntropyLoss(unittest.TestCase):
+    def checkGradientVsNumeric(self, X, y, W, reg_beta):
+        _, dW = softmax_cross_entropy_loss(X, y, W, reg_beta)
+        grad_num = eval_numerical_gradient(
+            f=lambda WW: softmax_cross_entropy_loss(X, y, WW, reg_beta)[0],
+            x=W)
+        np.testing.assert_allclose(dW, grad_num)
+
+
     def test_trivial(self):
         # Compares loss with hard-coded results from the CS231n sample
         # at http://cs231n.github.io/linear-classify/
@@ -441,20 +449,19 @@ class TestSoftmaxCrossEntropyLoss(unittest.TestCase):
             [0.1, 0.05, -0.2],
             [0.05, 0.16, 0.03]])
         y = np.array([2])
-        loss, dW = softmax_cross_entropy_loss(X, y, W, reg_beta=0.0)
-        np.testing.assert_allclose(loss, 1.04, rtol=1e-3)
+        self.checkGradientVsNumeric(X, y, W, reg_beta=0.0)
+        self.checkGradientVsNumeric(X, y, W, reg_beta=0.1)
 
-        grad_num = eval_numerical_gradient(
-            f=lambda W: softmax_cross_entropy_loss(X, y, W, reg_beta=0.0)[0],
-            x=W)
-        np.testing.assert_allclose(dW, grad_num)
+    def test_random_small(self):
+        np.random.seed(1)
+        k, n = 20, 5
+        t = 10
+        X = np.random.uniform(low=-3.0, high=3.0, size=(k,n))
+        W = np.random.normal(size=(n,t))
+        y = np.random.randint(low=0, high=t, size=(1,k))
+        self.checkGradientVsNumeric(X, y, W, reg_beta=0.0)
+        self.checkGradientVsNumeric(X, y, W, reg_beta=0.2)
 
-        # Now repeat with a different reg_beta
-        _, dWreg01 = softmax_cross_entropy_loss(X, y, W, reg_beta=0.1)
-        grad_num01 = eval_numerical_gradient(
-            f=lambda W: softmax_cross_entropy_loss(X, y, W, reg_beta=0.1)[0],
-            x=W)
-        np.testing.assert_allclose(dWreg01, grad_num01)
 
 
 if __name__ == '__main__':

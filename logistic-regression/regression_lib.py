@@ -111,7 +111,6 @@ def softmax_cross_entropy_loss(X, y, W, reg_beta=0.0):
 
     # Gradient of regularization.
     dW += W * reg_beta
-
     return loss, dW
 
 
