@@ -442,7 +442,7 @@ class TestSoftmaxCrossEntropyLoss(unittest.TestCase):
             [0.1, 0.05, -0.2],
             [0.05, 0.16, 0.03]])
         y = np.array([2])
-        loss = softmax_cross_entropy_loss(X, y, W)
+        loss = softmax_cross_entropy_loss(X, y, W, reg_beta=0.0)
         np.testing.assert_allclose(loss, 1.04, rtol=1e-3)
 
 

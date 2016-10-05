@@ -85,18 +85,23 @@ def softmax_cross_entropy_loss(X, y, W, reg_beta=0.0):
     k = X.shape[0]
     # Compute logits: (k, t)
     logits = X.dot(W)
-    print(logits.shape)
-    print(logits)
     # Vectorized sofmax computation on every row of logits. The normalization
     # is done as a sum of columns, which is then broadcast over exp_logits.
     # The result is also (k, t)
     exp_logits = np.exp(logits)
     softmax = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
-    print(softmax.shape)
-    print(softmax)
+
+    # y come in as class IDs, which is useful for the selection we need for
+    # xent.
+    # For each sample, we have to select the "right" softmax result and log it.
+    # The right one comes at index for any given input. Since in softmax the
+    # inputs are rows, [range(k), y] selects the yth in each row in a vectorized
+    # manner.
     logprobs = -np.log(softmax[range(k), y])
-    print(logprobs)
     loss = np.sum(logprobs) / k
+
+    # Add regularization loss.
+    loss += np.sum(W * W) * reg_beta / 2
     return loss
 
 
