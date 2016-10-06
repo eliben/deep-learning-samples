@@ -396,26 +396,27 @@ class TestGenerateBatch(unittest.TestCase):
 
 class TestGradientDescent(unittest.TestCase):
     def test_applies_dtheta(self):
-        # Tests that gradient_descent applies dtheta to an internal theta as
+        # Tests that gradient_descent applies dtheta to an initial theta as
         # expected
         k, n = 40, 3
-        dtheta = np.arange(1, n + 1).reshape(-1, 1)
+        t = 10
+        dtheta = np.random.randn(n, t)
         learning_rate = 0.1
         def lossfunc(X, y, theta):
             return 0, dtheta
 
+        init_theta = np.random.randn(n, t)
         gi = gradient_descent(
                 X=np.ones((k, n)),
                 y=np.ones((k, 1)),
-                init_theta=np.random.randn(n, 1),
+                init_theta=init_theta,
                 lossfunc=lossfunc,
                 nsteps=10,
                 learning_rate=learning_rate)
 
-        # Take note of initial theta: copy it since it's modified inside
-        # gradient_descent.
-        init_theta, _ = gi.next()
-        init_theta = init_theta.copy()
+        # Take note of initial theta.
+        first_theta, _ = gi.next()
+        np.testing.assert_allclose(init_theta, first_theta)
 
         for i, (theta, _) in enumerate(gi, 1):
             expected = init_theta - i * learning_rate * dtheta
