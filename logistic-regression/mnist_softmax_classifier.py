@@ -95,24 +95,18 @@ if __name__ == '__main__':
         with open(args.save_weights, 'wb') as f:
             pickle.dump(W, f)
 
-    # Compute probabilities for every digit and stack them into a (k, 10) matrix
-    # where allprobs[i, j] is the predicted probability for test sample i being
-    # the digit j. Note that these probabilities come from different classifiers
-    # so they don't add up to 1.
-    #probs = [predict_logistic_probability(X_test_augmented, W)
-             #for theta in thetas]
-    #allprobs = np.hstack(probs)
-    #print(allprobs.shape)
+    probs = softmax(X_test_augmented, W)
+    print('Probs shape:', probs.shape)
 
-    #predictions = np.argmax(allprobs, axis=1)
-    #print(predictions.shape)
-    #print(y_test.shape)
+    predictions = np.argmax(probs, axis=1)
+    print('Predictions shape:', predictions.shape)
+    print('y_test shape:', y_test.shape)
+    print('test accuracy =', np.mean(predictions == y_test))
 
-    #print('test accuracy =', np.mean(predictions == y_test))
-    #if args.report_mistakes:
-        #for i in range(y_test.size):
-            #if y_test[i] != predictions[i]:
-                #print('{0}: real={1} pred={2}'.format(i, y_test[i],
-                                                      #predictions[i]))
-                #print('  probs=', ' '.join('{0:.2f}'.format(p)
-                                           #for p in allprobs[i, :]))
+    if args.report_mistakes:
+        for i in range(y_test.size):
+            if y_test[i] != predictions[i]:
+                print('{0}: real={1} pred={2}'.format(i, y_test[i],
+                                                      predictions[i]))
+                print('  probs=', ' '.join('{0:.2f}'.format(p)
+                                           for p in probs[i, :]))

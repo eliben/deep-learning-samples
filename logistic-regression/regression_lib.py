@@ -75,6 +75,18 @@ def sigmoid(z):
                         np.exp(z) / (1 + np.exp(z)))
 
 
+def softmax(X, W):
+    k = X.shape[0]
+    # Compute logits: (k, t)
+    logits = X.dot(W)
+    # Vectorized sofmax computation on every row of logits. The normalization
+    # is done as a sum of columns, which is then broadcast over exp_logits.
+    # The result is also (k, t)
+    exp_logits = np.exp(logits)
+    softmax = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+    return softmax
+
+
 def softmax_cross_entropy_loss(X, y, W, reg_beta=0.0):
     """
     X: (k, n) k rows of data items, each having n features; augmented.
