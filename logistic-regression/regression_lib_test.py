@@ -377,6 +377,22 @@ class TestGenerateBatch(unittest.TestCase):
             for row in ybt:
                 self.assertIn(row, yt)
 
+    def test_with_row_y(self):
+        # Test that generate_batch works well with y as a row vector
+        X = np.array([
+            [10.0, 20.0],
+            [12.0, 22.0],
+            [13.0, 24.0],
+            [20.0, 40.0],
+            [40.0, 80.0]])
+        y = np.array([3, 4, 5, 9, 10])
+        for _ in range(10):
+            _, y_batch = generate_batch(X, y, batch_size=2)
+            ybt = tuple(y_batch)
+            self.assertEqual(len(set(ybt)), len(ybt))
+            for yy in ybt:
+                self.assertIn(yy, y)
+
 
 class TestGradientDescent(unittest.TestCase):
     def test_applies_dtheta(self):
