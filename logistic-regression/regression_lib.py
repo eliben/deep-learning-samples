@@ -75,33 +75,37 @@ def sigmoid(z):
                         np.exp(z) / (1 + np.exp(z)))
 
 
-def softmax(X, W):
-    k = X.shape[0]
+def softmax_layer(X, W):
+    """Computes the softmax layer for inputs X and weights W.
+
+    X: (k, n) k rows of data items, each having n features; augmented.
+    W: (n, t) t is the number of classes.
+
+    Applies the softmax function to X.dot(W). Returns an array of probabilities
+    with shape (k, t). Each row is the probabilities of the t classes for that
+    datum.
+    """
     # Compute logits: (k, t)
     logits = X.dot(W)
     # Vectorized sofmax computation on every row of logits. The normalization
     # is done as a sum of columns, which is then broadcast over exp_logits.
     # The result is also (k, t)
     exp_logits = np.exp(logits)
-    softmax = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
-    return softmax
+    return exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
 
 
 def softmax_cross_entropy_loss(X, y, W, reg_beta=0.0):
-    """
+    """Softmax cross entropy loss and gradient computation.
+
     X: (k, n) k rows of data items, each having n features; augmented.
     y: (k,) a number in the closed interval [0..t-1] - the correct class, for
             each of the k inputs.
     W: (n, t) t is the number of classes.
+
+    Applies the xent loss (comparing with y) for softmax_layer and computes its
+    gradient w.r.t. W. Returns (loss, dW).
     """
-    k = X.shape[0]
-    # Compute logits: (k, t)
-    logits = X.dot(W)
-    # Vectorized sofmax computation on every row of logits. The normalization
-    # is done as a sum of columns, which is then broadcast over exp_logits.
-    # The result is also (k, t)
-    exp_logits = np.exp(logits)
-    softmax = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+    softmax = softmax_layer(X, W)
 
     # y come in as class IDs, which is useful for the selection we need for
     # xent.
@@ -109,6 +113,7 @@ def softmax_cross_entropy_loss(X, y, W, reg_beta=0.0):
     # The right one comes at index for any given input. Since in softmax the
     # inputs are rows, [range(k), y] selects the yth in each row in a vectorized
     # manner.
+    k = X.shape[0]
     logprobs = -np.log(softmax[range(k), y])
     loss = np.sum(logprobs) / k
 

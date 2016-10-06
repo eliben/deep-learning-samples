@@ -11,7 +11,7 @@ from mnist_dataset import *
 from regression_lib import *
 
 
-def train(X, y, nsteps, learning_rate=0.12, reg_beta=0.02):
+def train(X, y, nsteps, learning_rate=0.09, reg_beta=0.01):
     """Train a logistic regression binary classifier for recognizing the digit.
     """
     k, n = X.shape
@@ -95,7 +95,7 @@ if __name__ == '__main__':
         with open(args.save_weights, 'wb') as f:
             pickle.dump(W, f)
 
-    probs = softmax(X_test_augmented, W)
+    probs = softmax_layer(X_test_augmented, W)
     print('Probs shape:', probs.shape)
 
     predictions = np.argmax(probs, axis=1)
