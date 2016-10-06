@@ -407,6 +407,7 @@ class TestGradientDescent(unittest.TestCase):
         gi = gradient_descent(
                 X=np.ones((k, n)),
                 y=np.ones((k, 1)),
+                init_theta=np.random.randn(n, 1),
                 lossfunc=lossfunc,
                 nsteps=10,
                 learning_rate=learning_rate)

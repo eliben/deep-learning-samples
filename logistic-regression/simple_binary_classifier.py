@@ -141,7 +141,9 @@ def search_best_L01_loss(X, y, theta_start=None,
 def run_gradient_descent_search(X, y, lossfunc, max_nsteps, learning_rate,
                                 verbose=False):
     """Helper function to run GD search for the given data and loss."""
+    n = X.shape[1]
     gradient_descent_iter = gradient_descent(X, y,
+                                             init_theta=np.random.randn(n, 1),
                                              lossfunc=lossfunc,
                                              nsteps=max_nsteps,
                                              learning_rate=learning_rate)

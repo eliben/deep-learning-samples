@@ -78,8 +78,10 @@ if __name__ == '__main__':
         print('Training logistic classifier with cross-entropy loss...')
         lossfunc = lambda X, y, theta: cross_entropy_loss_binary(
             X, y, theta, reg_beta=REG_BETA)
+    n = X_train_augmented.shape[1]
     gi = gradient_descent(X_train_augmented,
                           y_train_binary,
+                          init_theta=np.random.randn(n, 1),
                           lossfunc=lossfunc,
                           batch_size=256,
                           nsteps=args.nsteps,

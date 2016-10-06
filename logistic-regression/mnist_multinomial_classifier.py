@@ -22,8 +22,10 @@ def train_for_digit(X, y, digit, nsteps, learning_rate=0.12, reg_beta=0.02):
     lossfunc = lambda X, y, theta: cross_entropy_loss_binary(
         X, y, theta, reg_beta=reg_beta)
 
+    n = X.shape[1]
     gi = gradient_descent(X,
                           y_binary,
+                          init_theta=np.random.randn(n, 1),
                           lossfunc=lossfunc,
                           batch_size=256,
                           nsteps=nsteps,

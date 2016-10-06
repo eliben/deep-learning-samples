@@ -133,6 +133,8 @@ def cross_entropy_loss_binary(X, y, theta, reg_beta=0.0):
 
     Applies the cross-entropy loss function to sigmoid activation for X and
     theta.
+
+    See square_loss for arguments and return value.
     """
     k, n = X.shape
     # Calls to predict_logistic_probability may produce probabilities that are
@@ -154,12 +156,17 @@ def cross_entropy_loss_binary(X, y, theta, reg_beta=0.0):
     return loss.flat[0], dtheta
 
 
-# See the docstring of gradient_descent for the description of the signature of
-# loss functions.
 def square_loss(X, y, theta, reg_beta=0.0):
     """Computes squared loss and gradient.
 
     Based on mean square margin loss.
+
+    X: (k, n) data items.
+    y: (k, 1) result (+1 or -1) for each data item in X.
+    theta: (n, 1) parameters.
+
+    Returns (loss, dtheta) where loss is the numeric loss for this theta, and
+    dtheta is (n, 1) gradients for theta based on that loss.
 
     Note: the mean (division by k) helps; otherwise, the loss is very large and
     tiny learning rate is required to prevent divergence in the beginning of
@@ -178,7 +185,10 @@ def square_loss(X, y, theta, reg_beta=0.0):
 
 
 def hinge_loss(X, y, theta, reg_beta=0.0):
-    """Computes hinge loss and gradient."""
+    """Computes hinge loss and gradient.
+
+    See square_loss for arguments and return value.
+    """
     k, n = X.shape
     # margin is (k, 1)
     margin = y * X.dot(theta)
@@ -217,18 +227,19 @@ def generate_batch(X, y, batch_size=256):
     return X[batch_indices, :], y[batch_indices]
 
 
-def gradient_descent(X, y,
+def gradient_descent(X, y, init_theta,
                      lossfunc=None,
                      nsteps=100,
                      batch_size=None,
                      learning_rate=0.1):
     """Runs gradient descent optimization to minimize loss for X, y.
 
-    X: (k, n) data items.
-    y: (k, 1) result (+1 or -1) for each data item in X.
+    Starts with init_theta. The shapes of X, y, init_theta have to work with
+    the loss function provided. The actual theta array learned will have the
+    same shape as init_theta.
+
     lossfunc:
-        a function computing loss and gradients.
-        Takes (X, y, theta). theta is a (n, 1) parameter array.
+        a function computing loss and gradients. Takes (X, y, theta).
         Returns (loss, dtheta) where loss is the numeric loss for this theta,
         and dtheta is (n, 1) gradients for theta based on that loss.
     nsteps: how many steps to run.
@@ -241,8 +252,7 @@ def gradient_descent(X, y,
     initial theta and its loss; the rest carry results after each of the
     iteration steps.
     """
-    k, n = X.shape
-    theta = np.random.randn(n, 1)
+    theta = init_theta.copy()
 
     if batch_size is None:
         loss, dtheta = lossfunc(X, y, theta)
