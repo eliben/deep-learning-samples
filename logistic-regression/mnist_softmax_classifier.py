@@ -14,24 +14,31 @@ from regression_lib import *
 def train(X, y, nsteps, learning_rate=0.12, reg_beta=0.02):
     """Train a logistic regression binary classifier for recognizing the digit.
     """
-    y_binary = convert_y_to_binary(y, digit)
+    k, n = X.shape
+    assert y.shape == (k,)
 
-    lossfunc = lambda X, y, theta: cross_entropy_loss_binary(
-        X, y, theta, reg_beta=reg_beta)
+    lossfunc = lambda X, y, W: softmax_cross_entropy_loss(
+        X, y, W, reg_beta=reg_beta)
 
+    init_W = np.random.randn(n, 10)
+
+    # The gradient_descent is generic across different algorithms, so it uses
+    # the name "theta" for the regression parameters. Here we assign our W into
+    # theta.
     gi = gradient_descent(X,
-                          y_binary,
+                          y,
+                          init_theta=init_W,
                           lossfunc=lossfunc,
                           batch_size=256,
                           nsteps=nsteps,
                           learning_rate=learning_rate)
     # Run GD to completion.
-    for i, (theta, _) in enumerate(gi):
+    for i, (W, loss) in enumerate(gi):
         if i % 100 == 0 and i > 0:
-            print('{0}...'.format(i), end='')
+            print('{0}... [loss={1}]'.format(i, loss))
             sys.stdout.flush()
     print('')
-    return theta
+    return W
 
 
 if __name__ == '__main__':
@@ -42,13 +49,13 @@ if __name__ == '__main__':
                            help='Number of steps for gradient descent.')
     argparser.add_argument('--set-seed', default=-1, type=int,
                            help='Set random seed to this number (if > 0).')
-    argparser.add_argument('--load-thetas', type=str,
+    argparser.add_argument('--load-weights', type=str,
                            metavar='filename',
-                           help='Load trained thetas from this pickle file '
+                           help='Load trained weights from this pickle file '
                                 'instead of training.')
-    argparser.add_argument('--save-thetas', type=str,
+    argparser.add_argument('--save-weights', type=str,
                            metavar='filename',
-                           help='Save trained thetas to this pickle file. '
+                           help='Save trained weights to this pickle file. '
                                 'Helpful since training can take a long time.')
     argparser.add_argument('--report-mistakes', action='store_true',
                            default=False,
@@ -71,47 +78,41 @@ if __name__ == '__main__':
         X_valid_augmented = augment_1s_column(X_valid)
         X_test_augmented = augment_1s_column(X_test)
 
-    # Here "thetas" is a matrix with 10 rows and N columns, where N is the
+    # Here "weights" is a matrix with N rows and 10 columns, where N is the
     # number of features (pixels) in every MNIST image.
-    if args.load_thetas:
-        print('Loading thetas from "{0}"'.format(args.load_thetas))
-        with open(args.load_thetas, 'rb') as f:
-            thetas = pickle.load(f)
+    if args.load_weights:
+        print('Loading weights from "{0}"'.format(args.load_weights))
+        with open(args.load_weights, 'rb') as f:
+            W = pickle.load(f)
     else:
-        # Train a logistic classifier for every image [0..9]; thetas[n] will
-        # hold the regression parameters for recognizing digit n.
-        thetas = []
-        for digit in range(10):
-            print('Training for digit {0}...'.format(digit))
-            thetas.append(train_for_digit(X_train_augmented,
-                                          y_train,
-                                          digit=digit,
-                                          nsteps=args.nsteps))
-    print('thetas shape:', ', '.join([str(theta.shape) for theta in thetas]))
+        # Train a softmax classifier for every image [0..9]; W is the trained
+        # weights.
+        W = train(X_train_augmented, y_train, nsteps=args.nsteps)
+    print('W shape:', W.shape)
 
-    if args.save_thetas:
-        print('Saving thetas to "{0}"'.format(args.save_thetas))
-        with open(args.save_thetas, 'wb') as f:
-            pickle.dump(thetas, f)
+    if args.save_weights:
+        print('Saving weights to "{0}"'.format(args.save_weights))
+        with open(args.save_weights, 'wb') as f:
+            pickle.dump(W, f)
 
     # Compute probabilities for every digit and stack them into a (k, 10) matrix
     # where allprobs[i, j] is the predicted probability for test sample i being
     # the digit j. Note that these probabilities come from different classifiers
     # so they don't add up to 1.
-    probs = [predict_logistic_probability(X_test_augmented, theta)
-             for theta in thetas]
-    allprobs = np.hstack(probs)
-    print(allprobs.shape)
+    #probs = [predict_logistic_probability(X_test_augmented, W)
+             #for theta in thetas]
+    #allprobs = np.hstack(probs)
+    #print(allprobs.shape)
 
-    predictions = np.argmax(allprobs, axis=1)
-    print(predictions.shape)
-    print(y_test.shape)
+    #predictions = np.argmax(allprobs, axis=1)
+    #print(predictions.shape)
+    #print(y_test.shape)
 
-    print('test accuracy =', np.mean(predictions == y_test))
-    if args.report_mistakes:
-        for i in range(y_test.size):
-            if y_test[i] != predictions[i]:
-                print('{0}: real={1} pred={2}'.format(i, y_test[i],
-                                                      predictions[i]))
-                print('  probs=', ' '.join('{0:.2f}'.format(p)
-                                           for p in allprobs[i, :]))
+    #print('test accuracy =', np.mean(predictions == y_test))
+    #if args.report_mistakes:
+        #for i in range(y_test.size):
+            #if y_test[i] != predictions[i]:
+                #print('{0}: real={1} pred={2}'.format(i, y_test[i],
+                                                      #predictions[i]))
+                #print('  probs=', ' '.join('{0:.2f}'.format(p)
+                                           #for p in allprobs[i, :]))
