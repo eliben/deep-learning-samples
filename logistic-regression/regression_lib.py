@@ -107,8 +107,8 @@ def softmax_cross_entropy_loss(X, y, W, reg_beta=0.0):
     """
     softmax = softmax_layer(X, W)
 
-    # y come in as class IDs, which is useful for the selection we need for
-    # xent.
+    # y contains class IDs -- numbers in range [0, t) -- which is useful for the
+    # selection we need for xent.
     # For each sample, we have to select the "right" softmax result and log it.
     # The right one comes at index for any given input. Since in softmax the
     # inputs are rows, [range(k), y] selects the yth in each row in a vectorized
@@ -258,10 +258,11 @@ def gradient_descent(X, y, init_theta,
     lossfunc:
         a function computing loss and gradients. Takes (X, y, theta).
         Returns (loss, dtheta) where loss is the numeric loss for this theta,
-        and dtheta is (n, 1) gradients for theta based on that loss.
+        and dtheta is the gradients for theta based on that loss (same shape
+        as theta - every element is a gradient).
     nsteps: how many steps to run.
     batch_size:
-        if None, the whole data set is used for every step. If a number,
+        if None, the whole data set is used for every step. Otherwise
         batches of batch_size randomly-selected data items are used.
     learning_rate: learning rate update (multiplier of gradient).
 
