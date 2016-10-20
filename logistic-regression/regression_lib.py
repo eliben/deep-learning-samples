@@ -184,11 +184,11 @@ def square_loss(X, y, theta, reg_beta=0.0):
     y: (k, 1) result (+1 or -1) for each data item in X.
     theta: (n, 1) parameters.
 
-    Returns (loss, dtheta) where loss is the numeric loss for this theta, and
-    dtheta is (n, 1) gradients for theta based on that loss.
+    Returns (loss, dtheta) where loss is the aggregate numeric loss for this
+    theta, and dtheta is (n, 1) gradients for theta based on that loss.
 
     Note: the mean (division by k) helps; otherwise, the loss is very large and
-    tiny learning rate is required to prevent divergence in the beginning of
+    a tiny learning rate is required to prevent divergence in the beginning of
     the search.
     """
     k, n = X.shape
@@ -215,14 +215,14 @@ def hinge_loss(X, y, theta, reg_beta=0.0):
             np.dot(theta.T, theta) * reg_beta / 2)
 
     dtheta = np.zeros_like(theta)
-    # yx is (k, n) where the elementwise multiplication by y is broadcase across
+    # yx is (k, n) where the elementwise multiplication by y is broadcast across
     # the whole X.
     yx = y * X
     # We're going to select columns of yx, and each column turns into a vector.
     # Precompute the margin_selector vector which has for each j whether the
     # margin for that j was < 1.
-    # Note: still keeping an explicit look over n since I don't expect the
-    # number of features to be very large. It's possibly to fully vectorize this
+    # Note: still keeping an explicit loop over n since I don't expect the
+    # number of features to be very large. It's possible to fully vectorize this
     # but that would make the computation even more obscure. I'll do that if
     # performance becomes an issue with this version.
     margin_selector = (margin < 1).ravel()
