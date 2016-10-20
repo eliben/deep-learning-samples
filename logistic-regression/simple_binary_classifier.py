@@ -108,6 +108,13 @@ def search_best_L01_loss(X, y, theta_start=None,
     npoints_per_t: number of points to search per dimension of theta.
     tmargin: search within [-tmargin, tmargin] of theta_start.
 
+    Since the search is combinatorial, it is slow and works best when we begin
+    with a reasonable good theta. When theta is already close to optimal, this
+    search will do a good job finding the best theta in its vicinity. A
+    realistic approach which I didn't commit to code (but it could be easily
+    done) is to run this search on multiple "zoom" levels (kinda like simulated
+    annealing).
+
     Returns a pair best_theta, best_loss.
     """
     if theta_start is None:
@@ -190,7 +197,8 @@ if __name__ == '__main__':
     X_train_augmented = augment_1s_column(X_train)
     print('X_train_augmented shape:', X_train_augmented.shape)
 
-    # A pretty good theta determined by a long run of search_best_L01_loss.
+    # A pretty good theta determined by a long run of search_best_L01_loss with
+    # coarse granularity.
     theta = np.array([-0.9647, 0.2545, 0.2416]).reshape(-1, 1)
     print('Initial theta:\n', theta)
     print('Initial loss:', L01_loss(X_train_augmented, y_train, theta))
