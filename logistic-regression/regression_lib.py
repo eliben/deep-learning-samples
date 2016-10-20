@@ -78,6 +78,8 @@ def sigmoid(z):
 def softmax_layer(X, W):
     """Computes the softmax layer for inputs X and weights W.
 
+    Works in a vectorized manner for a whole batch of k data items.
+
     X: (k, n) k rows of data items, each having n features; augmented.
     W: (n, t) t is the number of classes.
 
