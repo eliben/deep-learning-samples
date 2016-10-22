@@ -15,7 +15,7 @@ from regression_lib import *
 def generate_data(k, num_neg_outliers=0):
     """Generates k data items with correct labels (+1 or -1) for each item.
 
-    k: number of data points to generate.
+    k: number of data items to generate.
     num_neg_outliers: number of outliers for the negative samples.
 
     Returns X (k, 2) - k data items in 2D, and y (k, 1) - the correct label
@@ -48,7 +48,7 @@ def generate_data(k, num_neg_outliers=0):
 def plot_data_scatterplot(X, y, thetas=[]):
     """Plots data as a scatterplot, with contour lines for thetas.
 
-    X: (k, n) data items.
+    X: (k, 2) data items.
     y: (k, 1) result (+1 or -1) for each data item in X.
     thetas: list of (theta array, label) pairs to plot contours.
 
