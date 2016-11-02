@@ -40,6 +40,8 @@ if __name__ == '__main__':
     if args.set_seed > 0:
         np.random.seed(args.set_seed)
 
+    # Load MNIST data into memory; this may download the MNIST dataset from
+    # the web if not already on disk.
     (X_train, y_train), (X_valid, y_valid), (X_test, y_test) = get_mnist_data()
 
     if args.display_test > -1:
@@ -58,7 +60,7 @@ if __name__ == '__main__':
         X_valid_augmented = augment_1s_column(X_valid)
         X_test_augmented = augment_1s_column(X_test)
 
-    # Convert y_train to binary "is this a the digit D", with +1 for a 4, -1
+    # Convert y_train to binary "is this a the digit D", with +1 for D, -1
     # otherwise. Also reshape it into a column vector as regression_lib expects.
     D = args.recognize_digit
     print('Training for digit', D)

@@ -205,7 +205,8 @@ if __name__ == '__main__':
     print('X_train_augmented shape:', X_train_augmented.shape)
 
     # A pretty good theta determined by a long run of search_best_L01_loss with
-    # coarse granularity.
+    # coarse granularity. Works for the seed set above. For different data,
+    # we'll need to find a new theta for good L01 loss.
     theta = np.array([-0.9647, 0.2545, 0.2416]).reshape(-1, 1)
     print('Initial theta:\n', theta)
     print('Initial loss:', L01_loss(X_train_augmented, y_train, theta))
