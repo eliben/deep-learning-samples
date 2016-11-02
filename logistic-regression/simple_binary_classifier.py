@@ -147,7 +147,12 @@ def search_best_L01_loss(X, y, theta_start=None,
 
 def run_gradient_descent_search(X, y, lossfunc, max_nsteps, learning_rate,
                                 verbose=False):
-    """Helper function to run GD search for the given data and loss."""
+    """Helper function to run GD search for the given data and loss function.
+
+    For help on arguments, see the gradient_descent function. max_nsteps is like
+    nsteps except that this function will stop once the loss isn't changing much
+    any more, which may take fewer than max_nsteps steps.
+    """
     n = X.shape[1]
     gradient_descent_iter = gradient_descent(X, y,
                                              init_theta=np.random.randn(n, 1),
@@ -161,6 +166,8 @@ def run_gradient_descent_search(X, y, lossfunc, max_nsteps, learning_rate,
     for i, (theta, loss) in enumerate(gradient_descent_iter):
         if verbose:
             print(i, ':', loss)
+        # Convergence of loss beneath a small threshold: this threshold can also
+        # be made configurable, if needed.
         if abs(loss - prev_loss) < 1e-5:
             converge_step = i
             break
@@ -177,6 +184,8 @@ if __name__ == '__main__':
                            help='Run combinatorial search for best L0/1 loss')
     argparser.add_argument('--verbose-gd', action='store_true', default=False,
                            help='Verbose output from gradient-descent search')
+    argparser.add_argument('--normalize', action='store_true', default=False,
+                           help='Normalize data: (x-mu)/sigma.')
 
     args = argparser.parse_args()
 
@@ -187,9 +196,7 @@ if __name__ == '__main__':
     print('X_train shape:', X_train.shape)
     print('y_train shape:', y_train.shape)
 
-    NORMALIZE = False
-
-    if NORMALIZE:
+    if args.normalize:
         X_train_normalized, mu, sigma = feature_normalize(X_train)
     else:
         X_train_normalized, mu, sigma = X_train, 0, 1

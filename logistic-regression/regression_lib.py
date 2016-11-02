@@ -183,6 +183,7 @@ def square_loss(X, y, theta, reg_beta=0.0):
     X: (k, n) data items.
     y: (k, 1) result (+1 or -1) for each data item in X.
     theta: (n, 1) parameters.
+    reg_beta: optional regularization strength, for L2 regularization.
 
     Returns (loss, dtheta) where loss is the aggregate numeric loss for this
     theta, and dtheta is (n, 1) gradients for theta based on that loss.
