@@ -98,6 +98,8 @@ if __name__ == '__main__':
     probs = softmax_layer(X_test_augmented, W)
     print('Probs shape:', probs.shape)
 
+    # Softmax assigns probabilities of each digits per data item; argmax will
+    # pinpoint the column with the highest probability.
     predictions = np.argmax(probs, axis=1)
     print('Predictions shape:', predictions.shape)
     print('y_test shape:', y_test.shape)

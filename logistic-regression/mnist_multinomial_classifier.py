@@ -76,6 +76,10 @@ if __name__ == '__main__':
         X_valid_augmented = augment_1s_column(X_valid)
         X_test_augmented = augment_1s_column(X_test)
 
+    # Training may take a long time and we may want to experiment with a trained
+    # model; therefore the save-thetas and load-thetas arguments let us save the
+    # trained model parameters into a pickle file and quickly reload them on a
+    # subsequent run.
     if args.load_thetas:
         print('Loading thetas from "{0}"'.format(args.load_thetas))
         with open(args.load_thetas, 'rb') as f:
@@ -106,6 +110,7 @@ if __name__ == '__main__':
     allprobs = np.hstack(probs)
     print(allprobs.shape)
 
+    # Use argmax to find the highest probability for every row.
     predictions = np.argmax(allprobs, axis=1)
     print(predictions.shape)
     print(y_test.shape)
