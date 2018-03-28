@@ -2,14 +2,15 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 
-in_channels = 32 # 3 for RGB, 32, 64, 128, ...
-out_channels = 64 # 128, 256, ...
-ones_3d = np.ones((5,5,in_channels)) # input is 3d, in_channels = 32
+in_channels = 3 # 3 for RGB, 32, 64, 128, ...
+out_channels = 6 # 128, 256, ...
+input = np.ones((5,5,in_channels)) # input is 3d, in_channels = 32
+
 # filter must have 3d-shpae x number of filters = 4D
 weight_4d = np.ones((3,3,in_channels, out_channels))
 strides_2d = [1, 1, 1, 1]
 
-in_3d = tf.constant(ones_3d, dtype=tf.float32)
+in_3d = tf.constant(input, dtype=tf.float32)
 filter_4d = tf.constant(weight_4d, dtype=tf.float32)
 
 in_width = int(in_3d.shape[0])
