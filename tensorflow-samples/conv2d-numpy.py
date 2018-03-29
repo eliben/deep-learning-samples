@@ -39,15 +39,20 @@ def tf_conv2d_single_channel(input, w):
 class TestConvs(unittest.TestCase):
     def test_single_channel(self):
         inp = np.linspace(-5, 5, 36).reshape(6, 6)
-        w = np.linspace(0, 8, 9)[::-1].reshape(3, 3)
 
+        w = np.linspace(0, 8, 9)[::-1].reshape(3, 3)
         np_ans = conv2d_single_channel(inp, w)
-        tf_ans = tf_conv2d_single_channel(inp, w).reshape(6, 6)
+        tf_ans = tf_conv2d_single_channel(inp, w).reshape(inp.shape)
+        npt.assert_almost_equal(np_ans, tf_ans, decimal=4)
+
+        w = np.array([[1, -1, 1], [0, -1, 1], [1, -1, 0]])
+        np_ans = conv2d_single_channel(inp, w)
+        tf_ans = tf_conv2d_single_channel(inp, w).reshape(inp.shape)
         npt.assert_almost_equal(np_ans, tf_ans, decimal=4)
 
 
 if __name__ == '__main__':
-    #unittest.main()
+    unittest.main()
 
     inp = np.ones((6, 6))
     w = np.zeros((3, 3))
