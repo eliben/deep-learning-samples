@@ -138,11 +138,20 @@ class TestConvs(unittest.TestCase):
         # input is 6x6, with 3 channels
         # filter is 3x3 with 3 input channels, 4 output channels
         inp = np.linspace(-5, 5, 6*6*3).reshape(6, 6, 3)
+
         w = np.linspace(0, 107, 108).reshape(3, 3, 3, 4)
         np_ans = conv2d_multi_channel(inp, w)
         tf_ans = tf_conv2d_multi_channel(inp, w)
         npt.assert_almost_equal(np_ans, tf_ans, decimal=3)
 
+        w = np.ones((3, 3, 3, 4))
+        w[0, 0, 0, 0] = -1
+        w[0, 0, 0, 1] = -1
+        w[0, 0, 0, 2] = -1
+        w[0, 0, 0, 3] = -1
+        np_ans = conv2d_multi_channel(inp, w)
+        tf_ans = tf_conv2d_multi_channel(inp, w)
+        npt.assert_almost_equal(np_ans, tf_ans, decimal=3)
 
 
 if __name__ == '__main__':
