@@ -1,5 +1,7 @@
 from __future__ import print_function
 import numpy as np
+import numpy.testing as npt
+import unittest
 
 # Tensorflow is used to verify the results of numpy computations - you can
 # remove its usage if you don't need the testing.
@@ -34,7 +36,19 @@ def tf_conv2d_single_channel(input, w):
         return sess.run(output)
 
 
+class TestConvs(unittest.TestCase):
+    def test_single_channel(self):
+        inp = np.linspace(-5, 5, 36).reshape(6, 6)
+        w = np.linspace(0, 8, 9)[::-1].reshape(3, 3)
+
+        np_ans = conv2d_single_channel(inp, w)
+        tf_ans = tf_conv2d_single_channel(inp, w).reshape(6, 6)
+        npt.assert_almost_equal(np_ans, tf_ans, decimal=4)
+
+
 if __name__ == '__main__':
+    #unittest.main()
+
     inp = np.ones((6, 6))
     w = np.zeros((3, 3))
     w[0, 0] = 1
