@@ -78,7 +78,6 @@ def conv2d_multi_channel(input, w):
                             w_element = w[fi, fj, c, out_c]
                             output[i, j, out_c] += (
                                 padded_input[i + fi, j + fj, c] * w_element)
-
     return output
 
 
@@ -120,6 +119,46 @@ def tf_conv2d_multi_channel(input, w):
         return ans.reshape((input.shape[0], input.shape[1], w.shape[3]))
 
 
+def depthwise_conv2d():
+    """Two-dimensional depthwise convolution.
+
+    Uses SAME padding with 0s, a stride of 1 and no dilation. A single output
+    channel is used per input channel (channel_multiplier=1).
+
+    input: input array with shape (height, width, in_depth)
+    w: filter array with shape (fd, fd, in_depth)
+    """
+    assert w.shape[0] == w.shape[1] and w.shape[0] % 2 == 1
+
+    padw = w.shape[0] // 2
+    padded_input = np.pad(input,
+                          pad_width=((padw, padw), (padw, padw), (0, 0)),
+                          mode='constant',
+                          constant_values=0)
+
+    height, width, in_depth = input.shape
+    assert in_depth == w.shape[2]
+    output = np.zeros((height, width, in_depth))
+
+    for c in range(in_depth):
+        # For each input channel separately, apply its corresponsing filter
+        # to the input.
+        for i in range(height):
+            for j in range(width):
+                for fi in range(w.shape[0]):
+                    for fj in range(w.shape[1]):
+                        w_element = w[fi, fj, c]
+                        output[i, j, c] += (
+                            padded_input[i + fi, j + fj, c] * w_element)
+    return output
+    
+
+#def tf_depthwise_conv2d(input, w):
+
+    
+
+
+
 class TestConvs(unittest.TestCase):
     def test_single_channel(self):
         inp = np.linspace(-5, 5, 36).reshape(6, 6)
@@ -157,6 +196,7 @@ class TestConvs(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 
+    # Comment out unittest.main() above to actually run this code...
     inp = np.ones((6, 6))
     w = np.zeros((3, 3))
     w[0, 0] = 1
