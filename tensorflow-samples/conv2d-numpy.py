@@ -119,7 +119,7 @@ def tf_conv2d_multi_channel(input, w):
         return ans.reshape((input.shape[0], input.shape[1], w.shape[3]))
 
 
-def depthwise_conv2d():
+def depthwise_conv2d(input, w):
     """Two-dimensional depthwise convolution.
 
     Uses SAME padding with 0s, a stride of 1 and no dilation. A single output
@@ -168,7 +168,7 @@ def tf_depthwise_conv2d(input, w):
     output = tf.nn.depthwise_conv2d(input_4d, kernel_4d,
                                     strides=[1, 1, 1, 1], padding='SAME')
     with tf.Session() as sess:
-        ans = ress.run(output)
+        ans = sess.run(output)
         # Remove the degenerate batch dimension, since we use batch 1.
         return ans.reshape(input.shape)
 
@@ -205,6 +205,26 @@ class TestConvs(unittest.TestCase):
         w[0, 0, 0, 3] = -1
         np_ans = conv2d_multi_channel(inp, w)
         tf_ans = tf_conv2d_multi_channel(inp, w)
+        npt.assert_almost_equal(np_ans, tf_ans, decimal=3)
+
+    def test_depthwise(self):
+        # input is 6x6, with 3 channels
+        # filter is 3x3 with 3 input channels
+        inp = np.linspace(-6, 6, 6*6*3).reshape(6, 6, 3)
+
+        w = np.linspace(0, 26, 27).reshape(3, 3, 3)
+        np_ans = depthwise_conv2d(inp, w)
+        tf_ans = tf_depthwise_conv2d(inp, w)
+        npt.assert_almost_equal(np_ans, tf_ans, decimal=3)
+
+        w = np.ones((3, 3, 3))
+        w[0, 0, 0] = 2
+        w[0, 1, 0] = 2
+        w[1, 1, 0] = 1
+        w[1, 1, 1] = 3
+        w[0, 1, 2] = 5
+        np_ans = depthwise_conv2d(inp, w)
+        tf_ans = tf_depthwise_conv2d(inp, w)
         npt.assert_almost_equal(np_ans, tf_ans, decimal=3)
 
 
