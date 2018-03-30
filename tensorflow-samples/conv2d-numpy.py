@@ -106,7 +106,7 @@ def tf_conv2d_multi_channel(input, w):
 
     Params same as in conv2d_multi_channel.
     """
-    # Here the input we get already has the out_depth dimension; we just have to
+    # Here the input we get already has the in_depth dimension; we just have to
     # set batch to 1.
     input_4d = tf.reshape(tf.constant(input, dtype=tf.float32),
                           [1, input.shape[0], input.shape[1], input.shape[2]])
@@ -127,6 +127,8 @@ def depthwise_conv2d():
 
     input: input array with shape (height, width, in_depth)
     w: filter array with shape (fd, fd, in_depth)
+
+    Returns a result with shape (height, width, in_depth).
     """
     assert w.shape[0] == w.shape[1] and w.shape[0] % 2 == 1
 
@@ -151,11 +153,24 @@ def depthwise_conv2d():
                         output[i, j, c] += (
                             padded_input[i + fi, j + fj, c] * w_element)
     return output
-    
 
-#def tf_depthwise_conv2d(input, w):
 
-    
+def tf_depthwise_conv2d(input, w):
+    """Two-dimensional depthwise convolution using TF.
+
+    Params same as in depthwise_conv2d.
+    """
+    input_4d = tf.reshape(tf.constant(input, dtype=tf.float32),
+                          [1, input.shape[0], input.shape[1], input.shape[2]])
+    # Set channel_multiplier dimension to 1
+    kernel_4d = tf.reshape(tf.constant(w, dtype=tf.float32),
+                           [w.shape[0], w.shape[1], w.shape[2], 1])
+    output = tf.nn.depthwise_conv2d(input_4d, kernel_4d,
+                                    strides=[1, 1, 1, 1], padding='SAME')
+    with tf.Session() as sess:
+        ans = ress.run(output)
+        # Remove the degenerate batch dimension, since we use batch 1.
+        return ans.reshape(input.shape)
 
 
 
