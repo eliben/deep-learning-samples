@@ -155,6 +155,39 @@ def depthwise_conv2d(input, w):
     return output
 
 
+def separable_conv2d(input, w_depth, w_pointwise):
+    """Depthwise separable convolution.
+
+    Performs 2d depthwise convolution with w_depth, and then applies a pointwise
+    1x1 convolution with w_pointwise on the result.
+
+    Uses SAME padding with 0s, a stride of 1 and no dilation. A single output
+    channel is used per input channel (channel_multiplier=1) in w_depth.
+
+    input: input array with shape (height, width, in_depth)
+    w_depth: depthwise filter array with shape (fd, fd, in_depth)
+    w_pointwise: pointwise filter array with shape (in_depth, out_depth)
+
+    Returns a result with shape (height, width, out_depth).
+    """
+    # First run the depthwise convolution. Its result has the same shape as
+    # input.
+    depthwise_result = depthwise_conv2d(input, w_depth)
+
+    height, width, in_depth = depthwise_result.shape
+    assert in_depth == w_pointwise.shape[0]
+    out_depth = w_pointwise.shape[1]
+    output = np.zeros((height, width, out_depth))
+
+    for out_c in range(out_depth):
+        for i in range(height):
+            for j in range(width):
+                for c in range(in_depth):
+                    w_element = w_pointwise[c, out_c]
+                    output[i, j, out_c] += depthwise_result[i, j, c] * w_element
+    return output
+
+
 def tf_depthwise_conv2d(input, w):
     """Two-dimensional depthwise convolution using TF.
 
@@ -172,6 +205,31 @@ def tf_depthwise_conv2d(input, w):
         # Remove the degenerate batch dimension, since we use batch 1.
         return ans.reshape(input.shape)
 
+
+def tf_separable_conv2d(input, w_depth, w_pointwise):
+    """Depthwise separable convolution using TF.
+
+    Params same as in separable_conv2d.
+    """
+    input_4d = tf.reshape(tf.constant(input, dtype=tf.float32),
+                          [1, input.shape[0], input.shape[1], input.shape[2]])
+    # Set channel_multiplier dimension to 1
+    depth_kernel_4d = tf.reshape(tf.constant(w_depth, dtype=tf.float32),
+                                 [w_depth.shape[0], w_depth.shape[1],
+                                  w_depth.shape[2], 1])
+    pointwise_kernel_4d = tf.reshape(tf.constant(w_pointwise, dtype=tf.float32),
+                                     [1, 1, w_pointwise.shape[0],
+                                      w_pointwise.shape[1]])
+
+    output = tf.nn.separable_conv2d(input_4d,
+                                    depth_kernel_4d,
+                                    pointwise_kernel_4d,
+                                    strides=[1, 1, 1, 1],
+                                    padding='SAME')
+    with tf.Session() as sess:
+        ans = sess.run(output)
+        # Remove the degenerate batch dimension, since we use batch 1.
+        return ans.reshape(input.shape[0], input.shape[1], w_pointwise.shape[1])
 
 
 class TestConvs(unittest.TestCase):
@@ -225,6 +283,28 @@ class TestConvs(unittest.TestCase):
         w[0, 1, 2] = 5
         np_ans = depthwise_conv2d(inp, w)
         tf_ans = tf_depthwise_conv2d(inp, w)
+        npt.assert_almost_equal(np_ans, tf_ans, decimal=3)
+
+    def test_separable(self):
+        # input is 6x6 with 3 channels
+        # depth filter is 3x3 with 3 input channels
+        # pointwise filter is 3x5 with 5 output channels
+        inp = np.linspace(-8, 8, 8*8*3).reshape(8, 8, 3)
+
+        w_depth = np.linspace(0, 26, 27).reshape(3, 3, 3)
+        w_pointwise = np.linspace(-2, 2, 3*5).reshape(3, 5)
+        np_ans = separable_conv2d(inp, w_depth, w_pointwise)
+        tf_ans = tf_separable_conv2d(inp, w_depth, w_pointwise)
+        npt.assert_almost_equal(np_ans, tf_ans, decimal=3)
+
+        w_depth = np.sin(np.linspace(0, 26, 27)).reshape(3, 3, 3)
+        w_pointwise = np.zeros((3, 5))
+        for i in range(5):
+            w_pointwise[0, i] = 1 + i
+            w_pointwise[1, i] = 3 - i
+            w_pointwise[2, i] = 0.2 + 0.6 * i
+        np_ans = separable_conv2d(inp, w_depth, w_pointwise)
+        tf_ans = tf_separable_conv2d(inp, w_depth, w_pointwise)
         npt.assert_almost_equal(np_ans, tf_ans, decimal=3)
 
 
