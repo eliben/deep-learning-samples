@@ -81,7 +81,7 @@ def rnn_forward(x, a0, parameters):
     a = np.zeros((n_a, m, T_x))
     y_pred = np.zeros((n_y, m, T_x))
 
-    a_next = a[:,:,0]
+    a_next = a0
 
     # loop over all time-steps
     for t in range(0, T_x):
