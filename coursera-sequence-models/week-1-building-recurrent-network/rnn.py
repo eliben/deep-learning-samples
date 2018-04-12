@@ -195,7 +195,7 @@ def lstm_forward(x, a0, parameters):
 
     # Retrieve dimensions from shapes of x and parameters['Wy'] (≈2 lines)
     n_x, m, T_x = x.shape
-    n_y, n_a = Wy.shape
+    n_y, n_a = parameters['Wy'].shape
 
     a = np.zeros((n_a, m, T_x))
     c = np.zeros((n_a, m, T_x))
