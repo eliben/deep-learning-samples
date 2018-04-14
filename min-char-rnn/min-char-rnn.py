@@ -11,9 +11,15 @@ BSD License
 from __future__ import print_function
 
 import numpy as np
+import sys
 
 # data I/O
-data = open('input.txt', 'r').read() # should be simple plain text file
+if len(sys.argv) > 1:
+    filename = sys.argv[1]
+else:
+    filename = 'input.txt'
+
+data = open(filename, 'r').read() # should be simple plain text file
 chars = list(set(data))
 data_size, vocab_size = len(data), len(chars)
 print('data has %d characters, %d unique.' % (data_size, vocab_size))
@@ -24,7 +30,7 @@ print('ix_to_char', ix_to_char)
 
 # hyperparameters
 hidden_size = 100 # size of hidden layer of neurons
-seq_length = 2 # number of steps to unroll the RNN for
+seq_length = 25 # number of steps to unroll the RNN for
 learning_rate = 1e-1
 MAX_DATA = 1000000
 
