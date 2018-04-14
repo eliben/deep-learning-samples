@@ -2,10 +2,13 @@
 Taken from Andrej Karpathy's min-char-rnn:
     https://gist.github.com/karpathy/d4dee566867f8291f086
 
-Modified in various ways for better introspection / customization.
+Modified in various ways for better introspection / customization, and added
+comments.
 
 ----
-Minimal character-level Vanilla RNN model. Written by Andrej Karpathy (@karpathy)
+
+Minimal character-level Vanilla RNN model.
+Written by Andrej Karpathy (@karpathy)
 BSD License
 """
 from __future__ import print_function
@@ -19,10 +22,16 @@ if len(sys.argv) > 1:
 else:
     filename = 'input.txt'
 
-data = open(filename, 'r').read() # should be simple plain text file
+with open(filename, 'r') as f:
+    data = f.read()
+
+# All unique characters / entities in the data set.
 chars = list(set(data))
 data_size, vocab_size = len(data), len(chars)
 print('data has %d characters, %d unique.' % (data_size, vocab_size))
+
+# Numerical index [0:N) mapping for N chars, to be used as vector indices (for
+# one-hot vectors, etc).
 char_to_ix = { ch:i for i,ch in enumerate(chars) }
 ix_to_char = { i:ch for i,ch in enumerate(chars) }
 print('char_to_ix', char_to_ix)
@@ -32,6 +41,8 @@ print('ix_to_char', ix_to_char)
 hidden_size = 100 # size of hidden layer of neurons
 seq_length = 25 # number of steps to unroll the RNN for
 learning_rate = 1e-1
+
+# Stop when processed this much data
 MAX_DATA = 1000000
 
 # Model parameters/weights -- these are shared among all steps.
