@@ -16,7 +16,8 @@ from __future__ import print_function
 import numpy as np
 import sys
 
-# data I/O
+# Make it possible to provide input file as a command-line argument; input.txt
+# is still the default.
 if len(sys.argv) > 1:
     filename = sys.argv[1]
 else:
@@ -32,8 +33,8 @@ print('data has %d characters, %d unique.' % (data_size, vocab_size))
 
 # Numerical index [0:N) mapping for N chars, to be used as vector indices (for
 # one-hot vectors, etc).
-char_to_ix = { ch:i for i,ch in enumerate(chars) }
-ix_to_char = { i:ch for i,ch in enumerate(chars) }
+char_to_ix = {ch:i for i, ch in enumerate(chars)}
+ix_to_char = {i:ch for i, ch in enumerate(chars)}
 print('char_to_ix', char_to_ix)
 print('ix_to_char', ix_to_char)
 
@@ -45,16 +46,18 @@ learning_rate = 1e-1
 # Stop when processed this much data
 MAX_DATA = 1000000
 
-# Model parameters/weights -- these are shared among all steps.
+# Model parameters/weights -- these are shared among all steps. Weights
+# initialized randomly; biases initialized to 0.
 # Inputs are characters one-hot encoded in a vocab-sized vector.
-Wxh = np.random.randn(hidden_size, vocab_size)*0.01 # input to hidden
-Whh = np.random.randn(hidden_size, hidden_size)*0.01 # hidden to hidden
-Why = np.random.randn(vocab_size, hidden_size)*0.01 # hidden to output
-bh = np.zeros((hidden_size, 1)) # hidden bias
-by = np.zeros((vocab_size, 1)) # output bias
+Wxh = np.random.randn(hidden_size, vocab_size) * 0.01       # input to hidden
+Whh = np.random.randn(hidden_size, hidden_size) * 0.01      # hidden to hidden
+Why = np.random.randn(vocab_size, hidden_size) * 0.01       # hidden to output
+bh = np.zeros((hidden_size, 1))     # hidden bias
+by = np.zeros((vocab_size, 1))      # output bias
 
 def lossFun(inputs, targets, hprev):
-  """
+  """Runs forward and backward passes through the RNN.
+
   inputs,targets are both list of integers.
   hprev is Hx1 array of initial hidden state
   returns the loss, gradients on model parameters, and last hidden state
