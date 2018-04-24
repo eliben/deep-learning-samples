@@ -49,6 +49,7 @@ MAX_DATA = 1000000
 # Model parameters/weights -- these are shared among all steps. Weights
 # initialized randomly; biases initialized to 0.
 # Inputs are characters one-hot encoded in a vocab-sized vector.
+# Dimensions: H = hidden_size, V = vocab_size
 Wxh = np.random.randn(hidden_size, vocab_size) * 0.01       # input to hidden
 Whh = np.random.randn(hidden_size, hidden_size) * 0.01      # hidden to hidden
 Why = np.random.randn(vocab_size, hidden_size) * 0.01       # hidden to output
@@ -62,17 +63,25 @@ def lossFun(inputs, targets, hprev):
   hprev is Hx1 array of initial hidden state
   returns the loss, gradients on model parameters, and last hidden state
   """
+  # Caches that keep values computed in the forward pass at each time step, to
+  # be reused in the backward pass.
   xs, hs, ys, ps = {}, {}, {}, {}
   hs[-1] = np.copy(hprev)
   loss = 0
   # forward pass
   for t in xrange(len(inputs)):
+    # Input at time step t is xs[t] -- a one-hot encoded vector of shape (V, 1).
     xs[t] = np.zeros((vocab_size,1)) # encode in 1-of-k representation
     xs[t][inputs[t]] = 1
-    hs[t] = np.tanh(np.dot(Wxh, xs[t]) + np.dot(Whh, hs[t-1]) + bh) # hidden state
-    ys[t] = np.dot(Why, hs[t]) + by # unnormalized log probabilities for next chars
-    ps[t] = np.exp(ys[t]) / np.sum(np.exp(ys[t])) # probabilities for next chars
-    loss += -np.log(ps[t][targets[t],0]) # softmax (cross-entropy loss)
+
+    # Compute h[t] from h[t-1] and x[t]
+    hs[t] = np.tanh(np.dot(Wxh, xs[t]) + np.dot(Whh, hs[t-1]) + bh)
+
+    # Compute ps[t] - probabilities for output, and the loss using xentropy.
+    ys[t] = np.dot(Why, hs[t]) + by
+    ps[t] = np.exp(ys[t]) / np.sum(np.exp(ys[t]))
+    loss += -np.log(ps[t][targets[t],0])
+
   # backward pass: compute gradients going backwards
   dWxh, dWhh, dWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
   dbh, dby = np.zeros_like(bh), np.zeros_like(by)
