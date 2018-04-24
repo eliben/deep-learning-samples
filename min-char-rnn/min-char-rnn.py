@@ -68,7 +68,7 @@ def lossFun(inputs, targets, hprev):
   xs, hs, ys, ps = {}, {}, {}, {}
   hs[-1] = np.copy(hprev)
   loss = 0
-  # forward pass
+  # Forward pass
   for t in xrange(len(inputs)):
     # Input at time step t is xs[t] -- a one-hot encoded vector of shape (V, 1).
     xs[t] = np.zeros((vocab_size,1)) # encode in 1-of-k representation
@@ -82,10 +82,12 @@ def lossFun(inputs, targets, hprev):
     ps[t] = np.exp(ys[t]) / np.sum(np.exp(ys[t]))
     loss += -np.log(ps[t][targets[t],0])
 
-  # backward pass: compute gradients going backwards
+  # Backward pass: compute gradients going backwards.
+  # Gradients are initialized to 0s, and every time step contributes to them.
   dWxh, dWhh, dWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
   dbh, dby = np.zeros_like(bh), np.zeros_like(by)
   dhnext = np.zeros_like(hs[0])
+
   for t in reversed(xrange(len(inputs))):
     dy = np.copy(ps[t])
     dy[targets[t]] -= 1 # backprop into y. see http://cs231n.github.io/neural-networks-case-study/#grad if confused here
@@ -97,8 +99,11 @@ def lossFun(inputs, targets, hprev):
     dWxh += np.dot(dhraw, xs[t].T)
     dWhh += np.dot(dhraw, hs[t-1].T)
     dhnext = np.dot(Whh.T, dhraw)
+
+  # Gradient clipping
   for dparam in [dWxh, dWhh, dWhy, dbh, dby]:
-    np.clip(dparam, -5, 5, out=dparam) # clip to mitigate exploding gradients
+    np.clip(dparam, -5, 5, out=dparam)
+
   return loss, dWxh, dWhh, dWhy, dbh, dby, hs[len(inputs)-1]
 
 def sample(h, seed_ix, n):
