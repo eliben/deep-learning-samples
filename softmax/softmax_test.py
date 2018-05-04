@@ -12,13 +12,17 @@ from softmax import *
 def eval_numerical_gradient(f, x, verbose=False, h=1e-5):
     """A naive implementation of numerical gradient of f at x.
 
+    Used for gradient checking.
+
     f: function taking a single array argument and returning a scalar.
     x: array starting point for evaluation.
 
     Based on http://cs231n.github.io/assignments2016/assignment1/, with a
     bit of cleanup.
+    Also uses the centered formula described in
+    http://cs231n.github.io/neural-networks-3/#gradcheck
 
-    Returns a numerical gradient
+    Returns a numerical gradient, same shape as x.
     """
     grad = np.zeros_like(x)
     # iterate over all indexes in x
