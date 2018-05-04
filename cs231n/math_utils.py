@@ -10,6 +10,9 @@ def eval_numerical_gradient(f, x):
     """A naive implementation of numerical gradient of f at x
         - f should be a function that takes a single argument
         - x is the point (numpy array) to evaluate the gradient at
+
+        NOTE: don't use this -- the centered formula is much better
+        as described in http://cs231n.github.io/neural-networks-3/#gradcheck
     """
     fx = f(x)  # evaluate function value at original point
     grad = np.zeros(x.shape)
