@@ -134,7 +134,7 @@ smooth_loss = -np.log(1.0/vocab_size)*seq_length # loss at iteration 0
 
 # gradient checking
 from random import uniform
-def gradCheck(inputs, target, hprev):
+def gradCheck(inputs, targets, hprev):
   global Wxh, Whh, Why, bh, by
   num_checks, delta = 10, 1e-5
   _, dWxh, dWhh, dWhy, dbh, dby, _ = lossFun(inputs, targets, hprev)
@@ -160,6 +160,14 @@ def gradCheck(inputs, target, hprev):
       rel_error = abs(grad_analytic - grad_numerical) / abs(grad_numerical + grad_analytic)
       print('%f, %f => %e ' % (grad_numerical, grad_analytic, rel_error))
       # rel_error should be on order of 1e-7 or less
+
+def basicGradCheck():
+  inputs = [char_to_ix[ch] for ch in data[:seq_length]]
+  targets = [char_to_ix[ch] for ch in data[1:seq_length+1]]
+  hprev = np.zeros((hidden_size,1)) # reset RNN memory
+  gradCheck(inputs, targets, hprev)
+
+basicGradCheck()
 
 while p < MAX_DATA:
   # prepare inputs (we're sweeping from left to right in steps seq_length long)
