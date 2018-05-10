@@ -80,6 +80,18 @@ def lossFun(inputs, targets, hprev):
     # Compute ps[t] - probabilities for output, and the loss using xentropy.
     ys[t] = np.dot(Why, hs[t]) + by
     ps[t] = np.exp(ys[t]) / np.sum(np.exp(ys[t]))
+
+    # Cross-entropy loss for two probability distributions p and q is defined as
+    # follows:
+    # 
+    #   xent(q, p) = -Sum q(k)log(p(k))
+    #                  k
+    #
+    # Where k goes over all the possible values of the random variable p and q
+    # are defined for.
+    # In our case taking q is the "real answer" which is 1-hot encoded; p is the
+    # result of softmax (ps). targets[t] has the only index where q is not 0,
+    # so the sum simply becomes log of ps at that index.
     loss += -np.log(ps[t][targets[t],0])
 
   # Backward pass: compute gradients going backwards.
