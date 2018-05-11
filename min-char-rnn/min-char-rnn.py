@@ -108,6 +108,10 @@ def lossFun(inputs, targets, hprev):
     #
     dWhy += np.dot(dy, hs[t].T)
     dby += dy
+
+    # TODO: proper Jacobian matmul here would be dy.dot(Why), that would give
+    # a [1,T] vector. Since we need [T,1] for h, we flip the dot (we could have
+    # transposed after everything, too)
     dh = np.dot(Why.T, dy) + dhnext # backprop into h
     dhraw = (1 - hs[t] * hs[t]) * dh # backprop through tanh nonlinearity
     dbh += dhraw
