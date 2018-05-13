@@ -221,35 +221,37 @@ def basicGradCheck():
 # of each step it points at the sequence in the input that will be used for
 # training this iteration.
 n, p = 0, 0
+
+# Memory variables for Adagrad.
 mWxh, mWhh, mWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
-mbh, mby = np.zeros_like(bh), np.zeros_like(by) # memory variables for Adagrad
-smooth_loss = -np.log(1.0/vocab_size)*seq_length # loss at iteration 0
+mbh, mby = np.zeros_like(bh), np.zeros_like(by)
+smooth_loss = -np.log(1.0/vocab_size)*seq_length
 
 while p < MAX_DATA:
-  # prepare inputs (we're sweeping from left to right in steps seq_length long)
+  # Prepare inputs (we're sweeping from left to right in steps seq_length long)
   if p+seq_length+1 >= len(data) or n == 0:
-    hprev = np.zeros((hidden_size,1)) # reset RNN memory
+    hprev = np.zeros((hidden_size, 1)) # reset RNN memory
     p = 0 # go from start of data
   inputs = [char_to_ix[ch] for ch in data[p:p+seq_length]]
   targets = [char_to_ix[ch] for ch in data[p+1:p+seq_length+1]]
 
-  # sample from the model now and then
+  # Sample from the model now and then.
   if n % 1000 == 0:
     sample_ix = sample(hprev, inputs[0], 200)
     txt = ''.join(ix_to_char[ix] for ix in sample_ix)
     print('----\n %s \n----' % (txt, ))
 
-  # forward seq_length characters through the net and fetch gradient
+  # Forward seq_length characters through the net and fetch gradient
   loss, dWxh, dWhh, dWhy, dbh, dby, hprev = lossFun(inputs, targets, hprev)
   smooth_loss = smooth_loss * 0.999 + loss * 0.001
   if n % 200 == 0: print('iter %d (p=%d), loss: %f' % (n, p, smooth_loss))
 
-  # perform parameter update with Adagrad
+  # Perform parameter update with Adagrad
   for param, dparam, mem in zip([Wxh, Whh, Why, bh, by],
                                 [dWxh, dWhh, dWhy, dbh, dby],
                                 [mWxh, mWhh, mWhy, mbh, mby]):
     mem += dparam * dparam
-    param += -learning_rate * dparam / np.sqrt(mem + 1e-8) # adagrad update
+    param += -learning_rate * dparam / np.sqrt(mem + 1e-8)
 
   p += seq_length
   n += 1
