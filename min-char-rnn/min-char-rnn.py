@@ -1,11 +1,19 @@
 """
+Minimal character-based language model learning with RNNs.
+
 Taken from Andrej Karpathy's min-char-rnn:
+
     https://gist.github.com/karpathy/d4dee566867f8291f086
 
+The companion blog post is TODO.
+
 Modified in various ways for better introspection / customization, and added
-comments.
+comments. I tried to retain the overall structure of this code almost identical
+to the original.
 
 ----
+
+Original license/copyright blurb:
 
 Minimal character-level Vanilla RNN model.
 Written by Andrej Karpathy (@karpathy)
@@ -38,7 +46,7 @@ ix_to_char = {i:ch for i, ch in enumerate(chars)}
 print('char_to_ix', char_to_ix)
 print('ix_to_char', ix_to_char)
 
-# hyperparameters
+# Hyperparameters
 hidden_size = 100 # size of hidden layer of neurons
 seq_length = 16 # number of steps to unroll the RNN for
 learning_rate = 1e-1
@@ -59,25 +67,31 @@ by = np.zeros((vocab_size, 1))      # output bias
 def lossFun(inputs, targets, hprev):
   """Runs forward and backward passes through the RNN.
 
-  inputs,targets are both list of integers.
-  hprev is Hx1 array of initial hidden state
-  returns the loss, gradients on model parameters, and last hidden state
+  inputs, targets: Lists of integers. For some i, inputs[i] is the input
+                   character (encoded as an index into the ix_to_char map) and
+                   targets[i] is the corresponding next character in the
+                   training data (similarly encoded).
+  hprev: Hx1 array of initial hidden state
+  returns: loss, gradients on model parameters, and last hidden state
   """
   # Caches that keep values computed in the forward pass at each time step, to
   # be reused in the backward pass.
   xs, hs, ys, ps = {}, {}, {}, {}
+
+  # Initial incoming state.
   hs[-1] = np.copy(hprev)
   loss = 0
   # Forward pass
   for t in xrange(len(inputs)):
-    # Input at time step t is xs[t] -- a one-hot encoded vector of shape (V, 1).
+    # Input at time step t is xs[t]. Prepare a one-hot encoded vector of shape
+    # (V, 1).
     xs[t] = np.zeros((vocab_size,1)) # encode in 1-of-k representation
     xs[t][inputs[t]] = 1
 
     # Compute h[t] from h[t-1] and x[t]
     hs[t] = np.tanh(np.dot(Wxh, xs[t]) + np.dot(Whh, hs[t-1]) + bh)
 
-    # Compute ps[t] - probabilities for output, and the loss using xentropy.
+    # Compute ps[t] - softmax probabilities for output.
     ys[t] = np.dot(Why, hs[t]) + by
     ps[t] = np.exp(ys[t]) / np.sum(np.exp(ys[t]))
 
@@ -98,57 +112,74 @@ def lossFun(inputs, targets, hprev):
   # Gradients are initialized to 0s, and every time step contributes to them.
   dWxh, dWhh, dWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
   dbh, dby = np.zeros_like(bh), np.zeros_like(by)
+
+  # Initialize the incoming gradient of h to zero; this is a safe assumption for
+  # a sufficiently long unrolling.
   dhnext = np.zeros_like(hs[0])
 
+  # The backwards pass iterates over the input sequence backwards.
   for t in reversed(xrange(len(inputs))):
+    # Backprop through the gradients of loss and softmax.
     dy = np.copy(ps[t])
-    dy[targets[t]] -= 1 # backprop into y. see http://cs231n.github.io/neural-networks-case-study/#grad if confused here
+    dy[targets[t]] -= 1
 
-    # Applying chain rule to propagate grad into dWhy and dby.
-    #
+    # Compute gradients for the Why and by parameters.
     dWhy += np.dot(dy, hs[t].T)
     dby += dy
 
-    # TODO: proper Jacobian matmul here would be dy.dot(Why), that would give
+    # Backprop through the fully-connected layer (Why, by) to h. Also add up the
+    # incoming gradient for h from the next cell.
+    # Note: proper Jacobian matmul here would be dy.dot(Why), that would give
     # a [1,T] vector. Since we need [T,1] for h, we flip the dot (we could have
     # transposed after everything, too)
-    dh = np.dot(Why.T, dy) + dhnext # backprop into h
-    dhraw = (1 - hs[t] * hs[t]) * dh # backprop through tanh nonlinearity
+    dh = np.dot(Why.T, dy) + dhnext
+
+    # Backprop through tanh.
+    dhraw = (1 - hs[t] * hs[t]) * dh
+
+    # Compute gradients for the dby, dWxh, Whh parameters.
     dbh += dhraw
     dWxh += np.dot(dhraw, xs[t].T)
     dWhh += np.dot(dhraw, hs[t-1].T)
+
+    # Backprop the gradient to the incoming h, which will be used in the
+    # previous time step.
     dhnext = np.dot(Whh.T, dhraw)
 
-  # Gradient clipping
+  # Gradient clipping to the range [-5, 5].
   for dparam in [dWxh, dWhh, dWhy, dbh, dby]:
     np.clip(dparam, -5, 5, out=dparam)
 
   return loss, dWxh, dWhh, dWhy, dbh, dby, hs[len(inputs)-1]
 
 def sample(h, seed_ix, n):
+  """Sample a sequence of integers from the model.
+
+  Runs the RNN in forward mode for n steps; seed_ix is the seed letter for the
+  first time step, and h is the memory state. Returns a sequences of letters produced
+  by the model (indices).
   """
-  sample a sequence of integers from the model
-  h is memory state, seed_ix is seed letter for first time step
-  """
+  # Create a one-hot vector to represent the input.
   x = np.zeros((vocab_size, 1))
   x[seed_ix] = 1
   ixes = []
+
   for t in xrange(n):
+    # Run the forward pass only.
     h = np.tanh(np.dot(Wxh, x) + np.dot(Whh, h) + bh)
     y = np.dot(Why, h) + by
     p = np.exp(y) / np.sum(np.exp(y))
+
+    # Sample from the distribution produced by softmax.
     ix = np.random.choice(range(vocab_size), p=p.ravel())
+
+    # Prepare input for the next cell.
     x = np.zeros((vocab_size, 1))
     x[ix] = 1
     ixes.append(ix)
   return ixes
 
-n, p = 0, 0
-mWxh, mWhh, mWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
-mbh, mby = np.zeros_like(bh), np.zeros_like(by) # memory variables for Adagrad
-smooth_loss = -np.log(1.0/vocab_size)*seq_length # loss at iteration 0
-
-# gradient checking
+# Gradient checking (from karpathy's own comment on the gist)
 from random import uniform
 def gradCheck(inputs, targets, hprev):
   global Wxh, Whh, Why, bh, by
@@ -183,7 +214,16 @@ def basicGradCheck():
   hprev = np.zeros((hidden_size,1)) # reset RNN memory
   gradCheck(inputs, targets, hprev)
 
-basicGradCheck()
+# Uncomment this to run a basic gradient check.
+#basicGradCheck()
+
+# n is the iteration counter; p is the input sequence pointer, at the beginning
+# of each step it points at the sequence in the input that will be used for
+# training this iteration.
+n, p = 0, 0
+mWxh, mWhh, mWhy = np.zeros_like(Wxh), np.zeros_like(Whh), np.zeros_like(Why)
+mbh, mby = np.zeros_like(bh), np.zeros_like(by) # memory variables for Adagrad
+smooth_loss = -np.log(1.0/vocab_size)*seq_length # loss at iteration 0
 
 while p < MAX_DATA:
   # prepare inputs (we're sweeping from left to right in steps seq_length long)
@@ -211,5 +251,5 @@ while p < MAX_DATA:
     mem += dparam * dparam
     param += -learning_rate * dparam / np.sqrt(mem + 1e-8) # adagrad update
 
-  p += seq_length # move data pointer
-  n += 1 # iteration counter
+  p += seq_length
+  n += 1
