@@ -7,9 +7,9 @@ Taken from Andrej Karpathy's min-char-rnn:
 
 The companion blog post is TODO.
 
-Modified in various ways for better introspection / customization, and added
-comments. I tried to retain the overall structure of this code almost identical
-to the original.
+Modified in various ways for better introspection / customization, Python 3
+compatibility and added comments. I tried to retain the overall structure of
+this code almost identical to the original.
 
 ----
 
@@ -82,7 +82,7 @@ def lossFun(inputs, targets, hprev):
   hs[-1] = np.copy(hprev)
   loss = 0
   # Forward pass
-  for t in xrange(len(inputs)):
+  for t in range(len(inputs)):
     # Input at time step t is xs[t]. Prepare a one-hot encoded vector of shape
     # (V, 1).
     xs[t] = np.zeros((vocab_size,1)) # encode in 1-of-k representation
@@ -118,7 +118,7 @@ def lossFun(inputs, targets, hprev):
   dhnext = np.zeros_like(hs[0])
 
   # The backwards pass iterates over the input sequence backwards.
-  for t in reversed(xrange(len(inputs))):
+  for t in reversed(range(len(inputs))):
     # Backprop through the gradients of loss and softmax.
     dy = np.copy(ps[t])
     dy[targets[t]] -= 1
@@ -164,7 +164,7 @@ def sample(h, seed_ix, n):
   x[seed_ix] = 1
   ixes = []
 
-  for t in xrange(n):
+  for t in range(n):
     # Run the forward pass only.
     h = np.tanh(np.dot(Wxh, x) + np.dot(Whh, h) + bh)
     y = np.dot(Why, h) + by
@@ -190,9 +190,9 @@ def gradCheck(inputs, targets, hprev):
                                ['Wxh', 'Whh', 'Why', 'bh', 'by']):
     s0 = dparam.shape
     s1 = param.shape
-    assert s0 == s1, 'Error dims dont match: %s and %s.' % (`s0`, `s1`)
+    assert s0 == s1, 'Error dims dont match: %s and %s.' % (s0, s1)
     print(name)
-    for i in xrange(num_checks):
+    for i in range(num_checks):
       ri = int(uniform(0,param.size))
       # evaluate cost at [x + delta] and [x - delta]
       old_val = param.flat[ri]
