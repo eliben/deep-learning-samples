@@ -11,6 +11,10 @@ Modified in various ways for better introspection / customization, Python 3
 compatibility and added comments. I tried to retain the overall structure of
 this code almost identical to the original.
 
+To run, learning a char-based language model from some text:
+
+    $ python min-char-rnn.py <text file>
+
 ----
 
 Original license/copyright blurb:
@@ -39,8 +43,9 @@ chars = list(set(data))
 data_size, vocab_size = len(data), len(chars)
 print('data has %d characters, %d unique.' % (data_size, vocab_size))
 
-# Numerical index [0:N) mapping for N chars, to be used as vector indices (for
-# one-hot vectors, etc).
+# Each character in the vocabulary gets a unique integer index assigned, in the
+# half-open interval [0:N). These indices are useful to create one-hot encoded
+# vectors that represent characters in numerical computations.
 char_to_ix = {ch:i for i, ch in enumerate(chars)}
 ix_to_char = {i:ch for i, ch in enumerate(chars)}
 print('char_to_ix', char_to_ix)
@@ -84,7 +89,7 @@ def lossFun(inputs, targets, hprev):
   # Forward pass
   for t in range(len(inputs)):
     # Input at time step t is xs[t]. Prepare a one-hot encoded vector of shape
-    # (V, 1).
+    # (V, 1). inputs[t] is the index where the 1 goes.
     xs[t] = np.zeros((vocab_size,1)) # encode in 1-of-k representation
     xs[t][inputs[t]] = 1
 
@@ -97,7 +102,7 @@ def lossFun(inputs, targets, hprev):
 
     # Cross-entropy loss for two probability distributions p and q is defined as
     # follows:
-    # 
+    #
     #   xent(q, p) = -Sum q(k)log(p(k))
     #                  k
     #
@@ -208,6 +213,7 @@ def gradCheck(inputs, targets, hprev):
       print('%f, %f => %e ' % (grad_numerical, grad_analytic, rel_error))
       # rel_error should be on order of 1e-7 or less
 
+# This function invokes gradCheck with all the parameters properly set up.
 def basicGradCheck():
   inputs = [char_to_ix[ch] for ch in data[:seq_length]]
   targets = [char_to_ix[ch] for ch in data[1:seq_length+1]]
@@ -232,6 +238,9 @@ while p < MAX_DATA:
   if p+seq_length+1 >= len(data) or n == 0:
     hprev = np.zeros((hidden_size, 1)) # reset RNN memory
     p = 0 # go from start of data
+
+  # In each step we unroll the RNN for seq_length cells, and present it with
+  # seq_length inputs and seq_length target outputs to learn.
   inputs = [char_to_ix[ch] for ch in data[p:p+seq_length]]
   targets = [char_to_ix[ch] for ch in data[p+1:p+seq_length+1]]
 
