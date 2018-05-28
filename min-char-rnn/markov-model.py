@@ -1,4 +1,4 @@
-# Simple Markov chain model for character-based text generation.
+# Simple n-gram (Markov chain) model for character-based text generation.
 #
 # Only tested with Python 3.6+
 #
@@ -11,6 +11,9 @@ import random
 import sys
 
 
+# This is the length of the "state" the current character is predicted from.
+# For Markov chains with memory, this is the "order" of the chain. For n-grams,
+# the n is STATE_LEN+1 since it includes the predicted character as well.
 STATE_LEN = 4
 
 
