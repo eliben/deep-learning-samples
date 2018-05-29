@@ -5,7 +5,7 @@ Taken from Andrej Karpathy's min-char-rnn:
 
     https://gist.github.com/karpathy/d4dee566867f8291f086
 
-The companion blog post is TODO.
+The companion blog post is https://eli.thegreenplace.net/2018/understanding-how-to-implement-a-character-based-rnn-language-model/.
 
 Modified in various ways for better introspection / customization, Python 3
 compatibility and added comments. I tried to retain the overall structure of
