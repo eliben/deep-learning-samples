@@ -1,3 +1,4 @@
+# Work in progress
 from __future__ import print_function
 
 import numpy as np
@@ -53,5 +54,3 @@ Wo = np.random.randn(hidden_size, combined_size) * 0.01
 bo = np.zeros((hidden_size, 1))
 Why = np.random.randn(vocab_size, hidden_size) * 0.01
 by = np.zeros((vocab_size, 1))
-
-
