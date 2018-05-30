@@ -56,6 +56,27 @@ bo = np.zeros((H, 1))
 Why = np.random.randn(V, H) * 0.01
 by = np.zeros((V, 1))
 
+
+def sigmoid(z):
+    """Computes sigmoid function.
+
+    z: array of input values.
+
+    Returns array of outputs, sigmoid(z).
+    """
+    # Note: this version of sigmoid tries to avoid overflows in the computation
+    # of e^(-z), by using an alternative formulation when z is negative, to get
+    # 0. e^z / (1+e^z) is equivalent to the definition of sigmoid, but we won't
+    # get e^(-z) to overflow when z is very negative.
+    # Since both the x and y arguments to np.where are evaluated by Python, we
+    # may still get overflow warnings for large z elements; therefore we ignore
+    # warnings during this computation.
+    with np.errstate(over='ignore', invalid='ignore'):
+        return np.where(z >= 0,
+                        1 / (1 + np.exp(-z)),
+                        np.exp(z) / (1 + np.exp(z)))
+
+
 def lossFun(inputs, targets, hprev, cprev):
     """Runs forward and backward passes through the RNN.
  
@@ -69,6 +90,14 @@ def lossFun(inputs, targets, hprev, cprev):
  
       returns: ? loss, gradients on model parameters, and last hidden state
     """
+    # Caches that keep values computed in the forward pass at each time step, to
+    # be reused in the backward pass.
+    xs, ys, hs, cs, fgs, igs, cts, ogs = {}, {}, {}, {}, {}, {}, {}, {}
+
+    # Initial incoming states.
+    hs[-1] = np.copy(hprev)
+    cs[-1] = np.copy(cprev)
+
     loss = 0
     # Forward pass
     for t in range(len(inputs)):
@@ -81,5 +110,21 @@ def lossFun(inputs, targets, hprev, cprev):
         # column vector.
         xh = np.row_stack(hprev, xs[t])
 
+        # Gates f, i and o.
+        fgs[t] = sigmoid(np.dot(Wf, xh) + bf)
+        igs[t] = sigmoid(np.dot(Wi, xh) + bi)
+        ogs[t] = sigmoid(np.dot(Wo, xh) + bo)
 
+        # Compute update candidate ct.
+        cts[t] = np.tanh(np.dot(Wct, xh) + bct)
 
+        # This step's h and c.
+        c[t] = fgs[t] * c[t-1] + cts[t] * igs[t]
+        h[t] = np.tanh(c[t]) * ogs[t]
+
+        # Softmax for output.
+        ys[t] = np.dot(Why, hs[t]) + by
+        ps[t] = np.exp(ys[t]) / np.sum(np.exp(ys[t]))
+
+        # Cross-entropy loss.
+        loss += -np.log(ps[t][targets[t], 0])
