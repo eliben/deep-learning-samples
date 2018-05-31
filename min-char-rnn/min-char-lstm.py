@@ -128,3 +128,20 @@ def lossFun(inputs, targets, hprev, cprev):
 
         # Cross-entropy loss.
         loss += -np.log(ps[t][targets[t], 0])
+
+    # Initialize gradients of all weights/biases to 0.
+    dWf = np.zeros_like(Wf)
+    dbf = np.zeros_like(bf)
+    dWi = np.zeros_like(Wi)
+    dbi = np.zeros_like(bi)
+    dWct = np.zeros_like(Wct)
+    dbct = np.zeros_like(bct)
+    dWo = np.zeros_like(Wo)
+    dbo = np.zeros_like(bo)
+    dWhy = np.zeros_like(Why)
+    dby = np.zeros_like(by)
+
+    # Incoming gradients for h and c
+    dhnext = np.zeros_like(h[0])
+    dcnext = np.zeros_like(c[0])
+
