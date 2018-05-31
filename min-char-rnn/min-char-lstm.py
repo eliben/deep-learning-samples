@@ -148,3 +148,17 @@ def lossFun(inputs, targets, hprev, cprev):
     # The backwards pass iterates over the input sequence backwards.
     for t in reversed(range(len(inputs))):
         # Backprop through the gradients of loss and softmax.
+        dy = np.copy(ps[t])
+        dy[targets[t]] -= 1
+
+        # Compute gradients for the Why and by parameters.
+        dWhy += np.dot(dy, hs[t].T)
+        dby += dy
+
+        # Backprop through the fully-connected layer (Why, by) to h. Also add up the
+        # incoming gradient for h from the next cell.
+        dh = np.dot(Why.T, dy) + dhnext
+
+        # Backprop through output gate and tanh to get to dc; dc also gets
+        # dcnext added because it branches in two directions.
+        dc = ogs[t] * (1 - hs[t] * hs[t]) * dh + dcnext
