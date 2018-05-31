@@ -119,8 +119,8 @@ def lossFun(inputs, targets, hprev, cprev):
         cts[t] = np.tanh(np.dot(Wct, xh) + bct)
 
         # This step's h and c.
-        c[t] = fgs[t] * c[t-1] + cts[t] * igs[t]
-        h[t] = np.tanh(c[t]) * ogs[t]
+        cs[t] = fgs[t] * cs[t-1] + cts[t] * igs[t]
+        hs[t] = np.tanh(cs[t]) * ogs[t]
 
         # Softmax for output.
         ys[t] = np.dot(Why, hs[t]) + by
@@ -142,6 +142,9 @@ def lossFun(inputs, targets, hprev, cprev):
     dby = np.zeros_like(by)
 
     # Incoming gradients for h and c
-    dhnext = np.zeros_like(h[0])
-    dcnext = np.zeros_like(c[0])
+    dhnext = np.zeros_like(hs[0])
+    dcnext = np.zeros_like(cs[0])
 
+    # The backwards pass iterates over the input sequence backwards.
+    for t in reversed(range(len(inputs))):
+        # Backprop through the gradients of loss and softmax.
