@@ -49,8 +49,8 @@ Wf = np.random.randn(H, HV) * 0.01
 bf = np.zeros((H, 1))
 Wi = np.random.randn(H, HV) * 0.01
 bi = np.zeros((H, 1))
-Wct = np.random.randn(H, HV) * 0.01
-bct = np.zeros((H, 1))
+Wcc = np.random.randn(H, HV) * 0.01
+bcc = np.zeros((H, 1))
 Wo = np.random.randn(H, HV) * 0.01
 bo = np.zeros((H, 1))
 Why = np.random.randn(V, H) * 0.01
@@ -92,7 +92,7 @@ def lossFun(inputs, targets, hprev, cprev):
     """
     # Caches that keep values computed in the forward pass at each time step, to
     # be reused in the backward pass.
-    xs, xhs, ys, hs, cs, fgs, igs, cts, ogs = {}, {}, {}, {}, {}, {}, {}, {}, {}
+    xs, xhs, ys, hs, cs, fgs, igs, ccs, ogs = {}, {}, {}, {}, {}, {}, {}, {}, {}
 
     # Initial incoming states.
     hs[-1] = np.copy(hprev)
@@ -115,11 +115,11 @@ def lossFun(inputs, targets, hprev, cprev):
         igs[t] = sigmoid(np.dot(Wi, xhs[t]) + bi)
         ogs[t] = sigmoid(np.dot(Wo, xhs[t]) + bo)
 
-        # Compute update candidate ct.
-        cts[t] = np.tanh(np.dot(Wct, xhs[t]) + bct)
+        # Compute update candidate cc.
+        ccs[t] = np.tanh(np.dot(Wcc, xhs[t]) + bcc)
 
         # This step's h and c.
-        cs[t] = fgs[t] * cs[t-1] + cts[t] * igs[t]
+        cs[t] = fgs[t] * cs[t-1] + ccs[t] * igs[t]
         hs[t] = np.tanh(cs[t]) * ogs[t]
 
         # Softmax for output.
@@ -134,8 +134,8 @@ def lossFun(inputs, targets, hprev, cprev):
     dbf = np.zeros_like(bf)
     dWi = np.zeros_like(Wi)
     dbi = np.zeros_like(bi)
-    dWct = np.zeros_like(Wct)
-    dbct = np.zeros_like(bct)
+    dWcc = np.zeros_like(Wcc)
+    dbcc = np.zeros_like(bcc)
     dWo = np.zeros_like(Wo)
     dbo = np.zeros_like(bo)
     dWhy = np.zeros_like(Why)
@@ -178,20 +178,20 @@ def lossFun(inputs, targets, hprev, cprev):
         dxh_from_f = np.dot(Wf.T, dhf)
 
         # Backprop through the input gate: sigmoid and elementwise mul.
-        # TODO: need multiply by cts[t] here?!
-        dhi = cts[t] * dc * igs[t] * (1 - igs[t])
+        # TODO: need multiply by ccs[t] here?!
+        dhi = ccs[t] * dc * igs[t] * (1 - igs[t])
         dWi += np.dot(dhi, xhs[t].T)
         dbi += dhi
         dxh_from_i = np.dot(Wi.T, dhi)
 
-        dhct = igs[t] * dc * (1 - cts[t] ** 2)
-        dWct += np.dot(dhct, xhs[t].T)
-        dbct += dhct
-        dxh_from_ct = np.dot(Wct.T, dhct)
+        dhcc = igs[t] * dc * (1 - ccs[t] ** 2)
+        dWcc += np.dot(dhcc, xhs[t].T)
+        dbcc += dhcc
+        dxh_from_cc = np.dot(Wcc.T, dhcc)
 
         # Combine all contributions to dxh, and extract the gradient for the
         # h part to propagate backwards as dhnext.
-        dxh = dxh_from_o + dxh_from_f + dxh_from_i + dxh_from_ct
+        dxh = dxh_from_o + dxh_from_f + dxh_from_i + dxh_from_cc
         dhnext = dxh[V:, :]
 
         # dcnext from dc and the forget gate.
