@@ -108,7 +108,7 @@ def lossFun(inputs, targets, hprev, cprev):
 
         # hprev and xs[t] are column vector; stack them together into a "taller"
         # column vector.
-        xhs[t] = np.row_stack(hprev, xs[t])
+        xhs[t] = np.row_stack(xs[t], hprev)
 
         # Gates f, i and o.
         fgs[t] = sigmoid(np.dot(Wf, xhs[t]) + bf)
@@ -161,7 +161,7 @@ def lossFun(inputs, targets, hprev, cprev):
 
         # Backprop through output gate and tanh to get to dc; dc also gets
         # dcnext added because it branches in two directions.
-        dc = ogs[t] * (1 - hs[t] * hs[t]) * dh + dcnext
+        dc = ogs[t] * (1 - hs[t] ** 2) * dh + dcnext
 
         # Backprop through output gate and sigmoid to get to this gate's
         # contribution to the gradient of xh (the stacked-together x and h).
@@ -169,7 +169,7 @@ def lossFun(inputs, targets, hprev, cprev):
         dho = hs[t] * ogs[t] * (1 - ogs[t])
         dWo += np.dot(dho, xhs[t].T)
         dbo += dho
-        dhx_from_o = np.dot(Wo.T, dho)
+        dxh_from_o = np.dot(Wo.T, dho)
 
         # Backprop through the forget gate: sigmoid and elementwise mul.
         dhf = c[t] * dc * fgs[t] * (1 - fgs[t])
@@ -178,8 +178,24 @@ def lossFun(inputs, targets, hprev, cprev):
         dxh_from_f = np.dot(Wf.T, dhf)
 
         # Backprop through the input gate: sigmoid and elementwise mul.
-        dhi = c[t] * dc * igs[t] * (1 - igs[t])
+        # TODO: need multiply by cts[t] here?!
+        dhi = cts[t] * dc * igs[t] * (1 - igs[t])
         dWi += np.dot(dhi, xhs[t].T)
         dbi += dhi
         dxh_from_i = np.dot(Wi.T, dhi)
+
+        dhct = igs[t] * dc * (1 - cts[t] ** 2)
+        dWct += np.dot(dhct, xhs[t].T)
+        dbct += dhct
+        dxh_from_ct = np.dot(Wct.T, dhct)
+
+        # Combine all contributions to dxh, and extract the gradient for the
+        # h part to propagate backwards as dhnext.
+        dxh = dxh_from_o + dxh_from_f + dxh_from_i + dxh_from_ct
+        dhnext = dxh[V:, :]
+
+        # dcnext from dc and the forget gate.
+        dcnext = fgs[t] * dc
+
+    # TODO: clip
 
