@@ -92,7 +92,7 @@ def lossFun(inputs, targets, hprev, cprev):
     """
     # Caches that keep values computed in the forward pass at each time step, to
     # be reused in the backward pass.
-    xs, ys, hs, cs, fgs, igs, cts, ogs = {}, {}, {}, {}, {}, {}, {}, {}
+    xs, xhs, ys, hs, cs, fgs, igs, cts, ogs = {}, {}, {}, {}, {}, {}, {}, {}, {}
 
     # Initial incoming states.
     hs[-1] = np.copy(hprev)
@@ -108,15 +108,15 @@ def lossFun(inputs, targets, hprev, cprev):
 
         # hprev and xs[t] are column vector; stack them together into a "taller"
         # column vector.
-        xh = np.row_stack(hprev, xs[t])
+        xhs[t] = np.row_stack(hprev, xs[t])
 
         # Gates f, i and o.
-        fgs[t] = sigmoid(np.dot(Wf, xh) + bf)
-        igs[t] = sigmoid(np.dot(Wi, xh) + bi)
-        ogs[t] = sigmoid(np.dot(Wo, xh) + bo)
+        fgs[t] = sigmoid(np.dot(Wf, xhs[t]) + bf)
+        igs[t] = sigmoid(np.dot(Wi, xhs[t]) + bi)
+        ogs[t] = sigmoid(np.dot(Wo, xhs[t]) + bo)
 
         # Compute update candidate ct.
-        cts[t] = np.tanh(np.dot(Wct, xh) + bct)
+        cts[t] = np.tanh(np.dot(Wct, xhs[t]) + bct)
 
         # This step's h and c.
         cs[t] = fgs[t] * cs[t-1] + cts[t] * igs[t]
@@ -155,10 +155,31 @@ def lossFun(inputs, targets, hprev, cprev):
         dWhy += np.dot(dy, hs[t].T)
         dby += dy
 
-        # Backprop through the fully-connected layer (Why, by) to h. Also add up the
-        # incoming gradient for h from the next cell.
+        # Backprop through the fully-connected layer (Why, by) to h. Also add up
+        # the incoming gradient for h from the next cell.
         dh = np.dot(Why.T, dy) + dhnext
 
         # Backprop through output gate and tanh to get to dc; dc also gets
         # dcnext added because it branches in two directions.
         dc = ogs[t] * (1 - hs[t] * hs[t]) * dh + dcnext
+
+        # Backprop through output gate and sigmoid to get to this gate's
+        # contribution to the gradient of xh (the stacked-together x and h).
+        # TODO: double-check the elementwise muls here...
+        dho = hs[t] * ogs[t] * (1 - ogs[t])
+        dWo += np.dot(dho, xhs[t].T)
+        dbo += dho
+        dhx_from_o = np.dot(Wo.T, dho)
+
+        # Backprop through the forget gate: sigmoid and elementwise mul.
+        dhf = c[t] * dc * fgs[t] * (1 - fgs[t])
+        dWf += np.dot(dhf, xhs[t].T)
+        dbf += dhf
+        dxh_from_f = np.dot(Wf.T, dhf)
+
+        # Backprop through the input gate: sigmoid and elementwise mul.
+        dhi = c[t] * dc * igs[t] * (1 - igs[t])
+        dWi += np.dot(dhi, xhs[t].T)
+        dbi += dhi
+        dxh_from_i = np.dot(Wi.T, dhi)
+
