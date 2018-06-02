@@ -53,7 +53,7 @@ Wcc = np.random.randn(H, HV) * 0.01
 bcc = np.zeros((H, 1))
 Wo = np.random.randn(H, HV) * 0.01
 bo = np.zeros((H, 1))
-Why = np.random.randn(V, H) * 0.01
+Wy = np.random.randn(V, H) * 0.01
 by = np.zeros((V, 1))
 
 
@@ -123,7 +123,7 @@ def lossFun(inputs, targets, hprev, cprev):
         hs[t] = np.tanh(cs[t]) * ogs[t]
 
         # Softmax for output.
-        ys[t] = np.dot(Why, hs[t]) + by
+        ys[t] = np.dot(Wy, hs[t]) + by
         ps[t] = np.exp(ys[t]) / np.sum(np.exp(ys[t]))
 
         # Cross-entropy loss.
@@ -138,10 +138,11 @@ def lossFun(inputs, targets, hprev, cprev):
     dbcc = np.zeros_like(bcc)
     dWo = np.zeros_like(Wo)
     dbo = np.zeros_like(bo)
-    dWhy = np.zeros_like(Why)
+    dWy = np.zeros_like(Wy)
     dby = np.zeros_like(by)
 
-    # Incoming gradients for h and c
+    # Incoming gradients for h and c; for backwards loop step these represent
+    # dh[t] and dc[t]; we do truncated BPTT, so assume they are 0 initially.
     dhnext = np.zeros_like(hs[0])
     dcnext = np.zeros_like(cs[0])
 
@@ -151,16 +152,17 @@ def lossFun(inputs, targets, hprev, cprev):
         dy = np.copy(ps[t])
         dy[targets[t]] -= 1
 
-        # Compute gradients for the Why and by parameters.
-        dWhy += np.dot(dy, hs[t].T)
+        # Compute gradients for the Wy and by parameters.
+        dWy += np.dot(dy, hs[t].T)
         dby += dy
 
-        # Backprop through the fully-connected layer (Why, by) to h. Also add up
+        # Backprop through the fully-connected layer (Wy, by) to h. Also add up
         # the incoming gradient for h from the next cell.
-        dh = np.dot(Why.T, dy) + dhnext
+        dh = np.dot(Wy.T, dy) + dhnext
 
-        # Backprop through output gate and tanh to get to dc; dc also gets
-        # dcnext added because it branches in two directions.
+        # Backprop through multiplication with output gate and tanh to get to
+        # dc; dc also gets dcnext added because it branches in two directions.
+        # TODO: check if tanh is applied properly here!!
         dc = ogs[t] * (1 - hs[t] ** 2) * dh + dcnext
 
         # Backprop through output gate and sigmoid to get to this gate's
