@@ -160,17 +160,24 @@ def lossFun(inputs, targets, hprev, cprev):
         # the incoming gradient for h from the next cell.
         dh = np.dot(Wy.T, dy) + dhnext
 
-        # Backprop through multiplication with output gate and tanh to get to
-        # dc; dc also gets dcnext added because it branches in two directions.
-        # TODO: check if tanh is applied properly here!!
-        dc = ogs[t] * (1 - hs[t] ** 2) * dh + dcnext
+        # Backprop through multiplication with output gate; here "dtanh" means
+        # the gradient at the output of tanh.
+        dctanh = ogs[t] * dh
+        # Backprop through the tanh function; since c[t] branches in two
+        # directions we add dcnext too.
+        dc = dctanh * (1 - cs[t] ** 2) + dcnext
 
-        # Backprop through output gate and sigmoid to get to this gate's
-        # contribution to the gradient of xh (the stacked-together x and h).
-        # TODO: double-check the elementwise muls here...
-        dho = hs[t] * ogs[t] * (1 - ogs[t])
+        # Backprop through multiplication with the tanh; here "dhogs" means
+        # the gradient at the output of the sigmoid of the output gate. Then
+        # backprop through the sigmoid itself (ogs[t] is the sigmoid output).
+        dhogs = dh * np.tanh(cs[t])
+        dho = dhogs * ogs[t] * (1 - ogs[t])
+
+        # Compute gradients for the output gate parameters.
         dWo += np.dot(dho, xhs[t].T)
         dbo += dho
+
+        # Backprop dho to the xh input as well.
         dxh_from_o = np.dot(Wo.T, dho)
 
         # Backprop through the forget gate: sigmoid and elementwise mul.
