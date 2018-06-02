@@ -107,15 +107,15 @@ def lossFun(inputs, targets, hprev, cprev):
         xs[t][inputs[t]] = 1
 
         # hprev and xs[t] are column vector; stack them together into a "taller"
-        # column vector.
-        xhs[t] = np.row_stack(xs[t], hprev)
+        # column vector - first the elements of x, then h.
+        xhs[t] = np.row_stack(xs[t], hs[t-1])
 
         # Gates f, i and o.
         fgs[t] = sigmoid(np.dot(Wf, xhs[t]) + bf)
         igs[t] = sigmoid(np.dot(Wi, xhs[t]) + bi)
         ogs[t] = sigmoid(np.dot(Wo, xhs[t]) + bo)
 
-        # Compute update candidate cc.
+        # Candidate cc.
         ccs[t] = np.tanh(np.dot(Wcc, xhs[t]) + bcc)
 
         # This step's h and c.
