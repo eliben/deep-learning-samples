@@ -31,7 +31,7 @@ print('ix_to_char', ix_to_char)
 # Hyperparameters.
 
 # Size of hidden state vectors; applies to h and c.
-H = hidden_size = 100
+H = hidden_size = 100 
 seq_length = 16 # number of steps to unroll the LSTM for
 learning_rate = 1e-1
 
@@ -92,7 +92,8 @@ def lossFun(inputs, targets, hprev, cprev):
     """
     # Caches that keep values computed in the forward pass at each time step, to
     # be reused in the backward pass.
-    xs, xhs, ys, hs, cs, fgs, igs, ccs, ogs = {}, {}, {}, {}, {}, {}, {}, {}, {}
+    xs, xhs, ys, ps, hs, cs, fgs, igs, ccs, ogs = (
+            {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
     # Initial incoming states.
     hs[-1] = np.copy(hprev)
@@ -108,7 +109,7 @@ def lossFun(inputs, targets, hprev, cprev):
 
         # hprev and xs[t] are column vector; stack them together into a "taller"
         # column vector - first the elements of x, then h.
-        xhs[t] = np.row_stack(xs[t], hs[t-1])
+        xhs[t] = np.vstack((xs[t], hs[t-1]))
 
         # Gates f, i and o.
         fgs[t] = sigmoid(np.dot(Wf, xhs[t]) + bf)
@@ -163,7 +164,7 @@ def lossFun(inputs, targets, hprev, cprev):
         # Backprop through multiplication with output gate; here "dtanh" means
         # the gradient at the output of tanh.
         dctanh = ogs[t] * dh
-        # Backprop through the tanh function; since c[t] branches in two
+        # Backprop through the tanh function; since cs[t] branches in two
         # directions we add dcnext too.
         dc = dctanh * (1 - cs[t] ** 2) + dcnext
 
@@ -181,7 +182,7 @@ def lossFun(inputs, targets, hprev, cprev):
         dxh_from_o = np.dot(Wo.T, dho)
 
         # Backprop through the forget gate: sigmoid and elementwise mul.
-        dhf = c[t-1] * dc * fgs[t] * (1 - fgs[t])
+        dhf = cs[t-1] * dc * fgs[t] * (1 - fgs[t])
         dWf += np.dot(dhf, xhs[t].T)
         dbf += dhf
         dxh_from_f = np.dot(Wf.T, dhf)
@@ -220,14 +221,14 @@ def sample(h, c, seed_ix, n):
 
     for t in range(n):
         # Run the forward pass only.
-        xh = np.row_stack(x, h)
+        xh = np.vstack((x, h))
         fg = sigmoid(np.dot(Wf, xh) + bf)
         ig = sigmoid(np.dot(Wi, xh) + bi)
         og = sigmoid(np.dot(Wo, xh) + bo)
         cc = np.tanh(np.dot(Wcc, xh) + bcc)
         c = fg * c + cc * ig
         h = np.tanh(c) * og
-        y = np.dot(Why, h) + by
+        y = np.dot(Wy, h) + by
         p = np.exp(y) / np.sum(np.exp(y))
 
         # Sample from the distribution produced by softmax.
@@ -283,10 +284,10 @@ while p < MAX_DATA:
         print('iter %d (p=%d), loss %f' % (n, p, smooth_loss))
 
     # Perform parameter update with Adagrad.
-    for param, dparam, mem in zip([
+    for param, dparam, mem in zip(
             [Wf, bf, Wi, bi, Wcc, bcc, Wo, bo, Wy, by],
             [dWf, dbf, dWi, dbi, dWcc, dbcc, dWo, dbo, dWy, dby],
-            [mWf, mbf, mWi, mbi, mWcc, mbcc, mWo, mbo, mWy, mby]]):
+            [mWf, mbf, mWi, mbi, mWcc, mbcc, mWo, mbo, mWy, mby]):
         mem += dparam * dparam
         param += -learning_rate * dparam / np.sqrt(mem + 1e-8)
 
