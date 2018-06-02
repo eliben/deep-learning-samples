@@ -161,8 +161,8 @@ def sample(h, seed_ix, n):
   """Sample a sequence of integers from the model.
 
   Runs the RNN in forward mode for n steps; seed_ix is the seed letter for the
-  first time step, and h is the memory state. Returns a sequences of letters produced
-  by the model (indices).
+  first time step, and h is the memory state. Returns a sequences of letters
+  produced by the model (indices).
   """
   # Create a one-hot vector to represent the input.
   x = np.zeros((vocab_size, 1))

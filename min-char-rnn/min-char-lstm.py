@@ -205,4 +205,37 @@ def lossFun(inputs, targets, hprev, cprev):
         # dcnext from dc and the forget gate.
         dcnext = fgs[t] * dc
 
-    # TODO: clip
+    # Gradient clipping to the range [-5, 5].
+    for dparam in [dWf, dbf, dWi, dbi, dWcc, dbcc, dWo, dbo, dWy, dby]:
+        np.clip(dparam, -5, 5, out=dparam)
+
+    return (loss, dWf, dbf, dWi, dbi, dWcc, dbcc, dWo, dbo, dWy, dby,
+            hs[len(inputs)-1], cs[len(inputs)-1])
+
+
+def sample(h, c, seed_ix, n):
+    x = np.zeros((V, 1))
+    x[seed_ix] = 1
+    ixes = []
+
+    for t in range(n):
+        # Run the forward pass only.
+        xh = np.row_stack(x, h)
+        fg = sigmoid(np.dot(Wf, xh) + bf)
+        ig = sigmoid(np.dot(Wi, xh) + bi)
+        og = sigmoid(np.dot(Wo, xh) + bo)
+        cc = np.tanh(np.dot(Wcc, xh) + bcc)
+        c = fg * c + cc * ig
+        h = np.tanh(c) * og
+        y = np.dot(Why, h) + by
+        p = np.exp(y) / np.sum(np.exp(y))
+
+        # Sample from the distribution produced by softmax.
+        ix = np.random.choice(range(V), p=p.ravel())
+        x = np.zeros((V, 1))
+        x[ix] = 1
+        ixes.append(ix)
+    return ixes
+
+
+
