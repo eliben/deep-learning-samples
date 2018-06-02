@@ -181,13 +181,12 @@ def lossFun(inputs, targets, hprev, cprev):
         dxh_from_o = np.dot(Wo.T, dho)
 
         # Backprop through the forget gate: sigmoid and elementwise mul.
-        dhf = c[t] * dc * fgs[t] * (1 - fgs[t])
+        dhf = c[t-1] * dc * fgs[t] * (1 - fgs[t])
         dWf += np.dot(dhf, xhs[t].T)
         dbf += dhf
         dxh_from_f = np.dot(Wf.T, dhf)
 
         # Backprop through the input gate: sigmoid and elementwise mul.
-        # TODO: need multiply by ccs[t] here?!
         dhi = ccs[t] * dc * igs[t] * (1 - igs[t])
         dWi += np.dot(dhi, xhs[t].T)
         dbi += dhi
@@ -207,4 +206,3 @@ def lossFun(inputs, targets, hprev, cprev):
         dcnext = fgs[t] * dc
 
     # TODO: clip
-
