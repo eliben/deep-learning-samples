@@ -166,7 +166,7 @@ def lossFun(inputs, targets, hprev, cprev):
         dctanh = ogs[t] * dh
         # Backprop through the tanh function; since cs[t] branches in two
         # directions we add dcnext too.
-        dc = dctanh * (1 - cs[t] ** 2) + dcnext
+        dc = dctanh * (1 - np.tanh(cs[t]) ** 2) + dcnext
 
         # Backprop through multiplication with the tanh; here "dhogs" means
         # the gradient at the output of the sigmoid of the output gate. Then
