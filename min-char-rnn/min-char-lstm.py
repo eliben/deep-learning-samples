@@ -88,7 +88,7 @@ def lossFun(inputs, targets, hprev, cprev):
       hprev: Hx1 array of initial hidden state
       cprev: Hx1 array of initial hidden state
  
-      returns: ? loss, gradients on model parameters, and last hidden state
+      returns: loss, gradients on model parameters, and last hidden states
     """
     # Caches that keep values computed in the forward pass at each time step, to
     # be reused in the backward pass.
@@ -120,7 +120,7 @@ def lossFun(inputs, targets, hprev, cprev):
         ccs[t] = np.tanh(np.dot(Wcc, xhs[t]) + bcc)
 
         # This step's h and c.
-        cs[t] = fgs[t] * cs[t-1] + ccs[t] * igs[t]
+        cs[t] = fgs[t] * cs[t-1] + igs[t] * ccs[t]
         hs[t] = np.tanh(cs[t]) * ogs[t]
 
         # Softmax for output.
@@ -226,7 +226,7 @@ def sample(h, c, seed_ix, n):
         ig = sigmoid(np.dot(Wi, xh) + bi)
         og = sigmoid(np.dot(Wo, xh) + bo)
         cc = np.tanh(np.dot(Wcc, xh) + bcc)
-        c = fg * c + cc * ig
+        c = fg * c + ig * cc
         h = np.tanh(c) * og
         y = np.dot(Wy, h) + by
         p = np.exp(y) / np.sum(np.exp(y))
