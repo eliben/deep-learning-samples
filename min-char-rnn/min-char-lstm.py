@@ -240,13 +240,14 @@ def sample(h, c, seed_ix, n):
 
 
 def gradCheck(inputs, targets, hprev, cprev):
-    global Wf, Wi, bf, bi
+    global Wf, Wi, bf, bi, Wcc, bcc, Wo, bo, Wy, by
     num_checks, delta = 10, 1e-5
     (_, dWf, dbf, dWi, dbi, dWcc, dbcc, dWo, dbo, dWy, dby,
      _, _) = lossFun(inputs, targets, hprev, cprev)
-    for param, dparam, name in zip([Wf, Wi, bf, bi],
-                                   [dWf, dWi, dbf, dbi],
-                                   ['Wf', 'Wi', 'bf', 'bi']):
+    for param, dparam, name in zip(
+            [Wf, bf, Wi, bi, Wcc, bcc, Wo, bo, Wy, by],
+            [dWf, dbf, dWi, dbi, dWcc, dbcc, dWo, dbo, dWy, dby],
+            ['Wf', 'bf', 'Wi', 'bi', 'Wcc', 'bcc', 'Wo', 'bo', 'Wy', 'by']):
         assert dparam.shape == param.shape
         print(name)
         for i in range(num_checks):
@@ -259,9 +260,12 @@ def gradCheck(inputs, targets, hprev, cprev):
             param.flat[ri] = old_val # reset
             grad_analytic = dparam.flat[ri]
             grad_numerical = (numloss0 - numloss1) / (2 * delta)
-            rel_error = (abs(grad_analytic - grad_numerical) / 
-                         abs(grad_numerical + grad_analytic))
-            print('%f, %f => %e' % (grad_numerical, grad_analytic, rel_error))
+            if grad_numerical + grad_analytic == 0:
+                rel_error = 0
+            else:
+                rel_error = (abs(grad_analytic - grad_numerical) / 
+                             abs(grad_numerical + grad_analytic))
+            print('%s, %s => %e' % (grad_numerical, grad_analytic, rel_error))
 
 
 def basicGradCheck():
