@@ -239,6 +239,42 @@ def sample(h, c, seed_ix, n):
     return ixes
 
 
+def gradCheck(inputs, targets, hprev, cprev):
+    global Wf, Wi, bf, bi
+    num_checks, delta = 10, 1e-5
+    (_, dWf, dbf, dWi, dbi, dWcc, dbcc, dWo, dbo, dWy, dby,
+     _, _) = lossFun(inputs, targets, hprev, cprev)
+    for param, dparam, name in zip([Wf, Wi, bf, bi],
+                                   [dWf, dWi, dbf, dbi],
+                                   ['Wf', 'Wi', 'bf', 'bi']):
+        assert dparam.shape == param.shape
+        print(name)
+        for i in range(num_checks):
+            ri = np.random.randint(0, param.size)
+            old_val = param.flat[ri]
+            param.flat[ri] = old_val + delta
+            numloss0 = lossFun(inputs, targets, hprev, cprev)[0]
+            param.flat[ri] = old_val - delta
+            numloss1 = lossFun(inputs, targets, hprev, cprev)[0]
+            param.flat[ri] = old_val # reset
+            grad_analytic = dparam.flat[ri]
+            grad_numerical = (numloss0 - numloss1) / (2 * delta)
+            rel_error = (abs(grad_analytic - grad_numerical) / 
+                         abs(grad_numerical + grad_analytic))
+            print('%f, %f => %e' % (grad_numerical, grad_analytic, rel_error))
+
+
+def basicGradCheck():
+    inputs = [char_to_ix[ch] for ch in data[:seq_length]]
+    targets = [char_to_ix[ch] for ch in data[1:seq_length+1]]
+    hprev = np.random.randn(H, 1)
+    cprev = np.random.randn(H, 1)
+    gradCheck(inputs, targets, hprev, cprev)
+
+
+basicGradCheck()
+sys.exit()
+
 # n is the iteration counter; p is the input sequence pointer, at the beginning
 # of each step it points at the sequence in the input that will be used for
 # training this iteration.
