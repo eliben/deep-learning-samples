@@ -31,9 +31,9 @@ print('ix_to_char', ix_to_char)
 # Hyperparameters.
 
 # Size of hidden state vectors; applies to h and c.
-H = hidden_size = 100 
+H = hidden_size = 256 
 seq_length = 16 # number of steps to unroll the LSTM for
-learning_rate = 1e-1
+learning_rate = 0.05
 
 # Size of combined state: input with hidden.
 HV = H + V
@@ -276,8 +276,8 @@ def basicGradCheck():
     gradCheck(inputs, targets, hprev, cprev)
 
 
-basicGradCheck()
-sys.exit()
+#basicGradCheck()
+#sys.exit()
 
 # n is the iteration counter; p is the input sequence pointer, at the beginning
 # of each step it points at the sequence in the input that will be used for
