@@ -1,4 +1,14 @@
-# Work in progress
+# Minimal character-based language model learning with an LSTM architecture.
+#
+# Overall code structure based on Andrej Karpathy's min-char-rnn model
+#    https://gist.github.com/karpathy/d4dee566867f8291f086
+#
+# But the architecture is modified to be LSTM rather than vanilla RNN.
+#
+# Tested with Python 3.6
+#
+# Eli Bendersky [http://eli.thegreenplace.net]
+# BSD License per original (@karpathy)
 from __future__ import print_function
 
 import numpy as np
@@ -178,7 +188,7 @@ def lossFun(inputs, targets, hprev, cprev):
         dWo += np.dot(dho, xhs[t].T)
         dbo += dho
 
-        # Backprop dho to the xh input as well.
+        # Backprop dho to the xh input.
         dxh_from_o = np.dot(Wo.T, dho)
 
         # Backprop through the forget gate: sigmoid and elementwise mul.
@@ -276,8 +286,8 @@ def basicGradCheck():
     gradCheck(inputs, targets, hprev, cprev)
 
 
-#basicGradCheck()
-#sys.exit()
+basicGradCheck()
+sys.exit()
 
 # n is the iteration counter; p is the input sequence pointer, at the beginning
 # of each step it points at the sequence in the input that will be used for
