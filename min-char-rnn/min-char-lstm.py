@@ -41,7 +41,7 @@ print('ix_to_char', ix_to_char)
 # Hyperparameters.
 
 # Size of hidden state vectors; applies to h and c.
-H = hidden_size = 256 
+H = hidden_size = 512
 seq_length = 16 # number of steps to unroll the LSTM for
 learning_rate = 0.05
 
@@ -285,9 +285,9 @@ def basicGradCheck():
     cprev = np.random.randn(H, 1)
     gradCheck(inputs, targets, hprev, cprev)
 
-
-basicGradCheck()
-sys.exit()
+# Uncomment this to run gradient checking instead of training
+#basicGradCheck()
+#sys.exit()
 
 # n is the iteration counter; p is the input sequence pointer, at the beginning
 # of each step it points at the sequence in the input that will be used for
