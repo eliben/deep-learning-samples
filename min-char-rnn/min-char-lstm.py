@@ -1,9 +1,11 @@
 # Minimal character-based language model learning with an LSTM architecture.
 #
-# Overall code structure based on Andrej Karpathy's min-char-rnn model
+# Overall code structure based on Andrej Karpathy's min-char-rnn model:
 #    https://gist.github.com/karpathy/d4dee566867f8291f086
 #
 # But the architecture is modified to be LSTM rather than vanilla RNN.
+# The companion blog post is:
+#   http:// TODO
 #
 # Tested with Python 3.6
 #
@@ -41,11 +43,13 @@ print('ix_to_char', ix_to_char)
 # Hyperparameters.
 
 # Size of hidden state vectors; applies to h and c.
-H = hidden_size = 512
+H = hidden_size = 100
 seq_length = 16 # number of steps to unroll the LSTM for
-learning_rate = 0.05
+learning_rate = 0.1
 
-# Size of combined state: input with hidden.
+# The input x is concatenated with state h, and the joined vector is used to
+# feed into most blocks within the LSTM cell. The combined height of the column
+# vector is HV.
 HV = H + V
 
 # Stop when processed this much data
@@ -89,7 +93,7 @@ def sigmoid(z):
 
 def lossFun(inputs, targets, hprev, cprev):
     """Runs forward and backward passes through the RNN.
- 
+
       TODO: keep me updated!
       inputs, targets: Lists of integers. For some i, inputs[i] is the input
                        character (encoded as an index into the ix_to_char map)
@@ -97,7 +101,7 @@ def lossFun(inputs, targets, hprev, cprev):
                        training data (similarly encoded).
       hprev: Hx1 array of initial hidden state
       cprev: Hx1 array of initial hidden state
- 
+
       returns: loss, gradients on model parameters, and last hidden states
     """
     # Caches that keep values computed in the forward pass at each time step, to
@@ -225,6 +229,12 @@ def lossFun(inputs, targets, hprev, cprev):
 
 
 def sample(h, c, seed_ix, n):
+    """Sample a sequence of integers from the model.
+
+    Runs the LSTM in forward mode for n steps; seed_ix is the seed letter for
+    the first time step, h and c are the memory state. Returns a sequence of
+    letters produced by the model (indices).
+    """
     x = np.zeros((V, 1))
     x[seed_ix] = 1
     ixes = []
@@ -273,7 +283,7 @@ def gradCheck(inputs, targets, hprev, cprev):
             if grad_numerical + grad_analytic == 0:
                 rel_error = 0
             else:
-                rel_error = (abs(grad_analytic - grad_numerical) / 
+                rel_error = (abs(grad_analytic - grad_numerical) /
                              abs(grad_numerical + grad_analytic))
             print('%s, %s => %e' % (grad_numerical, grad_analytic, rel_error))
 

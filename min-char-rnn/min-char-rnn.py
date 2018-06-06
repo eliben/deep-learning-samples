@@ -5,7 +5,8 @@ Taken from Andrej Karpathy's min-char-rnn:
 
     https://gist.github.com/karpathy/d4dee566867f8291f086
 
-The companion blog post is https://eli.thegreenplace.net/2018/understanding-how-to-implement-a-character-based-rnn-language-model/.
+The companion blog post is:
+  https://eli.thegreenplace.net/2018/understanding-how-to-implement-a-character-based-rnn-language-model/.
 
 Modified in various ways for better introspection / customization, Python 3
 compatibility and added comments. I tried to retain the overall structure of
@@ -161,7 +162,7 @@ def sample(h, seed_ix, n):
   """Sample a sequence of integers from the model.
 
   Runs the RNN in forward mode for n steps; seed_ix is the seed letter for the
-  first time step, and h is the memory state. Returns a sequences of letters
+  first time step, and h is the memory state. Returns a sequence of letters
   produced by the model (indices).
   """
   # Create a one-hot vector to represent the input.
