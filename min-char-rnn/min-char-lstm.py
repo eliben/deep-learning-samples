@@ -5,7 +5,7 @@
 #
 # But the architecture is modified to be LSTM rather than vanilla RNN.
 # The companion blog post is:
-#   http:// TODO
+#   https://eli.thegreenplace.net/2018/minimal-character-based-lstm-implementation/
 #
 # Tested with Python 3.6
 #
