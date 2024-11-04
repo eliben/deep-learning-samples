@@ -34,7 +34,7 @@ model.compile(
 )
 
 history = model.fit(
-    train_images, train_labels, epochs=30, validation_data=(test_images, test_labels)
+    train_images, train_labels, epochs=50, validation_data=(test_images, test_labels)
 )
 
 savefile = "trained-weights.keras"
