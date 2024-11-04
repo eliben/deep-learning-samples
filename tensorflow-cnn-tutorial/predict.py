@@ -49,7 +49,7 @@ for i in range(num):
 
     predidx = predindices[0]
     testidx = test_labels[0][0]
-    plt.imshow(test_images[0])
+    plt.imshow(test_images[i])
     plt.savefig(f"test_image_{i}.png")
 
     print(
