@@ -1,3 +1,4 @@
+import time
 import tensorflow as tf
 from tensorflow.keras import datasets, layers, models
 import matplotlib.pyplot as plt
@@ -35,10 +36,12 @@ label_classes = [
 
 # Predict the first 20 images; softmax converts them into probabilities,
 # and we use argmax to find the most likely class for each one.
+start = time.time()
 num = 20
 prediction = model(test_images[:num])
 probs = tf.nn.softmax(prediction)
 predindices = tf.argmax(probs, axis=1).numpy()
+print(f"Prediction took {time.time() - start:.2f} seconds")
 
 for i in range(num):
     predidx = predindices[i]
