@@ -34,21 +34,24 @@ label_classes = [
 #   model.predict(test_images[:1])
 # Doc: https://www.tensorflow.org/api_docs/python/tf/keras/Model
 
-# Predict the first 20 images; softmax converts them into probabilities,
+# Predict the first num images; softmax converts them into probabilities,
 # and we use argmax to find the most likely class for each one.
-start = time.time()
 num = 20
-prediction = model(test_images[:num])
-probs = tf.nn.softmax(prediction)
-predindices = tf.argmax(probs, axis=1).numpy()
-print(f"Prediction took {time.time() - start:.2f} seconds")
 
+# Do it in the loop one by one because we want to measure the prediction
+# latency for a single image after warmump (model cachedi in GPU, etc.)
 for i in range(num):
-    predidx = predindices[i]
-    testidx = test_labels[i][0]
-    plt.imshow(test_images[i])
+    time_start = time.time()
+    prediction = model(test_images[i : i + 1])
+    probs = tf.nn.softmax(prediction)
+    predindices = tf.argmax(probs, axis=1).numpy()
+    time_end = time.time()
+
+    predidx = predindices[0]
+    testidx = test_labels[0][0]
+    plt.imshow(test_images[0])
     plt.savefig(f"test_image_{i}.png")
 
     print(
-        f"{i:2d} Predicted: {label_classes[predidx]}, Actual: {label_classes[testidx]}"
+        f"{i:2d} Predicted: {label_classes[predidx]}, Actual: {label_classes[testidx]}    (elapsed: {time_end - time_start:.6f} seconds)"
     )
