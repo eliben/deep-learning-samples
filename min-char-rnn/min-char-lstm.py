@@ -9,7 +9,7 @@
 #
 # Tested with Python 3.6
 #
-# Eli Bendersky [http://eli.thegreenplace.net]
+# Eli Bendersky [https://eli.thegreenplace.net]
 # BSD License per original (@karpathy)
 from __future__ import print_function
 

@@ -1,6 +1,6 @@
 # Common library code for running logistic regressions and classifiers.
 #
-# Eli Bendersky (http://eli.thegreenplace.net)
+# Eli Bendersky (https://eli.thegreenplace.net)
 # This code is in the public domain
 import numpy as np
 

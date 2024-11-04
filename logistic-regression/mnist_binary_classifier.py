@@ -3,7 +3,7 @@
 # Poses a binary classification problem - is this image showing digit D (for
 # some D, for example "4"); trains a linear classifier to solve the problem.
 #
-# Eli Bendersky (http://eli.thegreenplace.net)
+# Eli Bendersky (https://eli.thegreenplace.net)
 # This code is in the public domain
 from __future__ import print_function
 import argparse

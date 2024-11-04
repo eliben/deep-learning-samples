@@ -3,7 +3,7 @@
 # Trains 10 different logistic regressions, one for each digit, and classifies
 # new inputs based on the highest probability among all the trained classifiers.
 #
-# Eli Bendersky (http://eli.thegreenplace.net)
+# Eli Bendersky (https://eli.thegreenplace.net)
 # This code is in the public domain
 from __future__ import print_function
 import argparse
