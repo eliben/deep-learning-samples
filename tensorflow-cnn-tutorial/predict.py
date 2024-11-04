@@ -8,6 +8,8 @@ model = models.load_model("trained-weights.keras")
 # Normalize pixel values to be between 0 and 1
 train_images, test_images = train_images / 255.0, test_images / 255.0
 
+print(test_images.shape, test_labels.shape)
+
 # for small predicts, calling the model object directly works
 # Alternatively, can call predict:
 #   model.predict(test_images[:1])
