@@ -4,11 +4,8 @@ from collections import namedtuple
 
 predecessor = namedtuple('predecessor', ['multiplier', 'var'])
 
-# TODO: what about constants??
-
 def is_number(v):
     return isinstance(v, numbers.Number)
-
 
 class Var:
     def __init__(self, v):
@@ -31,6 +28,12 @@ class Var:
         out = Var(-self.v)
         out.predecessors.append(predecessor(-1.0, self))
         return out
+    
+    def __sub__(self, other):
+        return self + (-other)
+
+    def __rsub__(self, other):
+        return other + (-self)
 
     def __mul__(self, other):
         if is_number(other):
@@ -66,6 +69,7 @@ class Var:
 
 
 def exp(x):
+    """ e^x """
     if is_number(x):
         x = Var(x)
     out = Var(math.exp(x.v))
@@ -73,10 +77,28 @@ def exp(x):
     return out
 
 
+def ln(x):
+    """ ln(x) """
+    if is_number(x):
+        x = Var(x)
+    out = Var(math.log(x.v))
+    out.predecessors.append(predecessor(1.0 / x.v, x))
+    return out
+
+
+def sin(x):
+    """ sin(x) """
+    if is_number(x):
+        x = Var(x)
+    out = Var(math.sin(x.v))
+    out.predecessors.append(predecessor(math.cos(x.v), x))
+    return out
+
+
 if __name__ == '__main__':
     x = Var(2.0)
     y = Var(5.0)
-    z = 6 * x * y + x * y + x
+    z = 6 * x * y - x * y + x
 
     z.grad(1.0)
 
@@ -89,4 +111,9 @@ if __name__ == '__main__':
     sigmoid.grad(1.0)
     print(xx.gv)
 
+    x1 = Var(2)
+    x2 = Var(5)
+    f = ln(x1) + x1 * x2 - sin(x2)
+    f.grad(1.0)
+    print(x1.gv, x2.gv)
 
