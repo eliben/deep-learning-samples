@@ -1,11 +1,19 @@
+# Basic reverse-mode automatic differentiation in Python. Create expressions
+# out of Var objects, then call grad() on the final result to backpropagate.
+# See the examples in the __main__ block at the end of the file.
+#
+# Eli Bendersky (https://eli.thegreenplace.net)
+# This code is in the public domain
 import math
 import numbers
 from collections import namedtuple
 
-predecessor = namedtuple('predecessor', ['multiplier', 'var'])
+predecessor = namedtuple("predecessor", ["multiplier", "var"])
+
 
 def is_number(v):
     return isinstance(v, numbers.Number)
+
 
 class Var:
     def __init__(self, v):
@@ -23,12 +31,12 @@ class Var:
 
     def __radd__(self, other):
         return self + other
-    
+
     def __neg__(self):
         out = Var(-self.v)
         out.predecessors.append(predecessor(-1.0, self))
         return out
-    
+
     def __sub__(self, other):
         return self + (-other)
 
@@ -42,22 +50,22 @@ class Var:
         out.predecessors.append(predecessor(other.v, self))
         out.predecessors.append(predecessor(self.v, other))
         return out
-    
+
     def __rmul__(self, other):
         return self * other
-    
+
     def __truediv__(self, other):
         if is_number(other):
             other = Var(other)
         out = Var(self.v / other.v)
         out.predecessors.append(predecessor(1.0 / other.v, self))
-        out.predecessors.append(predecessor(-self.v / (other.v ** 2), other))
+        out.predecessors.append(predecessor(-self.v / (other.v**2), other))
         return out
 
     def __rtruediv__(self, other):
         if is_number(other):
             out = Var(other / self.v)
-            out.predecessors.append(predecessor(-other / (self.v ** 2), self))
+            out.predecessors.append(predecessor(-other / (self.v**2), self))
             return out
         else:
             raise NotImplementedError
@@ -69,7 +77,7 @@ class Var:
 
 
 def exp(x):
-    """ e^x """
+    """e^x"""
     if is_number(x):
         x = Var(x)
     out = Var(math.exp(x.v))
@@ -78,7 +86,7 @@ def exp(x):
 
 
 def ln(x):
-    """ ln(x) """
+    """ln(x)"""
     if is_number(x):
         x = Var(x)
     out = Var(math.log(x.v))
@@ -87,7 +95,7 @@ def ln(x):
 
 
 def sin(x):
-    """ sin(x) """
+    """sin(x)"""
     if is_number(x):
         x = Var(x)
     out = Var(math.sin(x.v))
@@ -95,25 +103,26 @@ def sin(x):
     return out
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    # Examples of expressions created our of Var notes and operations they
+    # support, followed by calling grad(). After calling grad(), the
+    # participating Vars should not be reused.
     x = Var(2.0)
     y = Var(5.0)
     z = 6 * x * y - x * y + x
 
     z.grad(1.0)
-
     print(x.gv, y.gv)
 
     xx = Var(0.5)
     sigmoid = 1 / (1 + exp(-xx))
-    print(sigmoid)
-    
     sigmoid.grad(1.0)
     print(xx.gv)
 
+    # Example from the paper "Automatic Differentiation in Machine Learning:
+    # a Survey" by Baydin et al.
     x1 = Var(2)
     x2 = Var(5)
     f = ln(x1) + x1 * x2 - sin(x2)
     f.grad(1.0)
     print(x1.gv, x2.gv)
-
