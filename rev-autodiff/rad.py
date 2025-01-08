@@ -126,3 +126,10 @@ if __name__ == "__main__":
     f = ln(x1) + x1 * x2 - sin(x2)
     f.grad(1.0)
     print(x1.gv, x2.gv)
+
+    # More complicated variation on the previous example
+    x1 = Var(2)
+    x2 = Var(5)
+    f = ln(x1) + x1 * x2 - sin(x1 * x2)
+    f.grad(1.0)
+    print(x1.gv, x2.gv)
