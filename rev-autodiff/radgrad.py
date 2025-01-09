@@ -28,8 +28,14 @@ def maybe_box(value):
 
 def wrap_primitive(f):
     def wrapped(*args):
+        # If no arguments are boxes, there's no tracing to be done. Just
+        # call the primitive and return its result.
+        if not any(isinstance(x, Box) for x in args):
+            return f(*args)
+
         # For uniform handling in the rest of the function, make sure that
         # all inputs are boxes.
+        # TODO: is this needed??? for constants??
         boxes = [maybe_box(x) for x in args]
 
         # Unbox the values, compute forward output and get obtain the
@@ -68,14 +74,26 @@ vjp_rules[np.sin] = lambda x: (np.sin(x), lambda g: [np.cos(x) * g])
 vjp_rules[np.cos] = lambda x: (np.cos(x), lambda g: [-np.sin(x) * g])
 
 
+def backward_pass(arg_nodes, out_node, output_grad):
+    grads = {id(out_node): output_grad}
+
+
 def grad(f):
-    return f
+    def wrapped(*args):
+        boxed_args = [Box(value=x, node=make_root_node()) for x in args]
+        out = f(*boxed_args)
+        arg_nodes = [b.node for b in boxed_args]
+        return backward_pass(arg_nodes, out.node, 1.0)
+
+    return wrapped
 
 
 if __name__ == "__main__":
 
     def f(x):
         return sin(x) + x
+
+    print(f(3))
 
     fg = grad(f)
     print(fg(3))
