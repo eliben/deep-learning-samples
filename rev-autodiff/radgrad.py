@@ -78,11 +78,36 @@ def backward_pass(arg_nodes, out_node, output_grad):
     grads = {id(out_node): output_grad}
 
 
+def toposort(out_node):
+    """Topological sort of the computation graph starting at out_node.
+
+    Yields nodes in topologically sorted order.
+    """
+    visited = set()
+
+    def postorder(node):
+        visited.add(id(node))
+        for pred in node.predecessors:
+            if not id(pred) in visited:
+                yield from postorder(pred)
+        yield node
+
+    return reversed([node for node in postorder(out_node) if node.predecessors])
+
+
+import inspect
+
+
 def grad(f):
     def wrapped(*args):
         boxed_args = [Box(value=x, node=make_root_node()) for x in args]
         out = f(*boxed_args)
         arg_nodes = [b.node for b in boxed_args]
+
+        for n in toposort(out.node):
+            print(f"- {n}")
+            print(f"  {inspect.getsource(n.vjp_func)}")
+
         return backward_pass(arg_nodes, out.node, 1.0)
 
     return wrapped
