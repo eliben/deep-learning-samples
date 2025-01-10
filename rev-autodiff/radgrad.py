@@ -53,12 +53,17 @@ def wrap_primitive(f):
 
 add = wrap_primitive(np.add)
 mul = wrap_primitive(np.multiply)
+neg = Box.__neg__ = wrap_primitive(np.negative)
 Box.__add__ = Box.__radd__ = add
 Box.__mul__ = Box.__rmul__ = mul
+Box.__sub__ = lambda self, other: self + neg(other)
+Box.__rsub__ = lambda self, other: other + neg(self)
 sin = wrap_primitive(np.sin)
 cos = wrap_primitive(np.cos)
+log = wrap_primitive(np.log)
 
-# vjp_rules holds the calculation and gradient rules for each primitive.
+# vjp_rules holds the calculation and VJP rules for each primitive.
+# (VJP = Vector-Jacobian Product)
 # Structure:
 #   vjp_rules[primitive] = (f, vjp)
 #     primitive: The primitive function we've wrapped.
@@ -72,10 +77,22 @@ vjp_rules[np.add] = lambda x, y: (x + y, lambda g: [g, g])
 vjp_rules[np.multiply] = lambda x, y: (x * y, lambda g: [y * g, x * g])
 vjp_rules[np.sin] = lambda x: (np.sin(x), lambda g: [np.cos(x) * g])
 vjp_rules[np.cos] = lambda x: (np.cos(x), lambda g: [-np.sin(x) * g])
+vjp_rules[np.log] = lambda x: (np.log(x), lambda g: [g / x])
+vjp_rules[np.negative] = lambda x: (np.negative(x), lambda g: [-g])
 
 
-def backward_pass(arg_nodes, out_node, output_grad):
-    grads = {id(out_node): output_grad}
+def backprop(arg_nodes, out_node, out_g):
+    grads = {id(out_node): out_g}
+    for node in toposort(out_node):
+        g = grads.pop(id(node))
+
+        inputs_g = node.vjp_func(g)
+        print(f"Node: {node}, g={g}, inputs_g={inputs_g}")
+        assert len(inputs_g) == len(node.predecessors)
+        for inp_node, g in zip(node.predecessors, inputs_g):
+            grads[id(inp_node)] = grads.get(id(inp_node), 0.0) + g
+            print(f"  set {inp_node} to {grads[id(inp_node)]}")
+    return [grads.get(id(node), 0.0) for node in arg_nodes]
 
 
 def toposort(out_node):
@@ -108,7 +125,7 @@ def grad(f):
             print(f"- {n}")
             print(f"  {inspect.getsource(n.vjp_func)}")
 
-        return backward_pass(arg_nodes, out.node, 1.0)
+        return backprop(arg_nodes, out.node, 1.0)
 
     return wrapped
 
@@ -118,7 +135,13 @@ if __name__ == "__main__":
     def f(x):
         return sin(x) + x
 
-    print(f(3))
-
+    print(f(2))
     fg = grad(f)
-    print(fg(3))
+    print(fg(2))
+
+    def f(x1, x2):
+        return log(x1) + x1 * x2 - sin(x2)
+
+    print(f(2, 5))
+    fg = grad(f)
+    print(fg(2, 5))
