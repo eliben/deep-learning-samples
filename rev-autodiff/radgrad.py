@@ -152,10 +152,21 @@ if __name__ == "__main__":
     # fg = grad(f)
     # print(fg(2, 5))
 
-    def sigm(x):
-        return 1 / (1 + exp(-x))
+    # def sigm(x):
+    #     return 1 / (1 + exp(-x))
 
-    print(sigm(0.5))
+    # print(sigm(0.5))
 
-    fg = grad(sigm)
-    print(fg(0.5))
+    # fg = grad(sigm)
+    # print(fg(0.5))
+
+    def tanh(x):
+        y = exp(-2.0 * x)
+        return (1.0 - y) / (1.0 + y)
+
+    fg = grad(tanh)
+    # print(fg(1.0))
+
+    xx = np.linspace(-7, 7, 10)
+    print(tanh(xx))
+    print(fg(xx))
