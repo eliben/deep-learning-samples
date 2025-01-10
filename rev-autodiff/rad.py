@@ -85,8 +85,8 @@ def exp(x):
     return out
 
 
-def ln(x):
-    """ln(x)"""
+def log(x):
+    """log(x) - natural logarithm of x"""
     if is_number(x):
         x = Var(x)
     out = Var(math.log(x.v))
@@ -123,13 +123,13 @@ if __name__ == "__main__":
     # a Survey" by Baydin et al.
     x1 = Var(2)
     x2 = Var(5)
-    f = ln(x1) + x1 * x2 - sin(x2)
+    f = log(x1) + x1 * x2 - sin(x2)
     f.grad(1.0)
     print(x1.gv, x2.gv)
 
     # More complicated variation on the previous example
     x1 = Var(2)
     x2 = Var(5)
-    f = ln(x1) + x1 * x2 - sin(x1 * x2)
+    f = log(x1) + x1 * x2 - sin(x1 * x2)
     f.grad(1.0)
     print(x1.gv, x2.gv)
