@@ -7,5 +7,6 @@ def f(x1, x2):
 
 
 print(f(2, 5))
+
 df_dx = grad(f)
 print(df_dx(2, 5))

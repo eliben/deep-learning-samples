@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from collections.abc import Callable
 import typing
 import numpy as _np
-import inspect
 
 
 @dataclass
@@ -74,7 +73,7 @@ vjp_rules[_np.divide] = lambda x, y: (x / y, lambda g: [g / y, -g * x / y**2])
 
 
 def backprop(arg_nodes, out_node, out_g):
-    grads = {id(out_node): _np.float64(out_g)}
+    grads = {id(out_node): out_g}
     for node in toposort(out_node):
         g = grads.pop(id(node))
 
@@ -110,10 +109,11 @@ def grad(f):
         out = f(*boxed_args)
         arg_nodes = [b.node for b in boxed_args]
 
+        # import inspect
         # for n in toposort(out.node):
         #     print(f"- {n}")
         #     print(f"  {inspect.getsource(n.vjp_func)}")
 
-        return backprop(arg_nodes, out.node, 1.0)
+        return backprop(arg_nodes, out.node, _np.float64(1.0))
 
     return wrapped
