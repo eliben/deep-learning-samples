@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from collections.abc import Callable
 import typing
-import numpy as np
+import numpy as _np
 import inspect
 
 
@@ -52,21 +52,6 @@ def wrap_primitive(f):
     return wrapped
 
 
-add = wrap_primitive(np.add)
-mul = wrap_primitive(np.multiply)
-div = wrap_primitive(np.divide)
-Box.__add__ = Box.__radd__ = add
-Box.__mul__ = Box.__rmul__ = mul
-Box.__sub__ = lambda self, other: self + neg(other)
-Box.__rsub__ = lambda self, other: other + neg(self)
-Box.__truediv__ = div
-Box.__rtruediv__ = lambda self, other: div(other, self)
-neg = Box.__neg__ = wrap_primitive(np.negative)
-sin = wrap_primitive(np.sin)
-cos = wrap_primitive(np.cos)
-log = wrap_primitive(np.log)
-exp = wrap_primitive(np.exp)
-
 # vjp_rules holds the calculation and VJP rules for each primitive.
 # (VJP = Vector-Jacobian Product)
 # Structure:
@@ -78,14 +63,14 @@ exp = wrap_primitive(np.exp)
 #          primitive. It takes the output gradient and returns input gradients
 #          for each argument, as a list.
 vjp_rules = {}
-vjp_rules[np.add] = lambda x, y: (x + y, lambda g: [g, g])
-vjp_rules[np.multiply] = lambda x, y: (x * y, lambda g: [y * g, x * g])
-vjp_rules[np.sin] = lambda x: (np.sin(x), lambda g: [np.cos(x) * g])
-vjp_rules[np.cos] = lambda x: (np.cos(x), lambda g: [-np.sin(x) * g])
-vjp_rules[np.log] = lambda x: (np.log(x), lambda g: [g / x])
-vjp_rules[np.exp] = lambda x: (np.exp(x), lambda g: [np.exp(x) * g])
-vjp_rules[np.negative] = lambda x: (np.negative(x), lambda g: [-g])
-vjp_rules[np.divide] = lambda x, y: (x / y, lambda g: [g / y, -g * x / y**2])
+vjp_rules[_np.add] = lambda x, y: (x + y, lambda g: [g, g])
+vjp_rules[_np.multiply] = lambda x, y: (x * y, lambda g: [y * g, x * g])
+vjp_rules[_np.sin] = lambda x: (_np.sin(x), lambda g: [_np.cos(x) * g])
+vjp_rules[_np.cos] = lambda x: (_np.cos(x), lambda g: [-_np.sin(x) * g])
+vjp_rules[_np.log] = lambda x: (_np.log(x), lambda g: [g / x])
+vjp_rules[_np.exp] = lambda x: (_np.exp(x), lambda g: [_np.exp(x) * g])
+vjp_rules[_np.negative] = lambda x: (_np.negative(x), lambda g: [-g])
+vjp_rules[_np.divide] = lambda x, y: (x / y, lambda g: [g / y, -g * x / y**2])
 
 
 def backprop(arg_nodes, out_node, out_g):
@@ -132,38 +117,3 @@ def grad(f):
         return backprop(arg_nodes, out.node, 1.0)
 
     return wrapped
-
-
-if __name__ == "__main__":
-    # def f(x):
-    #     return sin(x) + x
-
-    # print(f(2))
-    # fg = grad(f)
-    # print(fg(2))
-
-    # def f(x1, x2):
-    #     return log(x1) + x1 * x2 - sin(x2)
-
-    # print(f(2, 5))
-    # fg = grad(f)
-    # print(fg(2, 5))
-
-    # def sigm(x):
-    #     return 1 / (1 + exp(-x))
-
-    # print(sigm(0.5))
-
-    # fg = grad(sigm)
-    # print(fg(0.5))
-
-    def tanh(x):
-        y = exp(-2.0 * x)
-        return (1.0 - y) / (1.0 + y)
-
-    fg = grad(tanh)
-    # print(fg(1.0))
-
-    xx = np.linspace(-7, 7, 10)
-    print(tanh(xx))
-    print(fg(xx))
