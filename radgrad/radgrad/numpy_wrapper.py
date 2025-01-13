@@ -10,6 +10,8 @@ cos = wrap_primitive(_np.cos)
 log = wrap_primitive(_np.log)
 exp = wrap_primitive(_np.exp)
 
+# TODO: add abs
+
 
 Box.__add__ = Box.__radd__ = add
 Box.__mul__ = Box.__rmul__ = mul
