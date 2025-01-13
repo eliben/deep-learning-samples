@@ -74,16 +74,16 @@ vjp_rules[_np.divide] = lambda x, y: (x / y, lambda g: [g / y, -g * x / y**2])
 
 
 def backprop(arg_nodes, out_node, out_g):
-    grads = {id(out_node): out_g}
+    grads = {id(out_node): _np.float64(out_g)}
     for node in toposort(out_node):
         g = grads.pop(id(node))
 
         inputs_g = node.vjp_func(g)
-        print(f"Node: {node}, g={g}, inputs_g={inputs_g}")
+        # print(f"Node: {node}, g={g}, inputs_g={inputs_g}")
         assert len(inputs_g) == len(node.predecessors)
         for inp_node, g in zip(node.predecessors, inputs_g):
             grads[id(inp_node)] = grads.get(id(inp_node), 0.0) + g
-            print(f"  set {inp_node} to {grads[id(inp_node)]}")
+            # print(f"  set {inp_node} to {grads[id(inp_node)]}")
     return [grads.get(id(node), 0.0) for node in arg_nodes]
 
 
@@ -110,9 +110,9 @@ def grad(f):
         out = f(*boxed_args)
         arg_nodes = [b.node for b in boxed_args]
 
-        for n in toposort(out.node):
-            print(f"- {n}")
-            print(f"  {inspect.getsource(n.vjp_func)}")
+        # for n in toposort(out.node):
+        #     print(f"- {n}")
+        #     print(f"  {inspect.getsource(n.vjp_func)}")
 
         return backprop(arg_nodes, out.node, 1.0)
 
