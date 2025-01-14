@@ -11,6 +11,7 @@ class Node:
 
 
 def make_root_node():
+    """Empty node with no predecessors."""
     return Node(None, [])
 
 
@@ -21,6 +22,7 @@ class Box:
 
 
 def maybe_box(value):
+    """Box the value if it's not already a Box."""
     if isinstance(value, Box):
         return value
     return Box(value=value, node=make_root_node())
@@ -37,7 +39,7 @@ def wrap_primitive(f):
         # all inputs are boxes.
         boxes = [maybe_box(x) for x in args]
 
-        # Unbox the values, compute forward output and get obtain the
+        # Unbox the values, compute forward output and obtain the
         # VJP function for this computation.
         output, vjp_func = vjp_rules[f](*[b.value for b in boxes])
 
