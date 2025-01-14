@@ -26,9 +26,9 @@ try:
     y = sigm(x)
     dy = dsigm_dx(x)[0]
 
-    # todo add labels/legend
-    plt.plot(x, y)
-    plt.plot(x, dy)
+    plt.plot(x, y, label="sigm")
+    plt.plot(x, dy, label="dsigm_dx")
+    plt.legend()
     plt.show()
 except ImportError:
     print("Please install numpy and matplotlib to plot the function.")

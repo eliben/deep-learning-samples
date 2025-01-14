@@ -35,7 +35,6 @@ def wrap_primitive(f):
 
         # For uniform handling in the rest of the function, make sure that
         # all inputs are boxes.
-        # TODO: is this needed??? for constants??
         boxes = [maybe_box(x) for x in args]
 
         # Unbox the values, compute forward output and get obtain the
@@ -69,6 +68,7 @@ vjp_rules[_np.cos] = lambda x: (_np.cos(x), lambda g: [-_np.sin(x) * g])
 vjp_rules[_np.log] = lambda x: (_np.log(x), lambda g: [g / x])
 vjp_rules[_np.exp] = lambda x: (_np.exp(x), lambda g: [_np.exp(x) * g])
 vjp_rules[_np.negative] = lambda x: (_np.negative(x), lambda g: [-g])
+vjp_rules[_np.fabs] = lambda x: (_np.fabs(x), lambda g: [_np.sign(x) * g])
 vjp_rules[_np.divide] = lambda x, y: (x / y, lambda g: [g / y, -g * x / y**2])
 
 
