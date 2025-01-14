@@ -1,4 +1,3 @@
-import radgrad.numpy_wrapper as np
 from radgrad import grad
 import math
 
