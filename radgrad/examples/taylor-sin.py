@@ -10,9 +10,10 @@ def taylor_sin(x):
     return ans
 
 
+dsin_dx = grad(taylor_sin)
+
 for v in [0.0, math.pi / 4, math.pi / 2, math.pi]:
     print(f"sin({v:.3}) = {taylor_sin(v):.3}")
-    dsin_dx = grad(taylor_sin)
     print(f"dsin_dx({v:.3}) = {dsin_dx(v)[0]:.3}")
 
 try:

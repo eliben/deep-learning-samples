@@ -55,22 +55,20 @@ def wrap_primitive(f):
 # vjp_rules holds the calculation and VJP rules for each primitive.
 # (VJP = Vector-Jacobian Product)
 # Structure:
-#   vjp_rules[primitive] = (f, vjp)
+#   vjp_rules[primitive] = maker_func(*args)
 #     primitive: The primitive function we've wrapped.
-#     f: The underlying function that calculates the primitive. It should be
-#        given unboxed arguments.
-#     vjp: The function that calculates the vector-jacobian product for this
-#          primitive. It takes the output gradient and returns input gradients
-#          for each argument, as a list.
+#     maker_func(*args):
+#       takes the runtime values of arguments passed into the primitive and
+#       returns a tuple (output, vjp_func). The output is the result of the
+#       forward computation of the primitive with *args, and vjp_func
+#       calculates the vector-jacobian product. It takes the output gradient
+#       and returns input gradients of the primitive for each argument,
+#       as a list.
 vjp_rules = {}
-vjp_rules[_np.add] = lambda x, y: (x + y, lambda g: [g, g])
-vjp_rules[_np.multiply] = lambda x, y: (x * y, lambda g: [y * g, x * g])
-vjp_rules[_np.sin] = lambda x: (_np.sin(x), lambda g: [_np.cos(x) * g])
-vjp_rules[_np.cos] = lambda x: (_np.cos(x), lambda g: [-_np.sin(x) * g])
-vjp_rules[_np.log] = lambda x: (_np.log(x), lambda g: [g / x])
-vjp_rules[_np.exp] = lambda x: (_np.exp(x), lambda g: [_np.exp(x) * g])
-vjp_rules[_np.negative] = lambda x: (_np.negative(x), lambda g: [-g])
-vjp_rules[_np.divide] = lambda x, y: (x / y, lambda g: [g / y, -g * x / y**2])
+
+
+def add_vjp_rule(np_primitive, vjp_maker_func):
+    vjp_rules[np_primitive] = vjp_maker_func
 
 
 def backprop(arg_nodes, out_node, out_g):
