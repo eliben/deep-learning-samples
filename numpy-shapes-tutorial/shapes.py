@@ -17,10 +17,12 @@ print("aa2", aa2.ndim, aa2.shape, aa2)
 aa3 = np.random.rand(2, 3, 4)
 print("aa3", aa3.ndim, aa3.shape, aa3)
 
-# When Numpy arrays are printed, their data order is used; the default order is
-# "C", which means row-major. So the last dimension is changing the fastest (and
-# thus will be shown as contiguous in the output). This is only the physical
-# layout/representation, though; logically it makes no difference.
+# When Numpy arrays are printed, they are shown with the last dimesion changing
+# # the fastest (and thus shown contiguous in the output).
+# This is only the physical layout/representation, though; logically it makes
+# no difference - we can consider all axes to be equivalent in this sense
+# (like in a cube representing a 3D array - we can look at it from any side).
+#
 # The concept of "rows" and "columns" is just a convention. Notice how aa2 is
 # printed out. the size of axis 0 is 3, the size of axis 1 is 4. So we see it
 # as having 3 "rows", each with 4 "columns".
