@@ -59,5 +59,13 @@ print("dotres:", dotres.shape, dotres)
 outer = np.random.randn(3, 1) @ np.random.randn(1, 2)
 print("outer:", outer.shape, outer)
 
+# Dot between a matrix and a vector will produce a 1d array ("row" vector)
+mat = np.ones((3, 4))
+print("mat @ v:", mat @ np.arange(4))
 
-# TODO: dot vectors by matrics, left and right, use ones and arange
+# If we want a column vector, we have to explicitly reshape the RHS vector
+# to a column vector.
+print("mat @ v col:", mat @ np.arange(4).reshape(4, 1))
+
+# LHS vector
+print("v @ mat:", np.arange(3) @ mat)
