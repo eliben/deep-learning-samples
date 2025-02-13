@@ -12,7 +12,9 @@ N = 3
 # Number of dimensions of each input
 D = 4
 
-# N random inputs, each a (D,1) array.
+# The self-attention mechanism maps N inputs x_n to N outputs x'_n.
+# Inputs and outputs are (D,1) arrays.
+
 all_x = []
 for n in range(N):
     all_x.append(np.random.normal(size=(D, 1)))
@@ -46,7 +48,7 @@ for x in all_x:
 
 
 def softmax(x):
-    """Compute the softmax of vector x."""
+    """Compute the softmax of vector (or list) x."""
     exps = np.exp(x)
     return exps / np.sum(exps)
 
@@ -56,24 +58,18 @@ all_x_prime = []
 
 # For each output
 for n in range(N):
-    # Create list for dot products of query N with all keys
+    # A list of dot products of query n with all keys.
+    # all_km_qn[i] is the dot product of key i with query n. It's a list with
+    # N elements.
     all_km_qn = []
-    # Compute the dot products
     for key in all_keys:
-        # TODO -- compute the appropriate dot product
-        # Replace this line
         dot_product = all_queries[n].T @ key
-
-        # Store dot product
         all_km_qn.append(dot_product[0][0])
 
     attention = softmax(all_km_qn)
-    # Print result (should be positive sum to one)
-    print("Attentions for output ", n)
-    print(attention)
+    print(f"Attentions for output n={n}: {attention}")
 
-    print(f"shapes attention={attention.shape}, all_values[n]={all_values[n].shape}")
-
+    # Compute self-attention: a weighted sum of all values.
     x_prime = np.zeros((D, 1))
     for i in range(len(all_values)):
         x_prime += attention[i] * all_values[i]
