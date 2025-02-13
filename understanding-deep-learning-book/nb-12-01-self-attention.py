@@ -15,6 +15,8 @@ for n in range(N):
 # Print out the list
 print(all_x)
 
+np.random.seed(0)
+
 # Attention parameters for Q, K, V
 omega_q = np.random.normal(size=(D, D))
 omega_k = np.random.normal(size=(D, D))
@@ -29,6 +31,7 @@ all_keys = []
 all_values = []
 # For every input
 for x in all_x:
+    # Shapes: (D, 1) = (D, D) @ (D, 1) + (D, 1)
     query = omega_q @ x + beta_q
     key = omega_k @ x + beta_k
     value = omega_v @ x + beta_v
@@ -55,20 +58,28 @@ for n in range(N):
     for key in all_keys:
         # TODO -- compute the appropriate dot product
         # Replace this line
-        dot_product = 1
+        dot_product = all_queries[n].T @ key
 
         # Store dot product
-        all_km_qn.append(dot_product)
+        all_km_qn.append(dot_product[0][0])
 
-    # Compute dot product
     attention = softmax(all_km_qn)
     # Print result (should be positive sum to one)
     print("Attentions for output ", n)
     print(attention)
 
-    # TODO: Compute a weighted sum of all of the values according to the attention
-    # (equation 12.3)
-    # Replace this line
+    print(f"shapes attention={attention.shape}, all_values[n]={all_values[n].shape}")
+
     x_prime = np.zeros((D, 1))
+    for i in range(len(all_values)):
+        x_prime += attention[i] * all_values[i]
 
     all_x_prime.append(x_prime)
+
+# Print out true values to check you have it correct
+print("x_prime_0_calculated:", all_x_prime[0].transpose())
+print("x_prime_0_true: [[ 0.94744244 -0.24348429 -0.91310441 -0.44522983]]")
+print("x_prime_1_calculated:", all_x_prime[1].transpose())
+print("x_prime_1_true: [[ 1.64201168 -0.08470004  4.02764044  2.18690791]]")
+print("x_prime_2_calculated:", all_x_prime[2].transpose())
+print("x_prime_2_true: [[ 1.61949281 -0.06641533  3.96863308  2.15858316]]")
