@@ -83,3 +83,45 @@ print("x_prime_1_calculated:", all_x_prime[1].transpose())
 print("x_prime_1_true: [[ 1.64201168 -0.08470004  4.02764044  2.18690791]]")
 print("x_prime_2_calculated:", all_x_prime[2].transpose())
 print("x_prime_2_true: [[ 1.61949281 -0.06641533  3.96863308  2.15858316]]")
+
+
+# Vector formulation
+
+
+def softmax_cols(data_in):
+    # Exponentiate all of the values
+    exp_values = np.exp(data_in)
+    # Sum over columns
+    denom = np.sum(exp_values, axis=0)
+    # Replicate denominator to N rows
+    denom = np.matmul(np.ones((data_in.shape[0], 1)), denom[np.newaxis, :])
+    # Compute softmax
+    softmax = exp_values / denom
+    # return the answer
+    return softmax
+
+
+# X: (D,N) matrix of inputs
+# omega_v, omega_q, omega_k: (D,D) matrices
+# beta_v, beta_q, beta_k: (D,1) vectors
+def self_attention(X, omega_v, omega_q, omega_k, beta_v, beta_q, beta_k):
+
+    Q = omega_q @ X + beta_q
+    K = omega_k @ X + beta_k
+    V = omega_v @ X + beta_v
+
+    KQ = K.T @ Q
+    att = softmax_cols(KQ)
+    X_prime = V @ att
+
+    return X_prime
+
+
+# Represent all inputs as a (D,N) matrix. Each column is an input.
+X = np.column_stack(all_x)
+
+# Run the self attention mechanism
+X_prime = self_attention(X, omega_v, omega_q, omega_k, beta_v, beta_q, beta_k)
+
+# Print out the results
+print(X_prime)
