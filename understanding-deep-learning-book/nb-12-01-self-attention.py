@@ -1,23 +1,27 @@
+# Based on the notebook
+# https://github.com/udlbook/udlbook/blob/main/Notebooks/Chap12/12_1_Self_Attention.ipynb
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Set seed so we get the same random numbers
+# Seeds follow the order/values of the notebook (f)
 np.random.seed(3)
+
 # Number of inputs
 N = 3
 # Number of dimensions of each input
 D = 4
-# Create an empty list
+
+# N random inputs, each a (D,1) array.
 all_x = []
-# Create elements x_n and append to list
 for n in range(N):
     all_x.append(np.random.normal(size=(D, 1)))
-# Print out the list
 print(all_x)
 
 np.random.seed(0)
 
-# Attention parameters for Q, K, V
+# Attention parameters for Q,K,V: matrices are (D,D) arrays, with corresponding
+# biases that are (D,1) arrays.
 omega_q = np.random.normal(size=(D, D))
 omega_k = np.random.normal(size=(D, D))
 omega_v = np.random.normal(size=(D, D))
@@ -25,11 +29,11 @@ beta_q = np.random.normal(size=(D, 1))
 beta_k = np.random.normal(size=(D, 1))
 beta_v = np.random.normal(size=(D, 1))
 
-# Make three lists to store queries, keys, and values
+# Compute Q,K,V for each input
 all_queries = []
 all_keys = []
 all_values = []
-# For every input
+
 for x in all_x:
     # Shapes: (D, 1) = (D, D) @ (D, 1) + (D, 1)
     query = omega_q @ x + beta_q
