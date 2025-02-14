@@ -104,14 +104,19 @@ def softmax_cols(data_in):
 # X: (D,N) matrix of inputs
 # omega_v, omega_q, omega_k: (D,D) matrices
 # beta_v, beta_q, beta_k: (D,1) vectors
-def self_attention(X, omega_v, omega_q, omega_k, beta_v, beta_q, beta_k):
+def self_attention(
+    X, omega_v, omega_q, omega_k, beta_v, beta_q, beta_k, is_scaled=False
+):
 
     Q = omega_q @ X + beta_q
     K = omega_k @ X + beta_k
     V = omega_v @ X + beta_v
 
     KQ = K.T @ Q
+    if is_scaled:
+        KQ /= np.sqrt(K.shape[0])
     att = softmax_cols(KQ)
+    print("attention matrix:", att)
     X_prime = V @ att
 
     return X_prime
@@ -119,9 +124,8 @@ def self_attention(X, omega_v, omega_q, omega_k, beta_v, beta_q, beta_k):
 
 # Represent all inputs as a (D,N) matrix. Each column is an input.
 X = np.column_stack(all_x)
+print(self_attention(X, omega_v, omega_q, omega_k, beta_v, beta_q, beta_k))
 
-# Run the self attention mechanism
-X_prime = self_attention(X, omega_v, omega_q, omega_k, beta_v, beta_q, beta_k)
-
-# Print out the results
-print(X_prime)
+print(
+    self_attention(X, omega_v, omega_q, omega_k, beta_v, beta_q, beta_k, is_scaled=True)
+)
