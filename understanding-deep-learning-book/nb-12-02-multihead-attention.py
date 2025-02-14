@@ -7,10 +7,9 @@ np.random.seed(3)
 N = 6
 # Number of dimensions of each input
 D = 8
-# Create an empty list
+
 X = np.random.normal(size=(D, N))
-# Print X
-print(X)
+print("X=\n", X)
 
 # Number of heads
 H = 2
@@ -36,7 +35,7 @@ beta_q2 = np.random.normal(size=(H_D, 1))
 beta_k2 = np.random.normal(size=(H_D, 1))
 beta_v2 = np.random.normal(size=(H_D, 1))
 
-# Choose random values for the parameters
+# Choose random values for the final transform
 omega_c = np.random.normal(size=(D, D))
 
 
@@ -52,7 +51,6 @@ def softmax_cols(data_in):
     return softmax
 
 
-# Now let's compute self attention in matrix form
 def multihead_scaled_self_attention(
     X,
     omega_v1,
@@ -69,8 +67,11 @@ def multihead_scaled_self_attention(
     beta_k2,
     omega_c,
 ):
-    X_prime = np.zeros_like(X)
-
+    # Calculate each of the heads separately.
+    #
+    # For each head, the dimensions of omega_* are D/H x D, beta_* is D/H x 1.
+    # X is D x N, so te intermediate Q,K,V values are D/H x N.
+    # The attention matrix is N x N, and the output of the head is D/H x N.
     Q1 = omega_q1 @ X + beta_q1
     K1 = omega_k1 @ X + beta_k1
     V1 = omega_v1 @ X + beta_v1
@@ -86,8 +87,8 @@ def multihead_scaled_self_attention(
     att2 = softmax_cols(KQ2)
 
     # Shape of KQN is D/H x N. Vertically concatenate them into a single
-    # matrix of shape D x N.
-    cc = np.concatenate((V1 @ att1, V2 @ att2))
+    # matrix of shape D x N, and calculate the final transform.
+    cc = np.concatenate((V1 @ att1, V2 @ att2), axis=0)
     X_prime = omega_c @ cc
 
     return X_prime
