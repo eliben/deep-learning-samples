@@ -14,8 +14,5 @@ def self_attention(x, Wk, Wq, Wv, Bk, Bq, Bv):
 
     kq = (k.T @ q) / np.sqrt(k.shape[0])
     att = softmax_columns(kq)
-    print(f'kq shape={kq.shape}')
-    print(f'att shape={att.shape}')
-
     # TODO: figure out how vectorization works here
     return v @ att
