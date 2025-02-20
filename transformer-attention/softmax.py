@@ -1,6 +1,11 @@
 import numpy as np
 
 def softmax_columns(x):
+    """Compute softmax for each column of x.
+
+    The result has the same shape as x, with each column replaced by the
+    softmax of that column.
+    """
     # Subtract the max for numerical stability
     ex = np.exp(x - np.max(x, axis=0, keepdims=True))
     # Divide by column-wise sums
