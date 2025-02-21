@@ -13,6 +13,8 @@ def self_attention(x, Wk, Wq, Wv, Bk, Bq, Bv):
     v = Wv @ x + Bv
 
     kq = (k.T @ q) / np.sqrt(k.shape[0])
+    
+    # att: (N, N) attention matrix. The columns become the weights that sum
+    # to 1 for each output vector.
     att = softmax_columns(kq)
-    # TODO: figure out how vectorization works here
     return v @ att
