@@ -36,12 +36,26 @@ class Head(nn.Module):
 
 
 B = 1
-T = 10
-C = 8
-HS = 8
+T = 6
+C = 4
+HS = 4
 
-x = torch.linspace(0.1, 0.4, T * C).reshape(B, T, C)
-out = Head(C, HS)(x)
+x = torch.linspace(0.1, 2.4, T * C).reshape(B, T, C)
+print(x)
+
+head = Head(C, HS)
+
+kseq = torch.linspace(0.1, 0.4, B * C * HS).view(head.key.weight.shape)
+qseq = torch.linspace(1.1, 1.4, B * C * HS).view(head.query.weight.shape)
+vseq = torch.linspace(2.1, 2.4, B * C * HS).view(head.value.weight.shape)
+
+with torch.no_grad():
+    head.key.weight.copy_(kseq)
+    head.query.weight.copy_(qseq)
+    head.value.weight.copy_(vseq)
+
+out = head(x)
+
 print(out.shape)
 print(out)
 # x = torch.randn(2, 10)
