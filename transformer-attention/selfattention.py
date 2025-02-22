@@ -2,17 +2,16 @@ import numpy as np
 from softmax import softmax_columns, softmax_rows
 
 
-# self_attention the way it happens in the Transformer model.
-# D = model dimension (length of embedding)
+# self_attention the way it happens in the Transformer model. No bias.
+# D = model dimension/depth (length of embedding)
 # N = input sequence length
 #
-# x is the inputs (N, D)
+# x is the inputs (N, D), each in a row.
 # Each of W* is a weight matrix of shape (D, D)
-# Each of B* is a vector of shape (D, 1)
-def self_attention(x, Wk, Wq, Wv, Bk, Bq, Bv):
-    q = x @ Wq + Bq
-    k = x @ Wk + Bk
-    v = x @ Wv + Bv
+def self_attention(x, Wk, Wq, Wv):
+    q = x @ Wq
+    k = x @ Wk
+    v = x @ Wv
 
     kq = q @ k.T / np.sqrt(k.shape[1])
 
