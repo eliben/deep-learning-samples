@@ -21,6 +21,20 @@ def self_attention(x, Wk, Wq, Wv):
     return att @ v
 
 
+# self_attention with inputs that have a batch dimension.
+# x has shape (B, N, D)
+# Each of W* has shape (D, D)
+def self_attention_batched(x, Wk, Wq, Wv):
+    q = x @ Wq  # (B, N, D)
+    k = x @ Wk  # (B, N, D)
+    v = x @ Wv  # (B, N, D)
+
+    kq = q @ k.swapaxes(-2, -1) / np.sqrt(k.shape[-1])  # (B, N, N)
+
+    att = softmax_rows(kq)  # (B, N, N)
+    return att @ v  # (B, N, D)
+
+
 # D = model dimension (length of embedding)
 # N = input sequence length
 #
