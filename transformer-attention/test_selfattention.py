@@ -34,7 +34,6 @@ def test_rows_values():
     N = 6
     D = 4
     x = np.linspace(0.1, 2.4, N * D).reshape(N, D)
-    print(x)
 
     # These have to be transposed to compare to torch because torch uses the
     # transposed weight matrix in a linear layer.
