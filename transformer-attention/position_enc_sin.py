@@ -17,9 +17,11 @@ def position_enc_sin_single(x):
 
 
 inp = np.zeros((96, 48))
-out = position_enc_sin_single(inp)
+out = position_enc_sin_single(inp).T
 
 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8, 3))
 pos = ax.imshow(out, cmap="RdGy", extent=(1, out.shape[1] + 1, out.shape[0] + 1, 1))
 fig.colorbar(pos, ax=ax)
+ax.set_xlabel("position in sequence")
+ax.set_ylabel("dimension")
 plt.show()
