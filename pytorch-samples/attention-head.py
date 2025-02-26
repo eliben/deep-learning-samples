@@ -14,17 +14,21 @@ device = (
 print(f"Using {device} device")
 
 
+block_size = 256  # what is the maximum context length for predictions?
+
+
 # Attention head taken from https://github.com/karpathy/ng-video-lecture/blob/master/gpt.py
 # with masking/dropout removed
 class Head(nn.Module):
     """one head of self-attention"""
 
-    def __init__(self, C, head_size):
+    def __init__(self, C, head_size, do_mask=False):
         super().__init__()
         self.key = nn.Linear(C, head_size, bias=False)
         self.query = nn.Linear(C, head_size, bias=False)
         self.value = nn.Linear(C, head_size, bias=False)
-        # self.register_buffer("tril", torch.tril(torch.ones(block_size, block_size)))
+        self.do_mask = do_mask
+        self.register_buffer("tril", torch.tril(torch.ones(block_size, block_size)))
         # self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
@@ -37,8 +41,11 @@ class Head(nn.Module):
         wei = (
             q @ k.transpose(-2, -1) * k.shape[-1] ** -0.5
         )  # (B, T, hs) @ (B, hs, T) -> (B, T, T)
-        # wei = wei.masked_fill(self.tril[:T, :T] == 0, float("-inf"))  # (B, T, T)
-        wei = F.softmax(wei, dim=-1)  # (B, T, T)
+
+        if self.do_mask:
+            wei = wei.masked_fill(self.tril[:T, :T] == 0, float("-inf"))  # (B, T, T)
+        else:
+            wei = F.softmax(wei, dim=-1)  # (B, T, T)
         # wei = self.dropout(wei)
         # perform the weighted aggregation of the values
         v = self.value(x)  # (B,T,hs)
@@ -49,9 +56,11 @@ class Head(nn.Module):
 class MultiHeadAttention(nn.Module):
     """multiple heads of self-attention in parallel"""
 
-    def __init__(self, C, num_heads, head_size):
+    def __init__(self, C, num_heads, head_size, do_mask=False):
         super().__init__()
-        self.heads = nn.ModuleList([Head(C, head_size) for _ in range(num_heads)])
+        self.heads = nn.ModuleList(
+            [Head(C, head_size, do_mask) for _ in range(num_heads)]
+        )
         self.proj = nn.Linear(head_size * num_heads, C)
         # self.dropout = nn.Dropout(dropout)
 
