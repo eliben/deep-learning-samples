@@ -44,8 +44,7 @@ class Head(nn.Module):
 
         if self.do_mask:
             wei = wei.masked_fill(self.tril[:T, :T] == 0, float("-inf"))  # (B, T, T)
-        else:
-            wei = F.softmax(wei, dim=-1)  # (B, T, T)
+        wei = F.softmax(wei, dim=-1)  # (B, T, T)
         # wei = self.dropout(wei)
         # perform the weighted aggregation of the values
         v = self.value(x)  # (B,T,hs)
@@ -130,7 +129,8 @@ NH = 3
 x = torch.linspace(0.1, 8.4, B * T * C).reshape(B, T, C)
 print(x)
 
-mhead = MultiHeadAttention(C, NH, HS)
+mhead = MultiHeadAttention(C, NH, HS, do_mask=False)
+# mhead = MultiHeadAttention(C, NH, HS, do_mask=True)
 
 kseqs = [
     torch.linspace(i + 0.1, i + 0.8, C * HS).view(mhead.heads[0].key.weight.shape)
