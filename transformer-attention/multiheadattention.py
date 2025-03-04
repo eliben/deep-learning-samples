@@ -1,5 +1,5 @@
 import numpy as np
-from softmax import softmax_rows
+from softmax import softmax_lastdim
 
 
 # x has shape (B, N, D)
@@ -37,7 +37,7 @@ def multihead_attention(x, Wks, Wqs, Wvs, Wp, do_mask=False):
             # affected by tokens that come after it in the softmax.
             kq = np.where(mask == 0, -np.inf, kq)
 
-        att = softmax_rows(kq)  # (B, N, N)
+        att = softmax_lastdim(kq)  # (B, N, N)
         head_outs.append(att @ v)  # (B, N, HS)
 
     # Concatenate the head outputs and apply the final linear projection

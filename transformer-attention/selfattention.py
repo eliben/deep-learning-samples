@@ -1,5 +1,5 @@
 import numpy as np
-from softmax import softmax_columns, softmax_rows
+from softmax import softmax_cols, softmax_lastdim
 
 
 # self_attention the way it happens in the Transformer model. No bias.
@@ -17,7 +17,7 @@ def self_attention(x, Wk, Wq, Wv):
 
     # att: (N, N) attention matrix. The rows become the weights that sum
     # to 1 for each output vector.
-    att = softmax_rows(kq)
+    att = softmax_lastdim(kq)
     return att @ v
 
 
@@ -31,7 +31,7 @@ def self_attention_batched(x, Wk, Wq, Wv):
 
     kq = q @ k.swapaxes(-2, -1) / np.sqrt(k.shape[-1])  # (B, N, N)
 
-    att = softmax_rows(kq)  # (B, N, N)
+    att = softmax_lastdim(kq)  # (B, N, N)
     return att @ v  # (B, N, D)
 
 
@@ -50,5 +50,5 @@ def self_attention_cols(x, Wk, Wq, Wv, Bk, Bq, Bv):
 
     # att: (N, N) attention matrix. The columns become the weights that sum
     # to 1 for each output vector.
-    att = softmax_columns(kq)
+    att = softmax_cols(kq)
     return v @ att
