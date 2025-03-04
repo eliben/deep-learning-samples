@@ -9,10 +9,13 @@ from softmax import softmax_cols, softmax_lastdim
 # x is the inputs (N, D), each in a row.
 # Each of W* is a weight matrix of shape (D, D)
 def self_attention(x, Wk, Wq, Wv):
+    # Each of these is (N, D) @ (D, D) = (N, D)
     q = x @ Wq
     k = x @ Wk
     v = x @ Wv
 
+    # kq: (N, N) matrix of dot products between each pair of q and k vectors.
+    # The division by sqrt(D) is the scaling.
     kq = q @ k.T / np.sqrt(k.shape[1])
 
     # att: (N, N) attention matrix. The rows become the weights that sum
