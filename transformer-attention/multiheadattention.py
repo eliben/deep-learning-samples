@@ -3,15 +3,19 @@ from softmax import softmax_lastdim
 
 
 # x has shape (B, N, D)
-# Each W*s is a list of NH weight matrices of shape (D, HS) where HS is the head
-# size. NH and HS must be the same across all lists.
+# In what follows:
+#   NH = number of heads
+#   HS = head size
+# Each W*s is a list of NH weight matrices of shape (D, HS).
 # Wp is a weight matrix for the final linear projection, of shape (NH * HS, D)
+# The result is (B, N, D)
+# If do_mask is True, each attention head is masked from attending to future
+# tokens.
 def multihead_attention(x, Wks, Wqs, Wvs, Wp, do_mask=False):
     # Check shapes.
-    N = x.shape[1]
-    assert len(Wks) == len(Wqs) == len(Wvs)
     NH = len(Wks)
     HS = Wks[0].shape[1]
+    assert len(Wks) == len(Wqs) == len(Wvs)
     for W in Wqs + Wks + Wvs:
         assert W.shape[1] == HS
     assert Wp.shape[0] == NH * HS
@@ -22,6 +26,7 @@ def multihead_attention(x, Wks, Wqs, Wvs, Wp, do_mask=False):
     if do_mask:
         # mask is a lower-triangular (N, N) matrix, with zeros above
         # the diagonal and ones on the diagonal and below.
+        N = x.shape[1]
         mask = np.tril(np.ones((N, N)))
 
     for Wk, Wq, Wv in zip(Wks, Wqs, Wvs):
