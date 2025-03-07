@@ -5,11 +5,13 @@ from softmax import softmax_cols, softmax_lastdim
 # self_attention the way it happens in the Transformer model. No bias.
 # D = model dimension/depth (length of embedding)
 # N = input sequence length
+# HS = head size
 #
-# x is the inputs (N, D), each in a row.
-# Each of W* is a weight matrix of shape (D, D)
+# x is the input (N, D), each token in a row.
+# Each of W* is a weight matrix of shape (D, HS)
+# The result is (N, HS)
 def self_attention(x, Wk, Wq, Wv):
-    # Each of these is (N, D) @ (D, D) = (N, D)
+    # Each of these is (N, D) @ (D, HS) = (N, HS)
     q = x @ Wq
     k = x @ Wk
     v = x @ Wv
@@ -21,21 +23,21 @@ def self_attention(x, Wk, Wq, Wv):
     # att: (N, N) attention matrix. The rows become the weights that sum
     # to 1 for each output vector.
     att = softmax_lastdim(kq)
-    return att @ v
+    return att @ v  # (N, HS)
 
 
 # self_attention with inputs that have a batch dimension.
 # x has shape (B, N, D)
-# Each of W* has shape (D, D)
+# Each of W* has shape (D, HS)
 def self_attention_batched(x, Wk, Wq, Wv):
-    q = x @ Wq  # (B, N, D)
-    k = x @ Wk  # (B, N, D)
-    v = x @ Wv  # (B, N, D)
+    q = x @ Wq  # (B, N, HS)
+    k = x @ Wk  # (B, N, HS)
+    v = x @ Wv  # (B, N, HS)
 
     kq = q @ k.swapaxes(-2, -1) / np.sqrt(k.shape[-1])  # (B, N, N)
 
     att = softmax_lastdim(kq)  # (B, N, N)
-    return att @ v  # (B, N, D)
+    return att @ v  # (B, N, HS)
 
 
 # D = model dimension (length of embedding)
