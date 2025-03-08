@@ -48,3 +48,39 @@ def multihead_attention(x, Wks, Wqs, Wvs, Wp, do_mask=False):
     # Concatenate the head outputs and apply the final linear projection
     all_heads = np.concatenate(head_outs, axis=-1)  # (B, N, NH * HS)
     return all_heads @ Wp  # (B, N, D)
+
+
+# Cross attention betwee two input sequences that can have different lengths.
+# xq has shape (B, Nq, D)
+# xv has shape (B, Nv, D)
+# In what follows:
+#   NH = number of heads
+#   HS = head size
+# Each W*s is a list of NH weight matrices of shape (D, HS).
+# Wp is a weight matrix for the final linear projection, of shape (NH * HS, D)
+# The result is (B, Nq, D)
+def multihead_cross_attention(xq, xv, Wks, Wqs, Wvs, Wp):
+    # Check shapes.
+    NH = len(Wks)
+    HS = Wks[0].shape[1]
+    assert len(Wks) == len(Wqs) == len(Wvs)
+    for W in Wqs + Wks + Wvs:
+        assert W.shape[1] == HS
+    assert Wp.shape[0] == NH * HS
+
+    # List of head outputs
+    head_outs = []
+
+    for Wk, Wq, Wv in zip(Wks, Wqs, Wvs):
+        q = xq @ Wq  # (B, Nq, HS)
+        k = xv @ Wk  # (B, Nv, HS)
+        v = xv @ Wv  # (B, Nv, HS)
+
+        kq = q @ k.swapaxes(-2, -1) / np.sqrt(k.shape[-1])  # (B, Nq, Nv)
+
+        att = softmax_lastdim(kq)  # (B, Nq, Nv)
+        head_outs.append(att @ v)  # (B, Nq, HS)
+
+    # Concatenate the head outputs and apply the final linear projection
+    all_heads = np.concatenate(head_outs, axis=-1)  # (B, Nq, NH * HS)
+    return all_heads @ Wp  # (B, Nq, D)

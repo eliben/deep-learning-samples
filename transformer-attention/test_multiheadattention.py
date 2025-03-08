@@ -188,3 +188,22 @@ def test_values():
     )
 
     assert np.allclose(y2, want2, rtol=1e-3)
+
+
+def test_shapes_cross():
+    # def multihead_cross_attention(xq, xv, Wks, Wqs, Wvs, Wp):
+    D = 12
+    Nq = 6
+    Nv = 8
+    HS = 3
+    NH = 4
+    B = 2
+    xq = np.random.randn(B, Nq, D)
+    xv = np.random.randn(B, Nv, D)
+    Wks = [np.random.randn(D, HS) for _ in range(NH)]
+    Wqs = [np.random.randn(D, HS) for _ in range(NH)]
+    Wvs = [np.random.randn(D, HS) for _ in range(NH)]
+    Wp = np.random.randn(NH * HS, D)
+
+    y = multihead_cross_attention(xq, xv, Wks, Wqs, Wvs, Wp)
+    assert y.shape == (B, Nq, D)
