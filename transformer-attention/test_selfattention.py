@@ -1,6 +1,5 @@
 import numpy as np
-import pytest
-from selfattention import *
+from selfattention import self_attention, self_attention_batched, self_attention_cols
 
 
 def test_shapes_cols():

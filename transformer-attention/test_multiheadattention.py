@@ -1,6 +1,5 @@
 import numpy as np
-import pytest
-from multiheadattention import *
+from multiheadattention import multihead_attention, multihead_cross_attention
 
 
 def test_shapes():
