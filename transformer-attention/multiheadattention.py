@@ -49,7 +49,7 @@ def multihead_attention_vec(x, W, NH, Wp, do_mask=False):
 # The result is (B, N, D)
 # If do_mask is True, each attention head is masked from attending to future
 # tokens.
-def multihead_attention(x, Wks, Wqs, Wvs, Wp, do_mask=False):
+def multihead_attention_list(x, Wks, Wqs, Wvs, Wp, do_mask=False):
     # Check shapes.
     NH = len(Wks)
     HS = Wks[0].shape[1]
@@ -97,7 +97,7 @@ def multihead_attention(x, Wks, Wqs, Wvs, Wp, do_mask=False):
 # Each W*s is a list of NH weight matrices of shape (D, HS).
 # Wp is a weight matrix for the final linear projection, of shape (NH * HS, D)
 # The result is (B, Nq, D)
-def multihead_cross_attention(xq, xv, Wks, Wqs, Wvs, Wp):
+def multihead_cross_attention_list(xq, xv, Wks, Wqs, Wvs, Wp):
     # Check shapes.
     NH = len(Wks)
     HS = Wks[0].shape[1]
