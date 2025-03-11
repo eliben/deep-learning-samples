@@ -2,12 +2,27 @@ import numpy as np
 from softmax import softmax_lastdim
 
 
-# W is expected to have shape (D, 3 * D)
+# x has shape (B, N, D)
+# In what follows:
+#   NH = number of heads
+#   HS = head size
+#   NH * HS = D
+# W is expected to have shape (D, 3 * D), with all the weight matrices for
+# Ks, Qs, and Vs concatenated along the last dimension, in this order.
+# Wp is a weight matrix for the final linear projection, of shape (D, D).
+# The result is (B, N, D).
+# If do_mask is True, each attention head is masked from attending to future
+# tokens.
 def multihead_attention_vec(x, W, NH, Wp, do_mask=False):
     B, N, D = x.shape
     assert W.shape == (D, 3 * D)
     qkv = x @ W  # (B, N, 3 * D)
     q, k, v = np.split(qkv, 3, axis=-1)  # (B, N, D) each
+
+    if do_mask:
+        # mask is a lower-triangular (N, N) matrix, with zeros above
+        # the diagonal and ones on the diagonal and below.
+        mask = np.tril(np.ones((N, N)))
 
     HS = D // NH
     q = q.reshape(B, N, NH, HS).transpose(0, 2, 1, 3)  # (B, NH, N, HS)
@@ -15,6 +30,11 @@ def multihead_attention_vec(x, W, NH, Wp, do_mask=False):
     v = v.reshape(B, N, NH, HS).transpose(0, 2, 1, 3)  # (B, NH, N, HS)
 
     kq = q @ k.swapaxes(-1, -2) / np.sqrt(k.shape[-1])  # (B, NH, N, N)
+    if do_mask:
+        # Set the masked positions to -inf, to ensure that a token isn't
+        # affected by tokens that come after it in the softmax.
+        kq = np.where(mask == 0, -np.inf, kq)
+
     att = softmax_lastdim(kq)  # (B, NH, N, N)
     out = att @ v  # (B, NH, N, HS)
     return out.transpose(0, 2, 1, 3).reshape(B, N, D) @ Wp  # (B, N, D)
