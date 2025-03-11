@@ -8,7 +8,7 @@ from softmax import softmax_lastdim
 #   HS = head size
 #   NH * HS = D
 # W is expected to have shape (D, 3 * D), with all the weight matrices for
-# Ks, Qs, and Vs concatenated along the last dimension, in this order.
+# Qs, Ks, and Vs concatenated along the last dimension, in this order.
 # Wp is a weight matrix for the final linear projection, of shape (D, D).
 # The result is (B, N, D).
 # If do_mask is True, each attention head is masked from attending to future
@@ -49,7 +49,7 @@ def multihead_attention_vec(x, W, NH, Wp, do_mask=False):
 # The result is (B, N, D)
 # If do_mask is True, each attention head is masked from attending to future
 # tokens.
-def multihead_attention_list(x, Wks, Wqs, Wvs, Wp, do_mask=False):
+def multihead_attention_list(x, Wqs, Wks, Wvs, Wp, do_mask=False):
     # Check shapes.
     NH = len(Wks)
     HS = Wks[0].shape[1]
@@ -67,7 +67,7 @@ def multihead_attention_list(x, Wks, Wqs, Wvs, Wp, do_mask=False):
         N = x.shape[1]
         mask = np.tril(np.ones((N, N)))
 
-    for Wk, Wq, Wv in zip(Wks, Wqs, Wvs):
+    for Wq, Wk, Wv in zip(Wqs, Wks, Wvs):
         # Calculate self attention for each head separately
         q = x @ Wq  # (B, N, HS)
         k = x @ Wk  # (B, N, HS)
@@ -97,7 +97,7 @@ def multihead_attention_list(x, Wks, Wqs, Wvs, Wp, do_mask=False):
 # Each W*s is a list of NH weight matrices of shape (D, HS).
 # Wp is a weight matrix for the final linear projection, of shape (NH * HS, D)
 # The result is (B, Nq, D)
-def multihead_cross_attention_list(xq, xv, Wks, Wqs, Wvs, Wp):
+def multihead_cross_attention_list(xq, xv, Wqs, Wks, Wvs, Wp):
     # Check shapes.
     NH = len(Wks)
     HS = Wks[0].shape[1]
@@ -109,7 +109,7 @@ def multihead_cross_attention_list(xq, xv, Wks, Wqs, Wvs, Wp):
     # List of head outputs
     head_outs = []
 
-    for Wk, Wq, Wv in zip(Wks, Wqs, Wvs):
+    for Wq, Wk, Wv in zip(Wks, Wqs, Wvs):
         q = xq @ Wq  # (B, Nq, HS)
         k = xv @ Wk  # (B, Nv, HS)
         v = xv @ Wv  # (B, Nv, HS)

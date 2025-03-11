@@ -68,11 +68,11 @@ def test_values():
     Wvs = [np.linspace(i + 6.1, i + 6.8, D * HS).reshape(HS, D).T for i in range(NH)]
     Wp = np.linspace(9.1, 9.8, NH * HS * D).reshape(D, NH * HS).T
 
-    y = multihead_attention_list(x, Wks, Wqs, Wvs, Wp)
+    y = multihead_attention_list(x, Wqs, Wks, Wvs, Wp)
     assert np.allclose(y, _multihead_want, rtol=1e-3)
 
     # Now test with masking
-    y2 = multihead_attention_list(x, Wks, Wqs, Wvs, Wp, do_mask=True)
+    y2 = multihead_attention_list(x, Wqs, Wks, Wvs, Wp, do_mask=True)
     assert np.allclose(y2, _multihead_masked_want, rtol=1e-3)
 
 
@@ -91,7 +91,7 @@ def test_shapes_cross():
     Wvs = [np.random.randn(D, HS) for _ in range(NH)]
     Wp = np.random.randn(NH * HS, D)
 
-    y = multihead_cross_attention_list(xq, xv, Wks, Wqs, Wvs, Wp)
+    y = multihead_cross_attention_list(xq, xv, Wqs, Wks, Wvs, Wp)
     assert y.shape == (B, Nq, D)
 
 
