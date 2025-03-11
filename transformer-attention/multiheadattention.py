@@ -2,6 +2,24 @@ import numpy as np
 from softmax import softmax_lastdim
 
 
+# W is expected to have shape (D, 3 * D)
+def multihead_attention_vec(x, W, NH, Wp, do_mask=False):
+    B, N, D = x.shape
+    assert W.shape == (D, 3 * D)
+    qkv = x @ W  # (B, N, 3 * D)
+    q, k, v = np.split(qkv, 3, axis=-1)  # (B, N, D) each
+
+    HS = D // NH
+    q = q.reshape(B, N, NH, HS).transpose(0, 2, 1, 3)  # (B, NH, N, HS)
+    k = k.reshape(B, N, NH, HS).transpose(0, 2, 1, 3)  # (B, NH, N, HS)
+    v = v.reshape(B, N, NH, HS).transpose(0, 2, 1, 3)  # (B, NH, N, HS)
+
+    kq = q @ k.swapaxes(-1, -2) / np.sqrt(k.shape[-1])  # (B, NH, N, N)
+    att = softmax_lastdim(kq)  # (B, NH, N, N)
+    out = att @ v  # (B, NH, N, HS)
+    return out.transpose(0, 2, 1, 3).reshape(B, N, D) @ Wp  # (B, N, D)
+
+
 # x has shape (B, N, D)
 # In what follows:
 #   NH = number of heads
@@ -50,7 +68,7 @@ def multihead_attention(x, Wks, Wqs, Wvs, Wp, do_mask=False):
     return all_heads @ Wp  # (B, N, D)
 
 
-# Cross attention betwee two input sequences that can have different lengths.
+# Cross attention between two input sequences that can have different lengths.
 # xq has shape (B, Nq, D)
 # xv has shape (B, Nv, D)
 # In what follows:
