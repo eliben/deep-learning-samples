@@ -30,6 +30,17 @@ def multihead_attention_vec(x, W, NH, Wp, do_mask=False):
     v = v.reshape(B, N, NH, HS).transpose(0, 2, 1, 3)  # (B, NH, N, HS)
 
     kq = q @ k.swapaxes(-1, -2) / np.sqrt(k.shape[-1])  # (B, NH, N, N)
+
+    # The last statement is equivalent to the following:
+    #
+    #   kq = np.einsum("bhqd,bhkd->bhqk", q, k) / np.sqrt(k.shape[-1])
+    #
+    # The transpose of k is implied in the dimension order of the einsum
+    # subscript. b is the batch dimension, h is the head dimension, q and k
+    # are the query and key dimensions, and d is the depth of the query/key
+    # vectors. Even though in our case the query and key vectors have the same
+    # depth, einsum needs to use distinct dimension labels for them.
+
     if do_mask:
         # Set the masked positions to -inf, to ensure that a token isn't
         # affected by tokens that come after it in the softmax.
