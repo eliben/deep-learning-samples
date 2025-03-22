@@ -17,7 +17,7 @@ def self_attention(x, Wk, Wq, Wv):
     v = x @ Wv
 
     # kq: (N, N) matrix of dot products between each pair of q and k vectors.
-    # The division by sqrt(D) is the scaling.
+    # The division by sqrt(HS) is the scaling.
     kq = q @ k.T / np.sqrt(k.shape[1])
 
     # att: (N, N) attention matrix. The rows become the weights that sum
