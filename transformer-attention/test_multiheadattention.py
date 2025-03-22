@@ -14,16 +14,16 @@ def test_values_vec():
     N = 4
     x = np.linspace(0.1, 8.4, B * N * D).reshape(B, N, D)
 
-    Wks = [np.linspace(i + 0.1, i + 0.8, D * HS).reshape(HS, D).T for i in range(NH)]
     Wqs = [np.linspace(i + 3.1, i + 3.8, D * HS).reshape(HS, D).T for i in range(NH)]
+    Wks = [np.linspace(i + 0.1, i + 0.8, D * HS).reshape(HS, D).T for i in range(NH)]
     Wvs = [np.linspace(i + 6.1, i + 6.8, D * HS).reshape(HS, D).T for i in range(NH)]
     Wp = np.linspace(9.1, 9.8, NH * HS * D).reshape(D, NH * HS).T
 
-    # concatenate all Ws, first K, then Q, then V
-    Wk = np.concatenate(Wks, axis=1)
+    # concatenate all Ws: first Q, then K, then V
     Wq = np.concatenate(Wqs, axis=1)
+    Wk = np.concatenate(Wks, axis=1)
     Wv = np.concatenate(Wvs, axis=1)
-    W = np.concatenate([Wk, Wq, Wv], axis=1)
+    W = np.concatenate([Wq, Wk, Wv], axis=1)
     assert W.shape == (D, 3 * D)
 
     y = multihead_attention_vec(x, W, NH, Wp)
@@ -43,12 +43,12 @@ def test_shapes():
     NH = 4
     B = 2
     x = np.random.randn(B, N, D)
-    Wks = [np.random.randn(D, HS) for _ in range(NH)]
     Wqs = [np.random.randn(D, HS) for _ in range(NH)]
+    Wks = [np.random.randn(D, HS) for _ in range(NH)]
     Wvs = [np.random.randn(D, HS) for _ in range(NH)]
     Wp = np.random.randn(NH * HS, D)
 
-    y = multihead_attention_list(x, Wks, Wqs, Wvs, Wp)
+    y = multihead_attention_list(x, Wqs, Wks, Wvs, Wp)
     assert y.shape == (B, N, D)
 
 
@@ -63,8 +63,8 @@ def test_values():
     # As before, we have to reshape these into the transposed form when filling
     # them in, then transpose. This is because PyTorch transposes the weight
     # matrix directly assigned to a layer.
-    Wks = [np.linspace(i + 0.1, i + 0.8, D * HS).reshape(HS, D).T for i in range(NH)]
     Wqs = [np.linspace(i + 3.1, i + 3.8, D * HS).reshape(HS, D).T for i in range(NH)]
+    Wks = [np.linspace(i + 0.1, i + 0.8, D * HS).reshape(HS, D).T for i in range(NH)]
     Wvs = [np.linspace(i + 6.1, i + 6.8, D * HS).reshape(HS, D).T for i in range(NH)]
     Wp = np.linspace(9.1, 9.8, NH * HS * D).reshape(D, NH * HS).T
 
@@ -86,8 +86,8 @@ def test_shapes_cross():
     B = 2
     xq = np.random.randn(B, Nq, D)
     xv = np.random.randn(B, Nv, D)
-    Wks = [np.random.randn(D, HS) for _ in range(NH)]
     Wqs = [np.random.randn(D, HS) for _ in range(NH)]
+    Wks = [np.random.randn(D, HS) for _ in range(NH)]
     Wvs = [np.random.randn(D, HS) for _ in range(NH)]
     Wp = np.random.randn(NH * HS, D)
 
