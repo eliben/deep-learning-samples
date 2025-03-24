@@ -16,9 +16,19 @@ def subsample(words, threshold=1e-4):
               for word in word_counts}
     return [word for word in words if random.random() < p_keep[word]]
 
+def make_vocabulary(words, top_k=20000):
+    word_counts = Counter(words)
+    vocab = {'unk': 0}
+    for word, _ in word_counts.most_common(top_k-1):
+        vocab[word] = len(vocab)
+    return vocab
+
 if __name__ == '__main__':
     words = read_words_from_file('text8')
     print('Number of words:', len(words))
 
     ss = subsample(words)
     print('Number of words after subsampling:', len(ss))
+
+    vocab = make_vocabulary(ss)
+    print('Vocabulary size:', len(vocab))
