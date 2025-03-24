@@ -1,6 +1,7 @@
 from collections import Counter
 import random
 import math
+import pickle
 
 
 def read_words_from_file(file_path):
@@ -46,7 +47,9 @@ def make_vocabulary(words, top_k=20000):
 
 
 if __name__ == "__main__":
-    words = read_words_from_file("text8")
+    input_filename = "text8"
+    print("Reading words from", input_filename)
+    words = read_words_from_file(input_filename)
     print("Number of words:", len(words))
 
     ss = subsample(words)
@@ -54,3 +57,12 @@ if __name__ == "__main__":
 
     vocab = make_vocabulary(ss)
     print("Vocabulary size:", len(vocab))
+
+    # TODO: this should be IDs... in a function
+    train_data = [word for word in ss if word in vocab]
+    print("Number of words in training data:", len(train_data))
+
+    output_filename = 'train-data.pickle'
+    print("Saving training data to", output_filename)
+    with open(output_filename, 'wb') as file:
+        pickle.dump({'train_data': train_data, 'vocab': vocab}, file)
