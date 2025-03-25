@@ -137,13 +137,4 @@ if __name__ == "__main__":
     )
 
     train(train_data, vocab)
-    # cnt = 0
-    # for target_batch, context_batch in generate_train_vectors(
-    #     train_data, vocab, batch_size=4
-    # ):
-    #     cnt += 1
-    # print("Target batch:", target_batch)
-    # print("Context batch:", context_batch)
-    # print()
 
-    # print("Number of batches:", cnt)
