@@ -12,9 +12,12 @@ The `download-dataset.sh` script should be run - it downloads a large (100 MB)
 text file named `text8`. This is just a lot of concatenated English text,
 space separated, with no punctuation.
 
+If you'd like to use a different dataset (such as Wikipedia dumps), make sure
+the input file has the same format as `text8`.
+
 # 2. Prepare data for training
 
-To start training, another round of preprocessing is needed. We want to
+To prepare the data for training, we want to
 sub-sample the input (reducing the frequency of very common words), and compile
 a vocabulary of the N most common words (20,000 by default).
 
@@ -33,7 +36,7 @@ To train the model, run:
     uv run train.py
 
 This reads `train-data.pickle` and trains a CBOW word2ver model using JAX. The
-training process runs multiple echos over the data set in shuffled batches,
+training process runs multiple epochs over the data set in shuffled batches,
 and saves a checkpoint every epoch. The checkpoint contains a dict with two
 arrays representing the model's layers.
 
