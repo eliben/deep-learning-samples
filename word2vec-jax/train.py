@@ -9,15 +9,15 @@ def generate_train_vectors(train_data, vocab, window_size=4, batch_size=128):
     """Generates training vectors from a list of words and vocabulary.
 
     Generates (target_batch, context_batch) pairs, where target_batch is a
-    (batch_size,) array of target word IDs and context_batch is a (batch_size,)
-    array of corresponding contexts; each context is an (2*window_size,) array
-    of word IDs.
+    (batch_size,) array of target word IDs and context_batch is a
+    (batch_size, 2*window_size) array of context word IDs.
 
-    Stops when it runs out of data. The last batch may have fewer elements than
-    batch_size.
+    Stops when it runs out of data. The leftover data (whatever doesn't fit in
+    the last batch) will be discared.
     """
-    target_batch = []
-    context_batch = []
+    target_batch = np.zeros(batch_size, dtype=np.int32)
+    context_batch = np.zeros((batch_size, 2 * window_size), dtype=np.int32)
+    batch_idx = 0
 
     for i in range(len(train_data)):
         if i + 2 * window_size >= len(train_data):
@@ -27,17 +27,16 @@ def generate_train_vectors(train_data, vocab, window_size=4, batch_size=128):
         target_word = train_data[i + window_size]
         left_context = train_data[i : i + window_size]
         right_context = train_data[i + window_size + 1 : i + 2 * window_size + 1]
-        context_words = left_context + right_context
 
-        if target_word not in vocab:
-            continue
-        target_batch.append(vocab.get(target_word, "<unk>"))
-        context_batch.append([vocab.get(word, "<unk>") for word in context_words])
+        target_batch[batch_idx] = vocab.get(target_word, 0)
+        context_batch[batch_idx, :] = np.array(
+            [vocab.get(word, 0) for word in left_context + right_context]
+        )
 
-        if len(target_batch) == batch_size:
+        batch_idx += 1
+        if batch_idx == batch_size:
             yield np.array(target_batch), np.array(context_batch)
-            target_batch = []
-            context_batch = []
+            batch_idx = 0
 
 
 @jax.jit
@@ -137,4 +136,3 @@ if __name__ == "__main__":
     )
 
     train(train_data, vocab)
-
