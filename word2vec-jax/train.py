@@ -42,8 +42,8 @@ def generate_train_vectors(train_data, vocab, window_size=4, batch_size=128):
 
 @jax.jit
 def word2vec_forward(params, context):
-    """ Forward pass of the word2Vec model.
-    
+    """Forward pass of the word2Vec model.
+
     context is a (batch_size, 2*window_size) array of word IDs.
 
     V is the vocabulary size, D is the embedding dimension.
@@ -60,12 +60,13 @@ def word2vec_forward(params, context):
     hidden = jnp.dot(avg_projection, params["hidden"])
     return hidden
 
+
 @jax.jit
 def word2vec_loss(params, target, context):
     """Compute the loss of the word2Vec model."""
-    logits = word2vec_forward(params, context) # (batch_size, V)
+    logits = word2vec_forward(params, context)  # (batch_size, V)
 
-    target_onehot = jax.nn.one_hot(target, logits.shape[1]) # (batch_size, V)
+    target_onehot = jax.nn.one_hot(target, logits.shape[1])  # (batch_size, V)
     loss = optax.losses.softmax_cross_entropy(logits, target_onehot).mean()
     return loss
 
@@ -74,7 +75,8 @@ def train(train_data, vocab):
     V = len(vocab)
     D = 200
     LEARNING_RATE = 1e-3
-    BATCH_SIZE = 512
+    WINDOW_SIZE = 8
+    BATCH_SIZE = 1024
     EPOCHS = 15
 
     initializer = jax.nn.initializers.glorot_uniform()
@@ -86,21 +88,37 @@ def train(train_data, vocab):
     optimizer = optax.adam(LEARNING_RATE)
     opt_state = optimizer.init(params)
 
+    print("Approximate number of batches:", len(train_data) // BATCH_SIZE)
+
     for epoch in range(EPOCHS):
-        print(f'=== Epoch {epoch+1}')
-        for n, (target_batch, context_batch) in enumerate(generate_train_vectors(train_data, vocab, batch_size=BATCH_SIZE)):
+        print(f"=== Epoch {epoch + 1}")
+        epoch_loss = []
+        for n, (target_batch, context_batch) in enumerate(
+            generate_train_vectors(
+                train_data, vocab, window_size=WINDOW_SIZE, batch_size=BATCH_SIZE
+            )
+        ):
             # Shuffle the batch.
             indices = np.random.permutation(len(target_batch))
             target_batch = target_batch[indices]
             context_batch = context_batch[indices]
-            
+
             # Compute the loss and gradients; optimize.
-            loss, grads = jax.value_and_grad(word2vec_loss)(params, target_batch, context_batch)
+            loss, grads = jax.value_and_grad(word2vec_loss)(
+                params, target_batch, context_batch
+            )
             updates, opt_state = optimizer.update(grads, opt_state)
             params = optax.apply_updates(params, updates)
 
+            epoch_loss.append(loss)
             if n > 0 and n % 1000 == 0:
-                print(f'Batch {n}, loss: {loss:.2f}')
+                print(f"Batch {n}")
+
+        print(f"Epoch loss: {np.mean(epoch_loss):.2f}")
+        checkpoint_filename = f"checkpoint-{epoch:03}.pickle"
+        print("Saving checkpoint to", checkpoint_filename)
+        with open(checkpoint_filename, "wb") as file:
+            pickle.dump(params, file)
 
 
 if __name__ == "__main__":
@@ -117,7 +135,6 @@ if __name__ == "__main__":
         "First 10 words and their IDs:",
         [(word, vocab[word]) for word in train_data[:10]],
     )
-    print('Approximate number of batches:', len(train_data) // 512)
 
     train(train_data, vocab)
     # cnt = 0
@@ -125,8 +142,8 @@ if __name__ == "__main__":
     #     train_data, vocab, batch_size=4
     # ):
     #     cnt += 1
-        # print("Target batch:", target_batch)
-        # print("Context batch:", context_batch)
-        # print()
+    # print("Target batch:", target_batch)
+    # print("Context batch:", context_batch)
+    # print()
 
     # print("Number of batches:", cnt)
