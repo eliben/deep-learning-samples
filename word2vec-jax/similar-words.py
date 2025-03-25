@@ -34,11 +34,49 @@ def find_similar_words(word, vocab, inv_vocab, embedding, top_k=10):
     ]
 
 
+def find_analogies(a, b, c, vocab, inv_vocab, embedding, top_k=10):
+    """Finds analogies for "A is to B as C is to ?".
+
+    Returns a list of (word, similarity) pairs.
+    """
+    if a not in vocab or b not in vocab or c not in vocab:
+        return []
+
+    # embedding is of shape (V, D), where V is the vocabulary size and D is the
+    # embedding dimension.
+    a_embedding = embedding[vocab[a]]  # (D,)
+    b_embedding = embedding[vocab[b]]  # (D,)
+    c_embedding = embedding[vocab[c]]  # (D,)
+
+    # Compute the analogy vector
+    analogy = b_embedding - a_embedding + c_embedding
+
+    # Compute cosine similarity between the analogy and all other words using
+    # numpy. The result is a (V,) array of cosine similarities of word with each
+    # of the vocabulary words.
+    norms = np.linalg.norm(embedding, axis=1)  # (V,)
+    similarities = np.dot(embedding, analogy) / (norms * np.linalg.norm(analogy))
+
+    # Extract the top_k indices with the highest similarities
+    top_k_words = np.argsort(similarities)
+    return [
+        (inv_vocab[word], similarities[word])
+        for word in islice(reversed(top_k_words), top_k)
+    ]
+
+
+DESCRIPTION = """
+Find similar words or analogies using word embeddings. Only one of -analogy
+and -word should be specified; if both are specified, -analogy will be used.
+"""
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Find similar words using word embeddings."
+    parser = argparse.ArgumentParser(description=DESCRIPTION)
+    parser.add_argument(
+        "-analogy",
+        help="Comma-separated list of words to perform analogy task (e.g., 'king,man,queen').",
     )
-    parser.add_argument("word", help="The word to find similar words for.")
+    parser.add_argument("-word", help="The word to find similar words for.")
     parser.add_argument(
         "-checkpoint", required=True, help="Path to the checkpoint pickle file."
     )
@@ -61,7 +99,14 @@ if __name__ == "__main__":
     # Its shape is (V, D).
     embedding = model_params["projection"]
 
-    similar_words = find_similar_words(args.word, vocab, inv_vocab, embedding)
-    print(f"Words similar to '{args.word}':")
-    for word, similarity in similar_words:
-        print(f"{word}: {similarity:.2f}")
+    if args.analogy:
+        a, b, c = args.analogy.split(",")
+        analogies = find_analogies(a, b, c, vocab, inv_vocab, embedding)
+        print(f"Analogies for '{a} is to {b} as {c} is to ?':")
+        for word, similarity in analogies:
+            print(f"{word:15} {similarity:.2f}")
+    else:
+        similar_words = find_similar_words(args.word, vocab, inv_vocab, embedding)
+        print(f"Words similar to '{args.word}':")
+        for word, similarity in similar_words:
+            print(f"{word:15} {similarity:.2f}")

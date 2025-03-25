@@ -77,7 +77,7 @@ def train(train_data, vocab):
     LEARNING_RATE = 1e-3
     WINDOW_SIZE = 8
     BATCH_SIZE = 1024
-    EPOCHS = 15
+    EPOCHS = 25
 
     initializer = jax.nn.initializers.glorot_uniform()
     params = {
