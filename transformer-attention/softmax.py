@@ -9,7 +9,7 @@ def softmax_lastdim(x):
     """
     # Subtract the max for numerical stability
     ex = np.exp(x - np.max(x, axis=-1, keepdims=True))
-    # Divide by row-wise sums
+    # Divide by sums across last dimension
     return ex / np.sum(ex, axis=-1, keepdims=True)
 
 
