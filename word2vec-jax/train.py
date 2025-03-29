@@ -46,6 +46,8 @@ def word2vec_forward(params, context):
     context is a (batch_size, 2*window_size) array of word IDs.
 
     V is the vocabulary size, D is the embedding dimension.
+    params["projection"] is a (V, D) matrix of word embeddings.
+    params["hidden"] is a (D, V) matrix of weights for the hidden layer.
     """
     # Indexing into (V, D) matrix with a batch of IDs. The output shape
     # is (batch_size, 2*window_size, D).

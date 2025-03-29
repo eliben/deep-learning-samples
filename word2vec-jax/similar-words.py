@@ -65,9 +65,41 @@ def find_analogies(a, b, c, vocab, inv_vocab, embedding, top_k=10):
     ]
 
 
+def show_similarity(w, cs, vocab, inv_vocab, embedding):
+    """Shows the similarity of a word with a list of context words.
+
+    Returns a list of (word, similarity) pairs. Each pair has one word
+    from cs and its degree of similarity with w.
+    """
+    if w not in vocab:
+        return []
+
+    w_id = vocab[w]
+
+    # embedding is of shape (V, D), where V is the vocabulary size and D is the
+    # embedding dimension.
+    w_embedding = embedding[w_id]  # (D,)
+
+    # Compute the cosine similarity between w_embedding and the embeddings of
+    # each of cs.
+    sims = []
+    for c in cs:
+        if c not in vocab:
+            continue
+        c_id = vocab[c]
+        c_embedding = embedding[c_id]
+        # Compute cosine similarity
+        similarity = np.dot(w_embedding, c_embedding) / (
+            np.linalg.norm(w_embedding) * np.linalg.norm(c_embedding)
+        )
+        sims.append((c, similarity))
+
+    return sims
+
+
 DESCRIPTION = """
-Find similar words or analogies using word embeddings. Only one of -analogy
-and -word should be specified; if both are specified, -analogy will be used.
+Find similar words or analogies using word embeddings. Only one of -analogy,
+-sims or -word should be specified; -analogy has priority.
 """
 
 if __name__ == "__main__":
@@ -75,6 +107,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "-analogy",
         help="Comma-separated list of words to perform analogy task (e.g., 'king,man,queen').",
+    )
+    parser.add_argument(
+        "-sims",
+        help="Comma-separated list of words: w,c1,c2...",
     )
     parser.add_argument("-word", help="The word to find similar words for.")
     parser.add_argument(
@@ -104,6 +140,12 @@ if __name__ == "__main__":
         analogies = find_analogies(a, b, c, vocab, inv_vocab, embedding)
         print(f"Analogies for '{a} is to {b} as {c} is to ?':")
         for word, similarity in analogies:
+            print(f"{word:15} {similarity:.2f}")
+    elif args.sims:
+        w, *cs = args.sims.split(",")
+        similarities = show_similarity(w, cs, vocab, inv_vocab, embedding)
+        print(f"Similarities for '{w}' with context words {cs}:")
+        for word, similarity in similarities:
             print(f"{word:15} {similarity:.2f}")
     else:
         similar_words = find_similar_words(args.word, vocab, inv_vocab, embedding)
