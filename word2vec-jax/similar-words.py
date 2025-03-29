@@ -73,12 +73,7 @@ def show_similarity(w, cs, vocab, inv_vocab, embedding):
     """
     if w not in vocab:
         return []
-
-    w_id = vocab[w]
-
-    # embedding is of shape (V, D), where V is the vocabulary size and D is the
-    # embedding dimension.
-    w_embedding = embedding[w_id]  # (D,)
+    w_embedding = embedding[vocab[w]]  # (D,)
 
     # Compute the cosine similarity between w_embedding and the embeddings of
     # each of cs.
@@ -86,8 +81,7 @@ def show_similarity(w, cs, vocab, inv_vocab, embedding):
     for c in cs:
         if c not in vocab:
             continue
-        c_id = vocab[c]
-        c_embedding = embedding[c_id]
+        c_embedding = embedding[vocab[c]]
         # Compute cosine similarity
         similarity = np.dot(w_embedding, c_embedding) / (
             np.linalg.norm(w_embedding) * np.linalg.norm(c_embedding)
