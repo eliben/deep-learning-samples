@@ -8,8 +8,8 @@ embeddings.
 Any training set of text will do, as long as it's properly cleaned up. For this
 project I'm using the same set used by the
 [original word2vec project](https://code.google.com/archive/p/word2vec/).
-The `download-dataset.sh` script should be run - it downloads a large (100 MB)
-text file named `text8`. This is just a lot of concatenated English text,
+The `download-dataset.sh` script should be run - it downloads a 100 MB
+text file named `text8`. This is just concatenated English text, all lowercase,
 space separated, with no punctuation.
 
 If you'd like to use a different dataset (such as Wikipedia dumps), make sure
@@ -26,7 +26,7 @@ After step 1 is completed, run:
     uv run make-train-data.py
 
 This creates a file named `train-data.pickle`, which can be directly loaded
-by subsequent steps. See the script top-level-comment for details on what
+by subsequent steps. See the script's top-level comment for details on what
 this file contains.
 
 # 3. Train the model
@@ -46,14 +46,13 @@ table, mapping word index to the word's learned embedding.
 
 # 4. Query embeddings for similar words and analogies
 
-Once the model has trained sufficiently for 15-25 epochs (the loss should go down),
-the latest checkpoint can be used to query the embeddings for word similarities
-and analogies. Here are some examples:
+Once the model has trained sufficiently for 15-25 epochs (the loss should go
+down), the latest checkpoint can be used to query the embeddings for word
+similarities and analogies. Here are some examples:
 
     # Find the most similar words to "paris"
     uv run similar-words.py -word paris -checkpoint checkpoint.pickle -traindata train-data.pickle
 
     # Find the best analogies for "berlin is to germany as tokyo is to ??"
     uv run similar-words.py -analogy berlin,germany,tokyo -checkpoint checkpoint.pickle -traindata train-data.pickle
-
 
