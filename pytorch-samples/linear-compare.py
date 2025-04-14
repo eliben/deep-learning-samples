@@ -12,7 +12,7 @@ K = 3
 # multiplies (M, N) by (N, K) to get (M, K).
 
 # Internally, nn.Linear creates its tensor as (out_features, in_features),
-# so when we assign to its weights directly we have to use the same shappe,
+# so when we assign to its weights directly we have to use the same shape,
 # which is (K, N) in our case.
 layer = nn.Linear(N, K, bias=False)
 lseq = torch.tensor(
