@@ -10,8 +10,7 @@ class ModelParams:
     dim: int
     hidden_dim: int
     num_experts: int
-    num_layers: int
-    dropout: float
+    topk_experts: int
 
 
 MP = ModelParams(
@@ -24,8 +23,8 @@ MP = ModelParams(
 # TODO: annotate dimensions here: in the general case, use (B, N, D) notation
 
 
-# TODO: figure this out, follows https://arxiv.org/pdf/2002.05202
-# "GLU variants improve transformer"
+# SwiGLU from the paper "GLU variants improve transformer"
+# [https://arxiv.org/pdf/2002.05202]
 class SwiGLU(nn.Module):
     def __init__(self):
         super().__init__()
@@ -38,7 +37,18 @@ class SwiGLU(nn.Module):
         return self.w2(nn.functional.silu(self.w1(x)) * self.w3(x))
 
 
-class MyModel(nn.Module):
+class FF(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.w1 = nn.Linear(MP.dim, MP.hidden_dim, bias=False)
+        self.w2 = nn.Linear(MP.hidden_dim, MP.dim, bias=False)
+
+    def forward(self, x):
+        return self.w2(nn.ReLU(self.w1(x)))
+
+
+class Moe(nn.Module):
     def __init__(self, experts: List[nn.Module], gate: nn.Module):
         super().__init__()
         self.experts = nn.ModuleList(experts)
@@ -46,7 +56,18 @@ class MyModel(nn.Module):
 
     def forward(self, x):
         gate_logits = self.gate(x)
-        return self.linear(x)
+        # TODO: continue working here...
+        return gate_logits
 
 
-model = MyModel()
+experts = [FF() for _ in range(MP.num_experts)]
+gate = nn.Linear(MP.dim, MP.num_experts, bias=False)
+model = Moe(experts, gate)
+
+N = 128
+
+print(f"Model parameters: {MP}")
+x = torch.randn(N, MP.dim)
+out = model(x)
+print(f"Input shape: {x.shape}")
+print(f"Output shape: {out.shape}")
