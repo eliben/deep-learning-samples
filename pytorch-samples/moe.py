@@ -3,6 +3,7 @@ from typing import List
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 @dataclass
@@ -10,7 +11,7 @@ class ModelParams:
     dim: int
     hidden_dim: int
     num_experts: int
-    topk_experts: int
+    topK: int
 
 
 MP = ModelParams(
@@ -34,7 +35,7 @@ class SwiGLU(nn.Module):
         self.w3 = nn.Linear(MP.dim, MP.hidden_dim, bias=False)
 
     def forward(self, x):
-        return self.w2(nn.functional.silu(self.w1(x)) * self.w3(x))
+        return self.w2(F.silu(self.w1(x)) * self.w3(x))
 
 
 # Feed-forward NN with ReLU activation and one hidden layer.
@@ -46,7 +47,7 @@ class FF(nn.Module):
         self.w2 = nn.Linear(MP.hidden_dim, MP.dim, bias=False)
 
     def forward(self, x):
-        return self.w2(nn.ReLU(self.w1(x)))
+        return self.w2(F.relu(self.w1(x)))
 
 
 class Moe(nn.Module):
@@ -56,25 +57,6 @@ class Moe(nn.Module):
         self.gate = gate
 
     def forward(self, x):
-        # Here's what we'd like to do for each token in the input/batch:
-        #
-        # for each token x:
-        #   # compute the gate layer to create scores for each expert
-        #   gate_logits = gate(x)
-        #
-        #   # select top K expects with highest scores  
-        #   top_logits, top_experts = torch.topk(gate_logits, MP.topK)
-        #
-        #   # Apply softmax between top scores to get weights that sum to 1.
-        #   top_logits = softmax(top_logits)
-        #
-        #   # For each selected expert, apply the expert to the input token and
-        #   # multiply by the corresponding weight.
-        #   output = 0
-        #   for expert_idx in top_experts:
-        #      output += top_logits[expert_idx] * experts[expert_idx](x)
-        #   return output
-
         # x is (B, N, dim)
         # gate is (dim, num_experts)
 
@@ -87,15 +69,22 @@ class Moe(nn.Module):
         # experts (B, N, topK).
         top_logits, top_experts = torch.topk(gate_logits, MP.topK, sorted=False)
 
-        top_logits = torch.nn.functional.softmax(
-            top_logits, dim=-1, dtype=torch.float
-        ).to(x.dtype)
+        weights = F.softmax(top_logits, dim=-1, dtype=torch.float).to(x.dtype)
 
         out = torch.zeros_like(x)
-        for expert_idx, expert in enumerate(self.experts):
-            # TODO ...
+        for b in range(x.shape[0]):
+            for n in range(x.shape[1]):
+                # Select the top K experts and their corresponding weights for
+                # this token.
+                selected_experts = top_experts[b, n]
+                selected_weights = top_logits[b, n]
 
-        return gate_logits
+                for expect_idx, weight in zip(top_experts[b, n], weights[b, n]):
+                    # Apply the expert to the input token and multiply by the
+                    # corresponding weight.
+                    out[b, n] += weight * self.experts[expect_idx](x[b, n])
+
+        return out
 
 
 experts = [FF() for _ in range(MP.num_experts)]
