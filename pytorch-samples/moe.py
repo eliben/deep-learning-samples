@@ -21,28 +21,11 @@ MP = ModelParams(
     topK=2,
 )
 
-# TODO: annotate dimensions here: in the general case, use (B, N, D) notation
-
-
-# SwiGLU from the paper "GLU variants improve transformer"
-# [https://arxiv.org/pdf/2002.05202]
-class SwiGLU(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-        self.w1 = nn.Linear(MP.dim, MP.hidden_dim, bias=False)
-        self.w2 = nn.Linear(MP.hidden_dim, MP.dim, bias=False)
-        self.w3 = nn.Linear(MP.dim, MP.hidden_dim, bias=False)
-
-    def forward(self, x):
-        return self.w2(F.silu(self.w1(x)) * self.w3(x))
-
 
 # Feed-forward NN with ReLU activation and one hidden layer.
 class FF(nn.Module):
     def __init__(self):
         super().__init__()
-
         self.w1 = nn.Linear(MP.dim, MP.hidden_dim, bias=False)
         self.w2 = nn.Linear(MP.hidden_dim, MP.dim, bias=False)
 
@@ -58,31 +41,28 @@ class Moe(nn.Module):
 
     def forward(self, x):
         # x is (B, N, dim)
-        # gate is (dim, num_experts)
-
         # Multiply by gate (dim, num_experts), to get (B, N, num_experts). For
         # each token, we get a score per expert.
-        gate_logits = self.gate(x)
+        gate_scores = self.gate(x)
 
-        # Select top K experts with the highest logits. top_logits is
+        # Select top K experts with the highest scores. top_scores is
         # (B, N, topK), and top_experts is the indices of the selected
         # experts (B, N, topK).
-        top_logits, top_experts = torch.topk(gate_logits, MP.topK, sorted=False)
+        top_scores, top_experts = torch.topk(gate_scores, MP.topK, sorted=False)
 
-        weights = F.softmax(top_logits, dim=-1, dtype=torch.float).to(x.dtype)
+        # Apply softmax to the top scores to get weights that sum to 1.
+        weights = F.softmax(top_scores, dim=-1)
 
         out = torch.zeros_like(x)
+        # For each token in batch and sequence.
         for b in range(x.shape[0]):
             for n in range(x.shape[1]):
                 # Select the top K experts and their corresponding weights for
                 # this token.
-                selected_experts = top_experts[b, n]
-                selected_weights = top_logits[b, n]
-
-                for expect_idx, weight in zip(top_experts[b, n], weights[b, n]):
+                for expert_idx, weight in zip(top_experts[b, n], weights[b, n]):
                     # Apply the expert to the input token and multiply by the
                     # corresponding weight.
-                    out[b, n] += weight * self.experts[expect_idx](x[b, n])
+                    out[b, n] += weight * self.experts[expert_idx](x[b, n])
 
         return out
 
@@ -92,7 +72,7 @@ gate = nn.Linear(MP.dim, MP.num_experts, bias=False)
 model = Moe(experts, gate)
 
 B = 16
-N = 128
+N = 64
 
 print(f"Model parameters: {MP}")
 x = torch.randn(B, N, MP.dim)
