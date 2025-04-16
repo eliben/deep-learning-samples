@@ -19,23 +19,10 @@ def feed_forward_relu(x, W1, W2):
     assert x.shape[-1] == W1.shape[0] == W2.shape[1]
     assert W1.shape[1] == W2.shape[0]
 
-    x = np.maximum(0, x @ W1)  # (B, N, DH)
-    return x @ W2  # (B, N, D)
-
-
-def router(x, Wr):
-    """Router (gate).
-
-    Args:
-        x: Input tensor (B, N, D).
-        Wr: Router weight matrix (D, NEXP).
-
-    Returns:
-        Output tensor (B, N, NEXP).
-    """
-    assert x.shape[-1] == Wr.shape[0]
-
-    return x @ Wr  # (B, N, NEXP)
+    x = x @ W1  # hidden layer (B, N, DH)
+    x = np.maximum(0, x)  # ReLU activation (B, N, DH)
+    x = x @ W2  # output layer (B, N, D)
+    return x
 
 
 def topk_lastdim(x, k):
@@ -76,7 +63,9 @@ class MoEParams:
 
 def moe(x, params):
     # Run input through router to get scores for each expert for each token.
-    expert_scores = router(x, params.router_weights)  # (B, N, NEXP)
+    # The router is a linear layer with shape (D, NEXP) that maps an input
+    # to the expert scores.
+    expert_scores = x @ params.router_weights  # (B, N, NEXP)
 
     # Select the top-k expert scores and their indices for each token.
     top_scores, top_experts = topk_lastdim(expert_scores, params.TOPK)  # (B, N, TOPK)
@@ -98,7 +87,6 @@ def moe(x, params):
 
 
 if __name__ == "__main__":
-    # Example usage
     B = 4
     N = 6
     D = 8
@@ -106,22 +94,19 @@ if __name__ == "__main__":
     NEXP = 4
     TOPK = 2
 
-    x = np.random.randn(B, N, D).astype(np.float32)  # Input tensor
-
-    # Initialize parameters
-    ff_weights = [
-        FFParams(np.random.randn(D, DH), np.random.randn(DH, D)) for _ in range(NEXP)
-    ]
-    router_weights = np.random.randn(D, NEXP)
-
     params = MoEParams(
         D=D,
         DH=DH,
         NEXP=NEXP,
         TOPK=TOPK,
-        ff_weights=ff_weights,
-        router_weights=router_weights,
+        ff_weights=[
+            FFParams(np.random.randn(D, DH), np.random.randn(DH, D))
+            for _ in range(NEXP)
+        ],
+        router_weights=np.random.randn(D, NEXP),
     )
+
+    x = np.linspace(0.1, 8.4, B * N * D).reshape(B, N, D)
 
     y = moe(x, params)
     print("Output shape:", y.shape)  # Should be (B, N, D)
