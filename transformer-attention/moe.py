@@ -75,6 +75,54 @@ class MoEParams:
 
 
 def moe(x, params):
-    gate_scores = router(x, params.router_weights)  # (B, N, NEXP)
+    # Run input through router to get scores for each expert for each token.
+    expert_scores = router(x, params.router_weights)  # (B, N, NEXP)
 
-    # top_scores, top_expects =
+    # Select the top-k expert scores and their indices for each token.
+    top_scores, top_experts = topk_lastdim(expert_scores, params.TOPK)  # (B, N, TOPK)
+
+    # Apply softmax to the top scores to get weights that sum to 1.
+    weights = softmax_lastdim(top_scores)  # (B, N, TOPK)
+
+    out = np.zeros_like(x)  # Initialize output tensor (B, N, D)
+    for b in range(x.shape[0]):
+        for n in range(x.shape[1]):
+            # Unvectorized implementation: for each token in the batch and
+            # sequence, select the top-k experts and apply them with the
+            # calculated weights.
+            for expert_idx, weight in zip(top_experts[b, n], weights[b, n]):
+                expert = params.ff_weights[expert_idx]
+                out[b, n] += weight * feed_forward_relu(x[b, n], expert.Wh, expert.Wo)
+
+    return out
+
+
+if __name__ == "__main__":
+    # Example usage
+    B = 4
+    N = 6
+    D = 8
+    DH = 16
+    NEXP = 4
+    TOPK = 2
+
+    x = np.random.randn(B, N, D).astype(np.float32)  # Input tensor
+
+    # Initialize parameters
+    ff_weights = [
+        FFParams(np.random.randn(D, DH), np.random.randn(DH, D)) for _ in range(NEXP)
+    ]
+    router_weights = np.random.randn(D, NEXP)
+
+    params = MoEParams(
+        D=D,
+        DH=DH,
+        NEXP=NEXP,
+        TOPK=TOPK,
+        ff_weights=ff_weights,
+        router_weights=router_weights,
+    )
+
+    y = moe(x, params)
+    print("Output shape:", y.shape)  # Should be (B, N, D)
+    print("Output:", y)
