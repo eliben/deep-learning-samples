@@ -3,11 +3,11 @@ import torch
 import torch.nn as nn
 
 # New torch array with given values
-x = torch.tensor([10, 20, 11, 4, 8, 19])
+x = torch.tensor([10, 20, 11, 4, 8, 19, 71, 9, 15])
 
-values, indices = torch.topk(x, 2)
-print(f"Top 2 values: {values}")
-print(f"Top 2 indices: {indices}")
+values, indices = torch.topk(x, 3)
+print(f"Top 3 values: {values}")
+print(f"Top 3 indices: {indices}")
 
 
 # Numpy equivalent
@@ -22,6 +22,6 @@ def topk_np(x, k):
 
 
 x_np = x.numpy()
-values_np, indices_np = topk_np(x_np, 2)
-print(f"Top 2 values (Numpy): {values_np}")
-print(f"Top 2 indices (Numpy): {indices_np}")
+values_np, indices_np = topk_np(x_np, 3)
+print(f"Top 3 values (Numpy): {values_np}")
+print(f"Top 3 indices (Numpy): {indices_np}")

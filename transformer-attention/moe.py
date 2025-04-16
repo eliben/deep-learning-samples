@@ -37,15 +37,17 @@ def topk_lastdim(x, k):
     return np.take_along_axis(x, idx, axis=-1), idx
 
 
+# Parameters for a feed-forward layer with a fixed activation function.
 @dataclass
 class FFParams:
     Wh: np.ndarray
     Wo: np.ndarray
 
 
+# Parameters for a Mixture of Experts (MoE) layer.
 @dataclass
 class MoEParams:
-    # Embedding dimension of each token
+    # Embedding dimension of each token (a.k.a. model dimension, Dmodel)
     D: int
 
     # Hidden dimension in FF layers
@@ -64,7 +66,7 @@ class MoEParams:
     router_weights: np.ndarray
 
 
-def moe(x, params):
+def moe(x: np.ndarray, params: MoEParams):
     """Mixture of Experts (MoE) layer.
 
     Args:
