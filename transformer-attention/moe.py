@@ -57,14 +57,31 @@ class MoEParams:
     # K in the top-k selection of top experts per token
     TOPK: int
 
+    # List of experts: each expert is a forward layer with FFParams.
     ff_weights: List[FFParams]
+
+    # Router weights: a linear layer (D, NEXP) that maps input to expert scores.
     router_weights: np.ndarray
 
 
 def moe(x, params):
-    # Run input through router to get scores for each expert for each token.
-    # The router is a linear layer with shape (D, NEXP) that maps an input
-    # to the expert scores.
+    """Mixture of Experts (MoE) layer.
+
+    Args:
+        x: Input tensor (B, N, D).
+        params: MoEParams.
+
+    Returns:
+        Output tensor (B, N, D).
+    """
+    assert x.shape[-1] == params.D
+    assert params.router_weights.shape == (params.D, params.NEXP)
+    assert len(params.ff_weights) == params.NEXP
+    for expert in params.ff_weights:
+        assert expert.Wh.shape == (params.D, params.DH)
+        assert expert.Wo.shape == (params.DH, params.D)
+
+    # Run input through router to get expert scores for each token.
     expert_scores = x @ params.router_weights  # (B, N, NEXP)
 
     # Select the top-k expert scores and their indices for each token.
@@ -73,7 +90,7 @@ def moe(x, params):
     # Apply softmax to the top scores to get weights that sum to 1.
     weights = softmax_lastdim(top_scores)  # (B, N, TOPK)
 
-    out = np.zeros_like(x)  # Initialize output tensor (B, N, D)
+    out = np.zeros_like(x)
     for b in range(x.shape[0]):
         for n in range(x.shape[1]):
             # Unvectorized implementation: for each token in the batch and
