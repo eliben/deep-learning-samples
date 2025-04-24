@@ -28,6 +28,13 @@ print(decode(encode("hii there")))
 # Encoode the entire text dataset into a torch.Tensor
 import torch
 
+device = (
+    torch.accelerator.current_accelerator().type
+    if torch.accelerator.is_available()
+    else "cpu"
+)
+print(f"Using {device} device")
+
 data = torch.tensor(encode(text), dtype=torch.long)
 print(data.shape, data.dtype)
 print(data[:200])
