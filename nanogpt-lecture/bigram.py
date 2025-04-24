@@ -5,6 +5,9 @@ import torch.nn.functional as F
 # Hyper parameters
 batch_size = 32
 block_size = 8
+max_iters = 9000
+eval_interval = 300
+learning_rate = 1e-2
 
 torch.manual_seed(1337)
 device = (
@@ -63,6 +66,7 @@ class BigramLanguageMode(nn.Module):
         self.token_embedding_table = nn.Embedding(vocab_size, vocab_size)
 
     def forward(self, idx, targets=None):
+        # idx is (B, T) array of indices in the current context
         # This basically predicts the next token from the current token only
         # (bigram).
         logits = self.token_embedding_table(idx)  # (B, T, C)
@@ -77,11 +81,14 @@ class BigramLanguageMode(nn.Module):
             loss = F.cross_entropy(logits, targets)
         return logits, loss
 
+    # Note: this function is written in a general way for educational purposes;
+    # it doesn't actually use the history (sequence) to predict the next token,
+    # all it uses is the last token.
     def generate(self, idx, max_new_tokens):
         # idx is (B, T) array of indices in the current context
         for _ in range(max_new_tokens):
-            # get the predictions
-            logits, loss = self(idx)
+            # get the logits (B, T, C)
+            logits, _ = self(idx)
             # focus only on the last time step
             logits = logits[:, -1, :]  # becomes (B, C)
             # apply softmax to get probabilities
@@ -105,3 +112,58 @@ out, loss = m(xb, yb)
 print("out shape: ", out.shape)
 print("out: ", out)
 print("loss: ", loss)
+
+# Starting with a single zero token (newline)
+# Untrained model -- generates garbage
+idx = torch.zeros((1, 1), dtype=torch.long).to(device)
+toks = m.generate(idx, max_new_tokens=100)[0].tolist()
+print(decode(toks))
+
+
+@torch.no_grad()
+def estimate_loss():
+    eval_iters = 200
+    out = {}
+    m.eval()
+    for split in ["train", "val"]:
+        losses = torch.zeros(eval_iters)
+        for k in range(eval_iters):
+            X, Y = get_batch(split)
+            logits, loss = m(X, Y)
+            losses[k] = loss.item()
+        out[split] = losses.mean()
+    m.train()
+    return out
+
+
+# create a PyTorch optimizer
+optimizer = torch.optim.AdamW(m.parameters(), lr=learning_rate)
+
+for iter in range(max_iters):
+
+    # every once in a while evaluate the loss on train and val sets
+    if iter % eval_interval == 0:
+        losses = estimate_loss()
+        print(
+            f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}"
+        )
+
+    # sample a batch of data
+    xb, yb = get_batch("train")
+
+    # evaluate the loss
+    logits, loss = m(xb, yb)
+
+    # clear old gradients
+    optimizer.zero_grad(set_to_none=True)
+
+    # compute new gradients from the loss
+    loss.backward()
+
+    # optimization step
+    optimizer.step()
+
+
+# generate from the model
+context = torch.zeros((1, 1), dtype=torch.long, device=device)
+print(decode(m.generate(context, max_new_tokens=500)[0].tolist()))
