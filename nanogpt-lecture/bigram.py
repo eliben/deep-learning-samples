@@ -5,7 +5,7 @@ import torch.nn.functional as F
 # Hyper parameters
 batch_size = 32
 block_size = 8
-max_iters = 9000
+max_iters = 3000
 eval_interval = 300
 learning_rate = 1e-2
 
@@ -33,7 +33,6 @@ encode = lambda s: [
 decode = lambda l: "".join(
     [itos[i] for i in l]
 )  # decoder: take a list of integers, output a string
-
 
 # Train and test splits
 data = torch.tensor(encode(text), dtype=torch.long)
@@ -120,6 +119,8 @@ toks = m.generate(idx, max_new_tokens=100)[0].tolist()
 print(decode(toks))
 
 
+# Estimate loss on both the train and validation sets. The loss is averaged
+# over multiple batches to reduce noise.
 @torch.no_grad()
 def estimate_loss():
     eval_iters = 200
