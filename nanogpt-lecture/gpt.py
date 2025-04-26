@@ -1,21 +1,23 @@
+import sys
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-# hyperparameters
-batch_size = 64  # how many independent sequences will we process in parallel?
-block_size = 256  # what is the maximum context length for predictions?
+# ----- hyperparameters
+batch_size = 64  # B: batch
+block_size = 256  # T: sequence / context length
 
+n_embd = 384  # C: embedding dimension
+n_head = 6  # number of attention heads. head_size will be n_embd // n_head
+n_layer = 6
+dropout = 0.2  # dropout for training
 
 max_iters = 1000  # Note: this takes a while to run on a single GPU...
 
 eval_interval = 500
 learning_rate = 3e-4
 eval_iters = 200
-n_embd = 384
-n_head = 6
-n_layer = 6
-dropout = 0.2  # dropout for training
+# -----
 
 torch.manual_seed(1337)
 device = (
@@ -42,37 +44,33 @@ decode = lambda l: "".join(
     [itos[i] for i in l]
 )  # decoder: take a list of integers, output a string
 
-# Train and test splits
+# Train and validation splits; first 90% will be train, rest val
 data = torch.tensor(encode(text), dtype=torch.long)
-n = int(0.9 * len(data))  # first 90% will be train, rest val
+n = int(0.9 * len(data))
 train_data = data[:n]
 val_data = data[n:]
 
 
-# data loading
+# Get a batch of data with the predicted output; both returned as (B,T) tensors,
+# where each item is an integer (the index of the character in the vocabulary).
+#
+# For each batch separately, the sequences work like this:
+#
+#  [ ... * * * * * * * * * * * * * * * * * * ... ]
+#                 ^              ^
+#                 | <--- x --- > |
+#                  ^              ^
+#                  | <--- y --- > |
+#
+# y is always shifted by one from x, because y[i] is the predicted output
+# to come after for context x[:i].
 def get_batch(split):
-    # generate a small batch of data of inputs x and targets y
     data = train_data if split == "train" else val_data
     ix = torch.randint(len(data) - block_size, (batch_size,))
     x = torch.stack([data[i : i + block_size] for i in ix])
     y = torch.stack([data[i + 1 : i + block_size + 1] for i in ix])
     x, y = x.to(device), y.to(device)
     return x, y
-
-
-@torch.no_grad()
-def estimate_loss():
-    out = {}
-    model.eval()
-    for split in ["train", "val"]:
-        losses = torch.zeros(eval_iters)
-        for k in range(eval_iters):
-            X, Y = get_batch(split)
-            logits, loss = model(X, Y)
-            losses[k] = loss.item()
-        out[split] = losses.mean()
-    model.train()
-    return out
 
 
 class Head(nn.Module):
@@ -84,25 +82,24 @@ class Head(nn.Module):
         self.query = nn.Linear(n_embd, head_size, bias=False)
         self.value = nn.Linear(n_embd, head_size, bias=False)
         self.register_buffer("tril", torch.tril(torch.ones(block_size, block_size)))
-
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
-        # input of size (batch, time-step, channels)
-        # output of size (batch, time-step, head size)
+        # input (B,T,C)
+        # output (B,T,HS)
         B, T, C = x.shape
-        k = self.key(x)  # (B,T,hs)
-        q = self.query(x)  # (B,T,hs)
+        k = self.key(x)  # (B,T,HS)
+        q = self.query(x)  # (B,T,HS)
         # compute attention scores ("affinities")
         wei = (
             q @ k.transpose(-2, -1) * k.shape[-1] ** -0.5
-        )  # (B, T, hs) @ (B, hs, T) -> (B, T, T)
+        )  # (B, T, HS) @ (B, HS, T) -> (B, T, T)
         wei = wei.masked_fill(self.tril[:T, :T] == 0, float("-inf"))  # (B, T, T)
         wei = F.softmax(wei, dim=-1)  # (B, T, T)
         wei = self.dropout(wei)
         # perform the weighted aggregation of the values
-        v = self.value(x)  # (B,T,hs)
-        out = wei @ v  # (B, T, T) @ (B, T, hs) -> (B, T, hs)
+        v = self.value(x)  # (B,T,HS)
+        out = wei @ v  # (B, T, T) @ (B, T, HS) -> (B, T, HS)
         return out
 
 
@@ -116,6 +113,9 @@ class MultiHeadAttention(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
+        # input (B,T,C)
+        # output (B,T,C) (where C is split to num_heads * head_size, and the
+        # shape of each head's output is (B,T,HS))
         out = torch.cat([h(x) for h in self.heads], dim=-1)
         out = self.dropout(self.proj(out))
         return out
@@ -159,14 +159,15 @@ class GPTLanguageModel(nn.Module):
 
     def __init__(self):
         super().__init__()
-        # each token directly reads off the logits for the next token from a lookup table
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
         self.position_embedding_table = nn.Embedding(block_size, n_embd)
         self.blocks = nn.Sequential(
             *[Block(n_embd, n_head=n_head) for _ in range(n_layer)]
         )
         self.ln_f = nn.LayerNorm(n_embd)  # final layer norm
-        self.lm_head = nn.Linear(n_embd, vocab_size)
+
+        # de-embedding layer, translates from n_embd back to vocab_size.
+        self.demb = nn.Linear(n_embd, vocab_size)
 
         # better init, not covered in the original GPT video, but important,
         # will cover in followup video
@@ -190,12 +191,17 @@ class GPTLanguageModel(nn.Module):
         x = tok_emb + pos_emb  # (B,T,C)
         x = self.blocks(x)  # (B,T,C)
         x = self.ln_f(x)  # (B,T,C)
-        logits = self.lm_head(x)  # (B,T,vocab_size)
+
+        # logits(b,t,v) are the un-normalized probabilities of character v
+        # (out of [0, vocab_size)) being generated after token t in batch b.
+        logits = self.demb(x)  # (B,T,vocab_size)
 
         if targets is None:
             loss = None
         else:
             B, T, C = logits.shape
+            # Reshape logits and targets to a form cross_entropy likes, and
+            # calculate the xent for the entire batch and sequence at once.
             logits = logits.view(B * T, C)
             targets = targets.view(B * T)
             loss = F.cross_entropy(logits, targets)
@@ -208,7 +214,7 @@ class GPTLanguageModel(nn.Module):
             # crop idx to the last block_size tokens
             idx_cond = idx[:, -block_size:]
             # get the predictions
-            logits, loss = self(idx_cond)
+            logits, _ = self(idx_cond)
             # focus only on the last time step
             logits = logits[:, -1, :]  # becomes (B, C)
             # apply softmax to get probabilities
@@ -228,6 +234,22 @@ print(sum(p.numel() for p in m.parameters()) / 1e6, "M parameters")
 # create a PyTorch optimizer
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
+
+@torch.no_grad()
+def estimate_loss():
+    out = {}
+    model.eval()
+    for split in ["train", "val"]:
+        losses = torch.zeros(eval_iters)
+        for k in range(eval_iters):
+            X, Y = get_batch(split)
+            logits, loss = model(X, Y)
+            losses[k] = loss.item()
+        out[split] = losses.mean()
+    model.train()
+    return out
+
+
 for iter in range(max_iters):
 
     # every once in a while evaluate the loss on train and val sets
@@ -246,6 +268,7 @@ for iter in range(max_iters):
     loss.backward()
     optimizer.step()
 
-# generate from the model
+# generate from the model, using batch 1 and starting with a single
+# context token of value 0 (newline).
 context = torch.zeros((1, 1), dtype=torch.long, device=device)
 print(decode(m.generate(context, max_new_tokens=500)[0].tolist()))
