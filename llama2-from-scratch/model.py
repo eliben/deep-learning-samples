@@ -84,6 +84,44 @@ class RMSNorm(nn.Module):
         return self.weight * self._norm(x.float()).type_as(x)
         
 
+class SelfAttention(nn.Module):
+    def __init__(self, args: ModelArgs):
+        super().__init__()
+
+        # number of key/value heads
+        self.n_kv_heads = args.n_heads if args.n_kv_heads is None else args.n_kv_heads
+
+        # number of query heads
+        self.n_heads_q = args.n_heads
+
+        # Ratio between the number of heads for queries and keys/values
+        # (how many times the k/v heads should be repeated to match the q heads)
+        self.n_rep = self.n_heads_q // self.n_kv_heads
+
+        # dimension of each head
+        self.head_dim = args.dim // args.n_heads
+
+        self.wq = nn.Linear(args.dim, args.n_heads_q * self.head_dim, bias=False)
+        self.wk = nn.Linear(args.dim, self.n_kv_heads * self.head_dim, bias=False)
+        self.wv = nn.Linear(args.dim, self.n_kv_heads * self.head_dim, bias=False)
+        self.wo = nn.Linear(args.n_heads * self.head_dim, args.dim, bias=False)
+
+        self.cache_k = torch.zeros((args.max_batchsize, args.max_seq_len, self.n_kv_heads, self.head_dim), device=args.device)
+        self.cache_v = torch.zeros((args.max_batchsize, args.max_seq_len, self.n_kv_heads, self.head_dim), device=args.device)
+
+    def forward(self, x: torch.Tensor, start_pos: int, freqs_complex: torch.Tensor):
+        batch_size, seq_len, _ = x.shape # (B, seq_len=1, dim)
+
+        xq = self.wq(x) # (B, 1, n_heads_q * head_dim)
+        xk = self.wk(x) # (B, 1, n_kv_heads * head_dim)
+        xv = self.wv(x) # (B, 1, n_kv_heads * head_dim)
+
+        xq = xq.view(batch_size, seq_len, self.n_heads_q, self.head_dim) # (B, 1, n_heads_q, head_dim)
+        xk = xk.view(batch_size, seq_len, self.n_kv_heads, self.head_dim) # (B, 1, n_kv_heads, head_dim)
+        xv = xv.view(batch_size, seq_len, self.n_kv_heads, self.head_dim) # (B, 1, n_kv_heads, head_dim)
+
+        # TODO: we're here, at 1:43:32 in the video
+
 class EncoderBlock(nn.Module):
     def __init__(self, args: ModelArgs) -> None:
         super().__init__()
