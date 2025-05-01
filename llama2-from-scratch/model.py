@@ -116,12 +116,12 @@ class SelfAttention(nn.Module):
         self.n_rep = self.n_heads_q // self.n_kv_heads
 
         # dimension of each head
-        self.head_dim = args.dim // args.n_heads
+        self.head_dim = args.dim // self.n_heads_q
 
-        self.wq = nn.Linear(args.dim, args.n_heads_q * self.head_dim, bias=False)
+        self.wq = nn.Linear(args.dim, self.n_heads_q * self.head_dim, bias=False)
         self.wk = nn.Linear(args.dim, self.n_kv_heads * self.head_dim, bias=False)
         self.wv = nn.Linear(args.dim, self.n_kv_heads * self.head_dim, bias=False)
-        self.wo = nn.Linear(args.n_heads * self.head_dim, args.dim, bias=False)
+        self.wo = nn.Linear(self.n_heads_q * self.head_dim, args.dim, bias=False)
 
         self.cache_k = torch.zeros(
             (args.max_batchsize, args.max_seq_len, self.n_kv_heads, self.head_dim),
@@ -183,6 +183,34 @@ class SelfAttention(nn.Module):
         out = torch.matmul(scores, values)
         out = out.transpose(1, 2).contiguous().view(batch_size, seq_len, -1)
         return self.wo(out)  # (B, 1, dim)
+
+
+class FeedForward(nn.Module):
+    def __init__(self, args: ModelArgs):
+        # FF layer with SwiGLU activation function
+        super().__init__()
+        self.args = args
+
+        hidden_dim = 4 * args.dim
+        hidden_dim = int(2 * hidden_dim / 3)
+        if args.ffn_dim_multiplier is not None:
+            hidden_dim = int(args.ffn_dim_multiplier * hidden_dim)
+
+        # Round the hidden_dim to the nearest multiple_of parameter
+        hidden_dim = args.multiple_of * (
+            (hidden_dim + args.multiple_of - 1) // args.multiple_of
+        )
+
+        self.w1 = nn.Linear(args.dim, hidden_dim, bias=False)
+        self.w2 = nn.Linear(hidden_dim, args.dim, bias=False)
+        self.w3 = nn.Linear(args.dim, hidden_dim, bias=False)
+
+    def forward(self, x: torch.Tensor):
+        swish = F.silu(self.w1(x))
+        x_V = self.w3(x)
+        x = swish * x_V
+        x = self.w2(x)
+        return x
 
 
 class EncoderBlock(nn.Module):
